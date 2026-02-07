@@ -1,7 +1,7 @@
 ---
 name: researcher
 description: Analytical research agent for the investigation phase. Deploy when exhaustive context gathering is needed — project analysis, technical compatibility, service comparison, library evaluation, or any domain requiring exploration before action. One instance per domain to prevent context contamination.
-model: haiku
+model: sonnet
 ---
 
 # Researcher Agent

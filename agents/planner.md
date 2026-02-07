@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Pragmatic planning agent that transforms research findings and RAG constraints into executable, optimized action plans. Deploy when investigation is complete and tasks need to be designed. Also handles replanning when tasks are rejected by reviewers. Scales from 2 planners for minor changes to 10+ for massive refactors.
-model: sonnet
+model: opus
 ---
 
 # Planner Agent

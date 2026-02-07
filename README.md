@@ -34,8 +34,8 @@ The orchestrator never writes code. Developers never investigate. Reviewers neve
 
 | Agent | Model | Phase | What It Does |
 |-------|-------|-------|--------------|
-| **Researcher** | Haiku | Investigation | Searches codebase, internet, docs, and RAG. Writes structured reports to disk with binary conclusions (YES/NO/REQUIRES_CLARIFICATION). One instance per domain. |
-| **Planner** | Sonnet | Planning | Reads research + RAG preferences. Produces task files with exact file paths, line numbers, literal values, and validation commands. No vague instructions. |
+| **Researcher** | Sonnet | Investigation | Searches codebase, internet, docs, and RAG. Writes structured reports to disk with binary conclusions (YES/NO/REQUIRES_CLARIFICATION). One instance per domain. |
+| **Planner** | Opus | Planning | Reads research + RAG preferences. Produces task files with exact file paths, line numbers, literal values, and validation commands. No vague instructions. |
 | **Developer** | Haiku | Execution | Reads one task file. Creates a git worktree. Executes steps in order. Reports COMPLETE or BLOCKED. Zero autonomy — ambiguity causes failure, not guessing. |
 | **Reviewer** | Opus | Validation | Runs typecheck, lint, tests, build, and ephemeral server. Executes 7 RAG compliance queries. Binary output only: APPROVED or REJECTED. A single warning is a rejection. |
 
@@ -126,8 +126,8 @@ Blocked commands return exit code 2 with `[Arko Studio] BLOCKED` in stderr. The 
 ├── plugin.json                   # Plugin manifest + MCP server declarations
 └── marketplace.json              # Marketplace catalog
 agents/
-├── researcher.md                 # Investigation agent (Haiku)
-├── planner.md                    # Planning agent (Sonnet)
+├── researcher.md                 # Investigation agent (Sonnet)
+├── planner.md                    # Planning agent (Opus)
 ├── developer.md                  # Execution agent (Haiku)
 └── reviewer.md                   # Validation agent (Opus)
 skills/
