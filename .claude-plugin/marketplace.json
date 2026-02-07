@@ -1,0 +1,31 @@
+{
+  "name": "arcaelas-plugins",
+  "version": "1.0.0",
+  "owner": {
+    "name": "Arcaelas"
+  },
+  "metadata": {
+    "description": "Plugin marketplace by Arcaelas — orchestration and productivity tools for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "arko-studio",
+      "version": "1.0.0",
+      "description": "Agent orchestration system with 4 specialized phases: Research (haiku), Planning (sonnet), Development (haiku), and Review (opus). Includes RAG integration, git worktree isolation, and destructive command blocking.",
+      "source": ".",
+      "category": "development",
+      "author": {
+        "name": "Arcaelas"
+      },
+      "repository": "https://github.com/arcaelas/arko-studio",
+      "license": "MIT",
+      "keywords": [
+        "orchestration",
+        "agents",
+        "rag",
+        "worktree",
+        "code-review"
+      ]
+    }
+  ]
+}

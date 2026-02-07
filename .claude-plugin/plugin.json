@@ -1,0 +1,55 @@
+{
+  "name": "arko-studio",
+  "version": "1.0.0",
+  "description": "Agent orchestration system that executes complex tasks through isolated phases — Research, Planning, Development, and Review — with RAG-aligned quality gates and git worktree isolation.",
+  "author": {
+    "name": "Arcaelas",
+    "url": "https://github.com/arcaelas"
+  },
+  "homepage": "https://github.com/arcaelas/arko-studio",
+  "repository": "https://github.com/arcaelas/arko-studio",
+  "license": "MIT",
+  "keywords": [
+    "orchestration",
+    "agents",
+    "code-review",
+    "planning",
+    "worktree-isolation",
+    "rag",
+    "quality-assurance"
+  ],
+  "agents": "./agents/",
+  "skills": ["./skills/orchestrator/"],
+  "hooks": "./hooks/hooks.json",
+  "mcpServers": {
+    "arcaelas": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@arcaelas/mcp",
+        "--stdio",
+        "--openai-url",
+        "https://api.arcaelas.com/v1",
+        "--image-model",
+        "gemini-3-pro",
+        "--audio-model",
+        "gpt-4o-mini-audio"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${ARKO_API_KEY}"
+      }
+    },
+    "rag": {
+      "command": "npx",
+      "args": ["-y", "@arcaelas/rag"],
+      "env": {
+        "OLLAMA_HOSTNAME": "http://localhost:11434",
+        "OLLAMA_MODEL_NAME": "mxbai-embed-large"
+      }
+    },
+    "mui-mcp": {
+      "command": "npx",
+      "args": ["-y", "@mui/mcp@latest"]
+    }
+  }
+}
