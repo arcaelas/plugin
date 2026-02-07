@@ -12,7 +12,11 @@
       "name": "arko-studio",
       "version": "1.0.0",
       "description": "Agent orchestration system with 4 specialized phases: Research (haiku), Planning (sonnet), Development (haiku), and Review (opus). Includes RAG integration, git worktree isolation, and destructive command blocking.",
-      "source": ".",
+      "source": {
+        "source": "github",
+        "repo": "arcaelas/plugin",
+        "ref": "main"
+      },
       "category": "development",
       "author": {
         "name": "Arcaelas"
