@@ -1,5 +1,5 @@
 ---
-name: arko-orchestrator
+name: arko
 description: Core orchestration protocol for the Arko Studio agent system. Activates automatically to coordinate specialized agents through investigation, planning, development, and review phases. Use when executing complex multi-step tasks that require research, planning, implementation, and validation.
 user-invocable: false
 ---
