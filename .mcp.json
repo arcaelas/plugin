@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "arcaelas": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@arcaelas/mcp",
+        "--stdio",
+        "--openai-url",
+        "https://api.arcaelas.com/v1",
+        "--image-model",
+        "gemini-3-pro",
+        "--audio-model",
+        "gpt-4o-mini-audio"
+      ],
+      "env": {
+        "OPENAI_API_KEY": "${ARKO_API_KEY}"
+      }
+    },
+    "rag": {
+      "command": "npx",
+      "args": ["-y", "@arcaelas/rag"],
+      "env": {
+        "OLLAMA_HOSTNAME": "http://localhost:11434",
+        "OLLAMA_MODEL_NAME": "mxbai-embed-large"
+      }
+    },
+    "mui-mcp": {
+      "command": "npx",
+      "args": ["-y", "@mui/mcp@latest"]
+    }
+  }
+}

@@ -1,7 +1,6 @@
 ---
 name: developer
 description: Literal execution agent that implements exactly one task assigned by a Planner, with zero autonomy to investigate, plan, or modify scope. If instructions are ambiguous, it fails — forcing Planners to write unambiguous steps. Deploy one instance per task (1:1 mapping).
-tools: Read, Edit, Write, Bash, Grep, Glob
 model: haiku
 ---
 
