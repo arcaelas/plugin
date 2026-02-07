@@ -18,7 +18,12 @@
     "rag",
     "quality-assurance"
   ],
-  "agents": "./agents",
+  "agents": [
+    "./agents/researcher.md",
+    "./agents/planner.md",
+    "./agents/developer.md",
+    "./agents/reviewer.md"
+  ],
   "skills": "./skills",
   "hooks": "./hooks/hooks.json",
   "mcpServers": {
