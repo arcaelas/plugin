@@ -18,8 +18,8 @@
     "rag",
     "quality-assurance"
   ],
-  "agents": "./agents/",
-  "skills": ["./skills/orchestrator/"],
+  "agents": "./agents",
+  "skills": "./skills",
   "hooks": "./hooks/hooks.json",
   "mcpServers": {
     "arcaelas": {
