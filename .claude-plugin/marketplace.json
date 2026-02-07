@@ -1,5 +1,5 @@
 {
-  "name": "arcaelas-plugins",
+  "name": "arcaelas",
   "version": "1.0.0",
   "owner": {
     "name": "Arcaelas"
@@ -9,7 +9,7 @@
   },
   "plugins": [
     {
-      "name": "arko-studio",
+      "name": "arko",
       "version": "1.0.0",
       "description": "Agent orchestration system with 4 specialized phases: Research (haiku), Planning (sonnet), Development (haiku), and Review (opus). Includes RAG integration, git worktree isolation, and destructive command blocking.",
       "source": {
@@ -21,15 +21,9 @@
       "author": {
         "name": "Arcaelas"
       },
-      "repository": "https://github.com/arcaelas/arko-studio",
+      "repository": "https://github.com/arcaelas/plugin",
       "license": "MIT",
-      "keywords": [
-        "orchestration",
-        "agents",
-        "rag",
-        "worktree",
-        "code-review"
-      ]
+      "keywords": ["orchestration", "agents", "rag", "worktree", "code-review"]
     }
   ]
 }
