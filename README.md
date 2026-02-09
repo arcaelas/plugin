@@ -32,12 +32,12 @@ The orchestrator never writes code. Developers never investigate. Reviewers neve
 
 ## Agents
 
-| Agent | Model | Phase | What It Does |
-|-------|-------|-------|--------------|
-| **Researcher** | Sonnet | Investigation | Searches codebase, internet, docs, and RAG. Writes structured reports to disk with binary conclusions (YES/NO/REQUIRES_CLARIFICATION). One instance per domain. |
-| **Planner** | Opus | Planning | Reads research + RAG preferences. Produces task files with exact file paths, line numbers, literal values, and validation commands. No vague instructions. |
-| **Developer** | Haiku | Execution | Reads one task file. Creates a git worktree. Executes steps in order. Reports COMPLETE or BLOCKED. Zero autonomy — ambiguity causes failure, not guessing. |
-| **Reviewer** | Opus | Validation | Runs typecheck, lint, tests, build, and ephemeral server. Executes 7 RAG compliance queries. Binary output only: APPROVED or REJECTED. A single warning is a rejection. |
+| Agent          | Model  | Phase         | What It Does                                                                                                                                                            |
+| -------------- | ------ | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Researcher** | Sonnet | Investigation | Searches codebase, internet, docs, and RAG. Writes structured reports to disk with binary conclusions (YES/NO/REQUIRES_CLARIFICATION). One instance per domain.         |
+| **Planner**    | Opus   | Planning      | Reads research + RAG preferences. Produces task files with exact file paths, line numbers, literal values, and validation commands. No vague instructions.              |
+| **Developer**  | Haiku  | Execution     | Reads one task file. Creates a git worktree. Executes steps in order. Reports COMPLETE or BLOCKED. Zero autonomy — ambiguity causes failure, not guessing.              |
+| **Reviewer**   | Opus   | Validation    | Runs typecheck, lint, tests, build, and ephemeral server. Executes 7 RAG compliance queries. Binary output only: APPROVED or REJECTED. A single warning is a rejection. |
 
 ## Installation
 
@@ -59,11 +59,11 @@ claude --plugin-dir ./plugin
 
 Arko Studio bundles three MCP servers. Each has its own requirements:
 
-| MCP Server | Package | Requires | Purpose |
-|------------|---------|----------|---------|
-| `arcaelas` | `@arcaelas/mcp` | `ARKO_API_KEY` env var | Image and audio generation |
-| `rag` | `@arcaelas/rag` | [Ollama](https://ollama.com) running on `localhost:11434` | Semantic memory (user preferences, conventions, history) |
-| `mui-mcp` | `@mui/mcp` | None | MUI component documentation |
+| MCP Server | Package         | Requires                                                  | Purpose                                                  |
+| ---------- | --------------- | --------------------------------------------------------- | -------------------------------------------------------- |
+| `arcaelas` | `@arcaelas/mcp` | `ARKO_API_KEY` env var                                    | Image and audio generation                               |
+| `rag`      | `@arcaelas/rag` | [Ollama](https://ollama.com) running on `localhost:11434` | Semantic memory (user preferences, conventions, history) |
+| `mui-mcp`  | `@mui/mcp`      | None                                                      | MUI component documentation                              |
 
 Set up the required environment variables before starting Claude Code:
 
@@ -84,6 +84,7 @@ Prefix any message with `/rag` to force a RAG memory search before Claude proces
 This triggers a `UserPromptSubmit` hook that injects a mandatory instruction into the context, requiring at least 3 `mcp__rag__search` calls with queries derived from your message. Without the `/rag` prefix, messages are processed normally with zero overhead.
 
 RAG is also used internally by agents during orchestration:
+
 - **Research** — 3 queries before each investigation
 - **Planner** — 7 pre-planning + 3 post-planning validation queries
 - **Reviewer** — 7 compliance queries before writing any review
@@ -109,13 +110,13 @@ All orchestration artifacts are written to `.claude/.arko/` (automatically added
 
 A `PreToolUse` hook intercepts every `Bash` command and blocks destructive patterns before they reach the shell:
 
-| Blocked Pattern | Risk |
-|-----------------|------|
-| `rm -rf` | Recursive deletion |
-| `git push --force`, `git push -f` | Force push to remote |
-| `git reset --hard` | Discard uncommitted changes |
-| `git checkout .` | Discard all modifications |
-| `git clean -f`, `-fd`, `-fx` | Remove untracked files |
+| Blocked Pattern                   | Risk                        |
+| --------------------------------- | --------------------------- |
+| `rm -rf`                          | Recursive deletion          |
+| `git push --force`, `git push -f` | Force push to remote        |
+| `git reset --hard`                | Discard uncommitted changes |
+| `git checkout .`                  | Discard all modifications   |
+| `git clean -f`, `-fd`, `-fx`      | Remove untracked files      |
 
 Blocked commands return exit code 2 with `[Arko Studio] BLOCKED` in stderr. The command never executes.
 
