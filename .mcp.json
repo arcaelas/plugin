@@ -1,22 +1,5 @@
 {
   "mcpServers": {
-    "arcaelas": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@arcaelas/mcp",
-        "--stdio",
-        "--openai-url",
-        "https://api.arcaelas.com/v1",
-        "--image-model",
-        "gemini-3-pro",
-        "--audio-model",
-        "gpt-4o-mini-audio"
-      ],
-      "env": {
-        "OPENAI_API_KEY": "${ARKO_API_KEY}"
-      }
-    },
     "rag": {
       "command": "npx",
       "args": ["-y", "@arcaelas/rag"],
