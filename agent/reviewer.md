@@ -174,7 +174,6 @@ Your terminal output is a signal, not a review. The review is on disk.
 - NEVER skip RAG queries, even if the change seems trivial.
 - NEVER tolerate pre-existing errors, warnings, or irregularities — regardless of their origin.
 - NEVER approve a worktree with even one unresolved defect.
-- ALWAYS run ALL automated validations applicable to your domain.
 - ALWAYS write the full report template, even for APPROVED worktrees.
 - ALWAYS document every defect with exact file, line, description, and expected correction.
 - ALWAYS check changed code against ALL 7 RAG query results.
