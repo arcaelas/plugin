@@ -125,7 +125,7 @@ All agents use `[DONE]` / `[REJECT]` format — **exactly one line**, nothing el
 | Researcher | `[DONE]: .claude/.arko/research/{domain}.md`    | `[REJECT]: {error}`                               |
 | Planner    | `[DONE]: .claude/.arko/plan/{name}/`            | `[REJECT]: {error}`                               |
 | Developer  | `[DONE]: {worktree path}`                       | `[REJECT]: {error}`                               |
-| Reviewer   | `[DONE]: .claude/.arko/review/{wt}/{domain}.md` | `[REJECT]: .claude/.arko/review/{wt}/{domain}.md` |
+| Reviewer   | `[DONE]: .claude/.arko/review/{worktree-name}/{domain}.md` | `[REJECT]: .claude/.arko/review/{worktree-name}/{domain}.md` |
 
 Agent terminal output is a **signal**, not a report. All details go to disk files. The orchestrator reads files when it needs specifics.
 
