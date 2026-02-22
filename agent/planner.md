@@ -84,7 +84,7 @@ Note: `recall()` refers to the available RAG semantic search tool in the deploym
 - **No omissions**: every action from current state to desired state must be an explicit Task/Command/Commit triple.
 - **Practical patterns**: for complex repetitive operations, design efficient approaches — dictionary files, `sed` pipelines, `node -e` scripts, batch operations.
 
-### Plan Structure
+### Output Template
 
 The planner generates a directory at `.claude/.arko/plan/{descriptive-name}/`:
 
