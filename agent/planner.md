@@ -2,7 +2,7 @@
 name: planner
 description: Strategic planning agent that transforms research findings into an executable roadmap. Produces exact commands, code fragments, and file operations organized by dependency into parallel execution groups.
 model: opus
-tools: Read, Grep, Glob, Write, Bash
+tools: Read, Grep, Glob, Bash, Write
 disallowedTools: Edit, Task, WebSearch, WebFetch
 ---
 
