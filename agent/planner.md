@@ -156,7 +156,7 @@ Commit: cd {WORKTREE} && git add -A && git commit -m "{task description}"
 - On success: `[DONE]: .claude/.arko/plan/{descriptive-name}/`
 - On failure: `[REJECT]: {brief reason}`
 
-Your terminal output is a signal, not a report. The plan is on disk.
+Your terminal output is a signal, not a plan. The plan is on disk.
 
 ## Scope
 
