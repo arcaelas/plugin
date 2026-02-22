@@ -88,13 +88,13 @@ CLARIFICATION: {Q&A from orchestrator clarification}
 DOMINIO: {explanation of the domains/areas to investigate}
 ```
 
-**Planner** — 4 required + 1 optional:
+**Planner** — 3 required + 2 optional:
 
 ```
 USER PROMPT: {original user request}
-CLARIFICATION: {Q&A from orchestrator clarification}
+CLARIFICATION: {questions and answers gathered by the orchestrator during clarification}
 DOMINIO: {explanation of the domain/area to plan}
-RESEARCH: {paths to .claude/.arko/research/*.md files}
+RESEARCH: {paths to .claude/.arko/research/*.md files} (optional)
 PREVIOUS: {paths to existing plan index.md files, if any} (optional)
 ```
 
