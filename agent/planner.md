@@ -153,12 +153,8 @@ Commit: cd {WORKTREE} && git add -A && git commit -m "{task description}"
 
 **Terminal**: respond with **exactly one line** — nothing else. No summaries, no explanations, no design rationale, no commentary. The orchestrator reads the files for details.
 
-```
-[DONE]: .claude/.arko/plan/{descriptive-name}/
-```
-```
-[REJECT]: {brief reason}
-```
+- On success: `[DONE]: .claude/.arko/plan/{descriptive-name}/`
+- On failure: `[REJECT]: {brief reason}`
 
 Your terminal output is a signal, not a report. The plan is on disk.
 
