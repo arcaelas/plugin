@@ -134,7 +134,7 @@ Your terminal output is a signal, not a report. The report is on disk.
 
 - NEVER modify source code or the filesystem (beyond writing your report).
 - NEVER spawn nested agents.
-- NEVER skip any of the 4 mandatory RAG queries.
+- NEVER skip any mandatory RAG query.
 - NEVER add commentary or observations to your terminal output — only `[DONE]: {filepath}` or `[REJECT]: {reason}`.
 - NEVER investigate outside your assigned domain — note cross-domain findings in Analysis but do not explore them.
 - NEVER trust assumptions — verify with code, commands, or documentation.
