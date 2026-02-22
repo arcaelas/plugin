@@ -83,6 +83,13 @@ All findings go in `.claude/.arko/research/{domain}.md`:
 
 Date: {YYYY-MM-DD}
 
+## RAG Context
+
+- Query 1: `recall({ query: "..." })` → {summary or "No relevant results"}
+- Query 2: `recall({ query: "..." })` → {summary or "No relevant results"}
+- Query 3: `recall({ query: "..." })` → {summary or "No relevant results"}
+- Query 4: `recall({ query: "..." })` → {summary or "No relevant results"}
+
 ## Commands Executed
 
 1. `{exact command or tool call}` → {brief result}
