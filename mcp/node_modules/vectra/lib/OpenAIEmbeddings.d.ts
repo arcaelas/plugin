@@ -1,0 +1,126 @@
+import { AxiosResponse, AxiosRequestConfig } from 'axios';
+import { EmbeddingsModel, EmbeddingsResponse } from "./types";
+import { CreateEmbeddingRequest, CreateEmbeddingResponse } from "./internals";
+export interface BaseOpenAIEmbeddingsOptions {
+    /**
+     * Optional. Number of embedding dimensions to return.
+     */
+    dimensions?: number;
+    /**
+     * Optional. Whether to log requests to the console.
+     * @remarks
+     * This is useful for debugging prompts and defaults to `false`.
+     */
+    logRequests?: boolean;
+    /**
+     * Optional. Maximum number of tokens that can be sent to the embedding model.
+     */
+    maxTokens?: number;
+    /**
+     * Optional. Retry policy to use when calling the OpenAI API.
+     * @remarks
+     * The default retry policy is `[2000, 5000]` which means that the first retry will be after
+     * 2 seconds and the second retry will be after 5 seconds.
+     */
+    retryPolicy?: number[];
+    /**
+     * Optional. Request options to use when calling the OpenAI API.
+     */
+    requestConfig?: AxiosRequestConfig;
+}
+/**
+ * Options for configuring an `OpenAIEmbeddings` to generate embeddings using an OSS hosted model.
+ */
+export interface OSSEmbeddingsOptions extends BaseOpenAIEmbeddingsOptions {
+    /**
+     * Model to use for completion.
+     */
+    ossModel: string;
+    /**
+     * Optional. Endpoint to use when calling the OpenAI API.
+     * @remarks
+     * For Azure OpenAI this is the deployment endpoint.
+     */
+    ossEndpoint: string;
+}
+/**
+ * Options for configuring an `OpenAIEmbeddings` to generate embeddings using an OpenAI hosted model.
+ */
+export interface OpenAIEmbeddingsOptions extends BaseOpenAIEmbeddingsOptions {
+    /**
+     * API key to use when calling the OpenAI API.
+     * @remarks
+     * A new API key can be created at https://platform.openai.com/account/api-keys.
+     */
+    apiKey: string;
+    /**
+     * Model to use for completion.
+     * @remarks
+     * For Azure OpenAI this is the name of the deployment to use.
+     */
+    model: string;
+    /**
+     * Optional. Organization to use when calling the OpenAI API.
+     */
+    organization?: string;
+    /**
+     * Optional. Endpoint to use when calling the OpenAI API.
+     */
+    endpoint?: string;
+}
+/**
+ * Options for configuring an `OpenAIEmbeddings` to generate embeddings using an Azure OpenAI hosted model.
+ */
+export interface AzureOpenAIEmbeddingsOptions extends BaseOpenAIEmbeddingsOptions {
+    /**
+     * API key to use when making requests to Azure OpenAI.
+     */
+    azureApiKey: string;
+    /**
+     * Deployment endpoint to use.
+     */
+    azureEndpoint: string;
+    /**
+     * Name of the Azure OpenAI deployment (model) to use.
+     */
+    azureDeployment: string;
+    /**
+     * Optional. Version of the API being called. Defaults to `2023-05-15`.
+     */
+    azureApiVersion?: string;
+}
+/**
+ * A `PromptCompletionModel` for calling OpenAI and Azure OpenAI hosted models.
+ * @remarks
+ */
+export declare class OpenAIEmbeddings implements EmbeddingsModel {
+    private readonly _httpClient;
+    private readonly _clientType;
+    private readonly UserAgent;
+    readonly maxTokens: number;
+    /**
+     * Options the client was configured with.
+     */
+    readonly options: OSSEmbeddingsOptions | OpenAIEmbeddingsOptions | AzureOpenAIEmbeddingsOptions;
+    /**
+     * Creates a new `OpenAIClient` instance.
+     * @param options Options for configuring an `OpenAIClient`.
+     */
+    constructor(options: OSSEmbeddingsOptions | OpenAIEmbeddingsOptions | AzureOpenAIEmbeddingsOptions);
+    /**
+     * Creates embeddings for the given inputs using the OpenAI API.
+     * @param model Name of the model to use (or deployment for Azure).
+     * @param inputs Text inputs to create embeddings for.
+     * @returns A `EmbeddingsResponse` with a status and the generated embeddings or a message when an error occurs.
+     */
+    createEmbeddings(inputs: string | string[]): Promise<EmbeddingsResponse>;
+    /**
+     * @private
+     */
+    protected createEmbeddingRequest(request: CreateEmbeddingRequest): Promise<AxiosResponse<CreateEmbeddingResponse>>;
+    /**
+     * @private
+     */
+    protected post<TData>(url: string, body: object, retryCount?: number): Promise<AxiosResponse<TData>>;
+}
+//# sourceMappingURL=OpenAIEmbeddings.d.ts.map
