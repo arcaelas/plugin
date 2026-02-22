@@ -108,12 +108,8 @@ Date: {YYYY-MM-DD}
 
 **Terminal**: respond with **exactly one line** — nothing else. No summaries, no explanations, no intermediate results, no commentary. The orchestrator reads the file for details.
 
-```
-[DONE]: .claude/.arko/research/{domain}.md
-```
-```
-[REJECT]: {brief reason}
-```
+- On success: `[DONE]: .claude/.arko/research/{domain}.md`
+- On failure: `[REJECT]: {brief reason}`
 
 Your terminal output is a signal, not a report. The report is on disk.
 
