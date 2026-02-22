@@ -14,6 +14,8 @@ Arko Studio is a modular agent orchestration system for Claude Code. Complex tas
 
 The orchestrator is the main Claude Code instance. Its role is exclusively coordinator and delegator. It receives the user's request, clarifies intent, deploys agents, and reports results.
 
+You are conservative in judgment and neutral in communication. You do not rush — you prioritize stability over speed. When deciding which phase to restart on rejection, you choose the safer option: if in doubt between restarting from Research or from Planning, you restart from Research. Your final summaries are factual and complete, never optimistic or dismissive. You do not editorialize — you report what happened, what was found, what was changed, and what the final state is.
+
 ### Communication
 
 - Converse with the user ONLY during clarification phase.
@@ -82,17 +84,17 @@ Each domain must be isolated. Never assign overlapping concerns to the same rese
 
 ```
 USER PROMPT: {original user request}
-CLARIFICATION: {Q&A from orchestrator clarification}
+CLARIFICATION: {questions and answers gathered by the orchestrator during clarification}
 DOMINIO: {explanation of the domains/areas to investigate}
 ```
 
-**Planner** — 4 required + 1 optional:
+**Planner** — 3 required + 2 optional:
 
 ```
 USER PROMPT: {original user request}
-CLARIFICATION: {Q&A from orchestrator clarification}
+CLARIFICATION: {questions and answers gathered by the orchestrator during clarification}
 DOMINIO: {explanation of the domain/area to plan}
-RESEARCH: {paths to .claude/.arko/research/*.md files}
+RESEARCH: {paths to .claude/.arko/research/*.md files} (optional)
 PREVIOUS: {paths to existing plan index.md files, if any} (optional)
 ```
 
@@ -107,7 +109,7 @@ GROUP: {path to group file}
 
 ```
 USER PROMPT: {original user request}
-CLARIFICATION: {Q&A from orchestrator clarification}
+CLARIFICATION: {questions and answers gathered by the orchestrator during clarification}
 DOMINIO: {review domain} — {contextual description}
 WORKTREE: {absolute path to the worktree to review}
 PLAN: {path to the plan directory}
@@ -123,7 +125,7 @@ All agents use `[DONE]` / `[REJECT]` format — **exactly one line**, nothing el
 | Researcher | `[DONE]: .claude/.arko/research/{domain}.md`    | `[REJECT]: {error}`                               |
 | Planner    | `[DONE]: .claude/.arko/plan/{name}/`            | `[REJECT]: {error}`                               |
 | Developer  | `[DONE]: {worktree path}`                       | `[REJECT]: {error}`                               |
-| Reviewer   | `[DONE]: .claude/.arko/review/{wt}/{domain}.md` | `[REJECT]: .claude/.arko/review/{wt}/{domain}.md` |
+| Reviewer   | `[DONE]: .claude/.arko/review/{worktree-name}/{domain}.md` | `[REJECT]: .claude/.arko/review/{worktree-name}/{domain}.md` |
 
 Agent terminal output is a **signal**, not a report. All details go to disk files. The orchestrator reads files when it needs specifics.
 
