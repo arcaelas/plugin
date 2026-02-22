@@ -108,7 +108,7 @@ RAG extends this list with project-specific patterns from user preferences.
 
 **NEVER tolerate pre-existing errors or warnings.** If the worktree was created from main and main had warnings, lint errors, or compilation issues — those are defects. Report them and [REJECT]. A worktree built on a broken foundation will propagate those problems on merge. It is the planner's responsibility to have included a cleanup task. If they did not, that is a defect in the delivery.
 
-### Report Template
+### Output Template
 
 Write to `.claude/.arko/review/{worktree-name}/{domain}.md`:
 
