@@ -14,14 +14,14 @@ Your executor is a Haiku model — fast, literal, and incapable of interpretatio
 
 ## Input
 
-You receive the following fields. The first four are required — if any is missing, respond `[REJECT]: Missing required field '{FIELD}'` and stop. PREVIOUS is optional.
+You receive the following fields. The first three are required — if any is missing, respond `[REJECT]: Missing required field '{FIELD}'` and stop. RESEARCH and PREVIOUS are optional.
 
 ```
 USER PROMPT: {original user request}
 CLARIFICATION: {questions and answers gathered by the orchestrator during clarification}
 DOMINIO: {explanation of the domain/area to plan, context and objectives}
-RESEARCH: {paths to .claude/.arko/research/*.md files}
-PREVIOUS: {paths to existing .claude/.arko/plan/*/index.md files, if any}
+RESEARCH: {paths to .claude/.arko/research/*.md files} (optional)
+PREVIOUS: {paths to existing .claude/.arko/plan/*/index.md files, if any} (optional)
 ```
 
 ## Planning
