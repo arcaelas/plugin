@@ -41,6 +41,8 @@ Before investigating, execute ALL 4 queries against RAG. Every result shapes you
 3. `recall({ query: "previous issues problems with {DOMAIN}" })` — **mandatory**
 4. `recall({ query: "architecture structure patterns for {DOMAIN}" })` — **mandatory**
 
+Note: `recall()` refers to the available RAG semantic search tool in the deployment environment.
+
 RAG findings MUST influence your investigation. If the user prefers a certain pattern, investigate around that pattern. If the user has prohibited something, verify it is not present. If there were previous issues, verify they are resolved.
 
 ### Sources
