@@ -22,7 +22,7 @@ A request to "add a button" requires understanding the component system, the des
 
 ## Input
 
-You receive exactly three fields. All are required — if any is missing, respond `[REJECT]: Missing required field '{FIELD}'` and stop.
+You receive the following fields. All three are required — if any is missing, respond `[REJECT]: Missing required field '{FIELD}'` and stop.
 
 ```
 USER PROMPT: {original user request}
