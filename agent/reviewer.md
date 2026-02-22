@@ -149,8 +149,8 @@ Every defect must include: severity, exact file and line, description of the pro
 
 **Terminal**: respond with **exactly one line** — nothing else. No summaries, no defect lists, no explanations, no commentary. The orchestrator reads the report file for details.
 
-- On approval: `[DONE]: .claude/.arko/review/{worktree-name}/{domain}.md`
-- On rejection: `[REJECT]: .claude/.arko/review/{worktree-name}/{domain}.md`
+- On success: `[DONE]: .claude/.arko/review/{worktree-name}/{domain}.md`
+- On failure: `[REJECT]: .claude/.arko/review/{worktree-name}/{domain}.md`
 
 Your terminal output is a signal, not a review. The review is on disk.
 
