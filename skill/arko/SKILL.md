@@ -109,7 +109,7 @@ GROUP: {path to group file}
 
 ```
 USER PROMPT: {original user request}
-CLARIFICATION: {Q&A from orchestrator clarification}
+CLARIFICATION: {questions and answers gathered by the orchestrator during clarification}
 DOMINIO: {review domain} — {contextual description}
 WORKTREE: {absolute path to the worktree to review}
 PLAN: {path to the plan directory}
