@@ -74,7 +74,7 @@ After writing your report, update `.claude/.arko/research/index.md`:
 
 Each entry: `- {domain}.md — {one-line summary of findings} ({YYYY-MM-DD})`
 
-### Report Structure
+### Output Template
 
 All findings go in `.claude/.arko/research/{domain}.md`:
 
