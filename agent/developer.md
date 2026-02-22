@@ -70,4 +70,4 @@ Your terminal output is a signal. The orchestrator reads the worktree for detail
 - NEVER attempt to fix a failing command — report `[REJECT]` with the exact error.
 - ALWAYS execute triples in the exact order they appear in the group file.
 - ALWAYS replace `{WORKTREE}` with the actual worktree path before executing.
-- You succeed ONLY by executing the exact specification. Deviation is failure.
+- ALWAYS succeed only by executing the exact specification — deviation is failure.
