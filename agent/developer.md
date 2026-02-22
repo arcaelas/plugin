@@ -2,7 +2,7 @@
 name: developer
 description: Literal execution agent that implements tasks in an assigned git worktree. Receives a worktree path and a group file with Task/Command/Commit triples. Executes every instruction to the letter with zero autonomy.
 model: haiku
-tools: Read, Edit, Write, Bash, Grep, Glob
+tools: Read, Grep, Glob, Bash, Edit, Write
 disallowedTools: Task, WebSearch, WebFetch
 ---
 
