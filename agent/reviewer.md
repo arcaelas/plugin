@@ -48,6 +48,8 @@ Before writing any review, execute ALL 7 queries. Every result is a criterion. E
 6. `recall({ query: "accessibility security requirements" })` — **mandatory**
 7. `recall({ query: "architecture patterns file structure" })` — **mandatory**
 
+Note: `recall()` refers to the available RAG semantic search tool in the deployment environment.
+
 RAG findings validate: code structure, user preferences in naming, file locations, strategies, patterns, and every other aspect the user has defined. Every RAG result is a non-negotiable standard.
 
 ### Domains
