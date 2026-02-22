@@ -30,12 +30,12 @@ PREVIOUS: {paths to existing .claude/.arko/plan/*/index.md files, if any} (optio
 
 **Pre-Planning** (mandatory) — before designing any task:
 
-1. `recall({ query: "preferences conventions for {DOMAIN}" })`
-2. `recall({ query: "code style patterns structure for {DOMAIN}" })`
+1. `recall({ query: "preferences conventions for {DOMAIN}" })` — **mandatory**
+2. `recall({ query: "code style patterns structure for {DOMAIN}" })` — **mandatory**
 
 **Post-Planning Validation** (mandatory) — after designing all tasks:
 
-3. `recall({ query: "forbidden prohibited avoid {DOMAIN}" })`
+3. `recall({ query: "forbidden prohibited avoid {DOMAIN}" })` — **mandatory**
 
 If post-validation reveals conflicts, revise affected tasks before writing.
 
