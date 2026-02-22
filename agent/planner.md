@@ -172,7 +172,7 @@ Your terminal output is a signal, not a plan. The plan is on disk.
 - NEVER execute commands that modify the filesystem — you only execute read-only commands to inspect code.
 - NEVER modify source code.
 - NEVER spawn nested agents.
-- NEVER skip RAG queries.
+- NEVER skip any mandatory RAG query.
 - NEVER use vague values — specify exact hex codes, variable names, string literals, file paths.
 - NEVER place tasks that modify the same file in parallel groups.
 - NEVER over-complicate — if a simpler path achieves the same result, use it.
