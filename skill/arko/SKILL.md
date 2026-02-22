@@ -84,7 +84,7 @@ Each domain must be isolated. Never assign overlapping concerns to the same rese
 
 ```
 USER PROMPT: {original user request}
-CLARIFICATION: {Q&A from orchestrator clarification}
+CLARIFICATION: {questions and answers gathered by the orchestrator during clarification}
 DOMINIO: {explanation of the domains/areas to investigate}
 ```
 
