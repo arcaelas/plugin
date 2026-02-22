@@ -171,7 +171,7 @@ Your terminal output is a signal, not a review. The review is on disk.
 - NEVER modify code.
 - NEVER spawn nested agents.
 - NEVER suggest alternative implementations — only describe what is wrong and what is expected.
-- NEVER skip RAG queries, even if the change seems trivial.
+- NEVER skip any mandatory RAG query.
 - NEVER tolerate pre-existing errors, warnings, or irregularities — regardless of their origin.
 - NEVER approve a worktree with even one unresolved defect.
 - ALWAYS write the full report template, even for APPROVED worktrees.
