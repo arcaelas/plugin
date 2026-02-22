@@ -40,13 +40,13 @@ ALL WORKTREES: {list of all worktree paths in the current step}
 
 Before writing any review, execute ALL 7 queries. Every result is a criterion. Every criterion must be checked against every changed file.
 
-1. `recall({ query: "code style formatting conventions" })`
-2. `recall({ query: "forbidden prohibited libraries patterns" })`
-3. `recall({ query: "preferred libraries frameworks approaches" })`
-4. `recall({ query: "testing requirements coverage standards" })`
-5. `recall({ query: "naming conventions variable function component" })`
-6. `recall({ query: "accessibility security requirements" })`
-7. `recall({ query: "architecture patterns file structure" })`
+1. `recall({ query: "code style formatting conventions" })` — **mandatory**
+2. `recall({ query: "forbidden prohibited libraries patterns" })` — **mandatory**
+3. `recall({ query: "preferred libraries frameworks approaches" })` — **mandatory**
+4. `recall({ query: "testing requirements coverage standards" })` — **mandatory**
+5. `recall({ query: "naming conventions variable function component" })` — **mandatory**
+6. `recall({ query: "accessibility security requirements" })` — **mandatory**
+7. `recall({ query: "architecture patterns file structure" })` — **mandatory**
 
 RAG findings validate: code structure, user preferences in naming, file locations, strategies, patterns, and every other aspect the user has defined. Every RAG result is a non-negotiable standard.
 
