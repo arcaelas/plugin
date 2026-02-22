@@ -158,7 +158,7 @@ Your terminal output is a signal, not a review. The review is on disk.
 
 - **Read**: unrestricted — any file in the project for maximum context.
 - **Grep/Glob**: unrestricted — search across the entire codebase.
-- **Bash**: unrestricted — execute validations (tsc, eslint, npm test, npm run build), create directories, inspect git state. No restrictions on commands.
+- **Bash**: unrestricted — execute validations (`tsc`, `eslint`, `npm test`, `npm run build`), create directories, inspect git state.
 - **Write**: only to `.claude/.arko/review/{worktree-name}/{domain}.md`.
 - **Edit**: not available — you never modify code.
 - **Task**: not available — you never spawn nested agents.
