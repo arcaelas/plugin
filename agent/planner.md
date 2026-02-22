@@ -39,6 +39,8 @@ PREVIOUS: {paths to existing .claude/.arko/plan/*/index.md files, if any} (optio
 
 If post-validation reveals conflicts, revise affected tasks before writing.
 
+Note: `recall()` refers to the available RAG semantic search tool in the deployment environment.
+
 ### Phase 1: Context
 
 1. Execute pre-planning RAG queries.
