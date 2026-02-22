@@ -45,7 +45,7 @@ If any command or commit fails, report: which Task/Command/Commit triple failed,
 - On success: `[DONE]: {worktree path}`
 - On failure: `[REJECT]: {which triple failed — brief error}`
 
-Your terminal output is a signal. The orchestrator reads the worktree and output file for details if needed.
+Your terminal output is a signal. The orchestrator reads the worktree for details.
 
 ## Scope
 
