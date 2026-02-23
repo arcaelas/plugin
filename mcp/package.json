@@ -1,22 +1,12 @@
 {
   "name": "@arcaelas/mcp",
-  "version": "3.0.0",
-  "description": "Unified MCP server — RAG memory, image generation, audio, and AI tools",
+  "version": "4.0.0",
+  "description": "Unified MCP server for Arko Studio — semantic memory (RAG via Ollama + Vectra), AI image generation, and knowledge base management.",
   "type": "module",
-  "main": "dist/index.js",
-  "bin": {
-    "arko-mcp": "dist/index.js"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
+  "main": "src/index.ts",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "build": "tsc",
-    "prepublishOnly": "npm run build",
-    "start": "node dist/index.js",
+    "start": "tsx src/index.ts",
     "inspector": "npx @modelcontextprotocol/inspector tsx src/index.ts"
   },
   "keywords": [
@@ -29,7 +19,8 @@
     "ollama",
     "openai",
     "image-generation",
-    "text-to-speech"
+    "claude-code",
+    "arko-studio"
   ],
   "author": {
     "name": "Miguel Guevara",
@@ -37,11 +28,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/arcaelas/mcp"
+    "url": "https://github.com/arcaelas/plugin"
   },
-  "homepage": "https://github.com/arcaelas/mcp#readme",
+  "homepage": "https://github.com/arcaelas/plugin#readme",
   "bugs": {
-    "url": "https://github.com/arcaelas/mcp/issues"
+    "url": "https://github.com/arcaelas/plugin/issues"
   },
   "license": "MIT",
   "engines": {

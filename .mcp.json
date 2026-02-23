@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "arcaelas": {
+      "command": "npx",
+      "args": ["-y", "tsx", "${CLAUDE_PLUGIN_ROOT}/mcp/src/index.ts", "--stdio"]
+    }
+  }
+}

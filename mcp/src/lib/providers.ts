@@ -1,6 +1,6 @@
 import config from "./config.js";
 
-export default async function openai(
+export async function openai(
   endpoint: string,
   options: { method?: string; body?: string; headers?: Record<string, string> } = {}
 ): Promise<Response> {
@@ -12,5 +12,15 @@ export default async function openai(
       ...options.headers,
     },
     body: options.body,
+    signal: AbortSignal.timeout(120000),
+  });
+}
+
+export async function ollama(endpoint: string, body?: unknown): Promise<Response> {
+  return fetch(`${config.ollama_base_url}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+    signal: AbortSignal.timeout(30000),
   });
 }

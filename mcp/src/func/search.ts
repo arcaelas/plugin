@@ -1,3 +1,4 @@
+import type { Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import * as rag from "../lib/rag.js";
@@ -8,8 +9,8 @@ export const schema = z.object({
   limit: z.number().min(1).max(20).default(5).optional().describe("Max results to return"),
 });
 
-export function func(server: McpServer) {
-  server.registerTool("search", {
+export function func(_app: Express, mcp: McpServer) {
+  mcp.registerTool("search", {
     description: "Semantic search across the knowledge base. Returns matching chunks with full content and total document length. Use tags to narrow results.",
     inputSchema: schema,
   }, async (input) => {

@@ -1,17 +1,18 @@
+import type { Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { writeFile, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import config from "../lib/config.js";
-import openai from "../lib/openai.js";
+import { openai } from "../lib/providers.js";
 
 export const schema = z.object({
   content: z.string().describe("Text description of the image to generate"),
 });
 
-export function func(server: McpServer) {
-  server.registerTool("draw", {
+export function func(_app: Express, mcp: McpServer) {
+  mcp.registerTool("draw", {
     description: "Generate an image from a text prompt using AI. Returns the file path to the generated image.",
     inputSchema: schema,
   }, async (input) => {

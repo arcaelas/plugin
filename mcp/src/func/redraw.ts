@@ -1,18 +1,19 @@
+import type { Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { writeFile, readFile, mkdtemp } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import config from "../lib/config.js";
-import openai from "../lib/openai.js";
+import { openai } from "../lib/providers.js";
 
 export const schema = z.object({
   content: z.string().describe("Text description of how to redesign the image"),
   references: z.array(z.string()).describe("Absolute paths to reference image files"),
 });
 
-export function func(server: McpServer) {
-  server.registerTool("redraw", {
+export function func(_app: Express, mcp: McpServer) {
+  mcp.registerTool("redraw", {
     description: "Redesign an existing image based on a text prompt and reference images. Returns the file path to the generated image.",
     inputSchema: schema,
   }, async (input) => {

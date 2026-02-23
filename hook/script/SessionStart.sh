@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# SessionStart: initialize Arko runtime directories, configure gitignore, validate environment
+# SessionStart: initialize Arko runtime directories, validate environment
 
 # Create runtime artifact directories
 mkdir -p .claude/.arko/{research,plan,review,resume,.worktree} 2>/dev/null || true
+
+# Install MCP dependencies only if node_modules is missing
+if [ ! -d "${CLAUDE_PLUGIN_ROOT}/mcp/node_modules" ]; then
+  npx -y yarn --cwd "${CLAUDE_PLUGIN_ROOT}/mcp" install --silent 2>/dev/null || true
+fi
 
 # Ensure .gitignore excludes runtime artifacts
 if [ -f .gitignore ]; then
@@ -11,16 +16,16 @@ fi
 
 WARNINGS=""
 
-# Validate ARKO_API_KEY for @arcaelas/mcp (image/audio tools)
-if [ -z "$ARKO_API_KEY" ]; then
+# Validate MCP configuration file
+if [ ! -f "$HOME/.arcaelas/mcp/config.json" ]; then
   WARNINGS="${WARNINGS}
-[!] ARKO_API_KEY not set — @arcaelas/mcp (image/audio) will not start. Run: export ARKO_API_KEY=sk-..."
+[!] MCP not configured — config UI will open in browser on first use."
 fi
 
-# Validate Ollama for @arcaelas/rag (semantic memory)
-if ! curl -sf http://localhost:11434/api/version >/dev/null 2>&1; then
+# Validate Ollama (2s max to avoid blocking startup)
+if ! curl -sf --max-time 2 "${OLLAMA_BASE_URL:-http://localhost:11434}/api/version" >/dev/null 2>&1; then
   WARNINGS="${WARNINGS}
-[!] Ollama not reachable at localhost:11434 — @arcaelas/rag (memory) will not start."
+[!] Ollama not reachable — MCP RAG (semantic memory) will fail."
 fi
 
 # Validate git (required for worktree isolation)
@@ -29,15 +34,12 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 [!] Not a git repository — worktree isolation will not work. Run: git init"
 fi
 
-# Build context message
+# Output structured JSON for Claude Code
 CONTEXT="Arko Studio active. Runtime artifacts at .claude/.arko/{research,plan,review,resume,.worktree}/"
-if [ -n "$WARNINGS" ]; then
-  CONTEXT="${CONTEXT}
+[ -n "$WARNINGS" ] && CONTEXT="${CONTEXT}
 
 Setup warnings:${WARNINGS}"
-fi
 
-# Output structured JSON for Claude Code
 if command -v jq >/dev/null 2>&1; then
   jq -n --arg ctx "$CONTEXT" \
     '{"hookSpecificOutput":{"hookEventName":"SessionStart","additionalContext":$ctx}}'
