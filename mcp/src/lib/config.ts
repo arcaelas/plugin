@@ -15,6 +15,7 @@ interface ConfigData {
   openai_base_url: string;
   ollama_base_url: string;
   ollama_embedding_model: string;
+  stitch_api_key: string;
 }
 
 export const DEFAULTS: ConfigData = {
@@ -24,6 +25,7 @@ export const DEFAULTS: ConfigData = {
   openai_base_url: "https://api.openai.com/v1",
   ollama_base_url: "http://localhost:11434",
   ollama_embedding_model: "mxbai-embed-large",
+  stitch_api_key: "",
 };
 
 const ENV_MAP: Record<keyof ConfigData, string> = {
@@ -33,6 +35,7 @@ const ENV_MAP: Record<keyof ConfigData, string> = {
   openai_base_url: "OPENAI_BASE_URL",
   ollama_base_url: "OLLAMA_BASE_URL",
   ollama_embedding_model: "OLLAMA_EMBEDDING_MODEL",
+  stitch_api_key: "STITCH_API_KEY",
 };
 
 const CONFIG_PATH = resolve(homedir(), ".arcaelas", "mcp", "config.json");

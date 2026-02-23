@@ -142,9 +142,41 @@
       </div>
     </section>
 
+    <!-- Stitch -->
+    <section class="bg-slate-900/50 border border-slate-800/50 rounded-2xl p-5 mb-6 fade-in-up fade-delay-3">
+      <div class="flex items-center justify-between mb-5">
+        <div class="flex items-center gap-2.5">
+          <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-500/10">
+            <span class="material-symbols-outlined text-blue-400" style="font-size:16px">cable</span>
+          </div>
+          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Google Stitch</h2>
+        </div>
+        <div class="flex items-center gap-2">
+          <span id="stitch-status" class="hidden text-xs"></span>
+          <button onclick="testStitch()" id="btn-test-stitch"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700/40">
+            <span class="material-symbols-outlined" style="font-size:14px">science</span>Test
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label for="stitch_api_key" class="block text-xs font-medium text-slate-400 mb-1.5">API Key</label>
+        <div class="relative">
+          <input type="password" id="stitch_api_key" placeholder="AIza..."
+            class="w-full bg-slate-950/60 border border-slate-700/40 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40 transition-all pr-10">
+          <button type="button" onclick="toggleStitchKey()"
+            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors">
+            <span id="stitch-eye-icon" class="material-symbols-outlined" style="font-size:18px">visibility_off</span>
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-600 mt-1 ml-1">Proxies Google Stitch tools into Arko's MCP server</p>
+      </div>
+    </section>
+
     <!-- Save -->
     <button onclick="save()" id="btn-save"
-      class="w-full flex items-center justify-center gap-2.5 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/30 fade-in-up fade-delay-3">
+      class="w-full flex items-center justify-center gap-2.5 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/30 fade-in-up" style="animation-delay:0.32s">
       <span class="material-symbols-outlined" style="font-size:20px">save</span>
       Save Configuration
     </button>
@@ -162,6 +194,7 @@
     const FIELDS = [
       'openai_api_key', 'openai_base_url', 'openai_model_image',
       'openai_model_audio', 'ollama_base_url', 'ollama_embedding_model',
+      'stitch_api_key',
     ];
 
     document.addEventListener('DOMContentLoaded', async () => {
@@ -183,6 +216,33 @@
       const hidden = input.type === 'password';
       input.type = hidden ? 'text' : 'password';
       icon.textContent = hidden ? 'visibility' : 'visibility_off';
+    }
+
+    function toggleStitchKey() {
+      const input = document.getElementById('stitch_api_key');
+      const icon = document.getElementById('stitch-eye-icon');
+      const hidden = input.type === 'password';
+      input.type = hidden ? 'text' : 'password';
+      icon.textContent = hidden ? 'visibility' : 'visibility_off';
+    }
+
+    async function testStitch() {
+      const btn = document.getElementById('btn-test-stitch');
+      const status = document.getElementById('stitch-status');
+      setTestState(btn, status, 'loading');
+      try {
+        const res = await fetch('/api/test/stitch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            key: document.getElementById('stitch_api_key').value,
+          }),
+        });
+        const data = await res.json();
+        setTestState(btn, status, data.ok ? 'success' : 'error', data.ok ? 'Connected' : data.error);
+      } catch (err) {
+        setTestState(btn, status, 'error', err.message);
+      }
     }
 
     async function testOpenai() {

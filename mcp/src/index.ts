@@ -2,7 +2,7 @@
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import express from "express";
+import express, { type Express } from "express";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import config, { initConfig, openBrowser } from "./lib/config.js";
@@ -14,6 +14,7 @@ import * as draw from "./func/draw.js";
 import * as redraw from "./func/redraw.js";
 import * as remember from "./func/remember.js";
 import * as search from "./func/search.js";
+import * as stitch from "./func/stitch.js";
 import * as transport from "./func/transport.js";
 import * as upload from "./func/upload.js";
 
@@ -30,8 +31,11 @@ app.use(express.json());
 app.use(express.static(resolve(dirname(fileURLToPath(import.meta.url)), "public")));
 
 // --- Register funcs ---
-for (const f of [api, remember, search, destroy, upload, download, draw, redraw]) {
-  f.func(app, server);
+const funcs: Array<{ func: (_app: Express, _mcp: McpServer) => void | Promise<void> }> = [
+  api, remember, search, destroy, upload, download, draw, redraw, stitch,
+];
+for (const f of funcs) {
+  await f.func(app, server);
 }
 
 // --- Start ---

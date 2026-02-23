@@ -33,6 +33,43 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
+  app.post("/api/test/stitch", async (req, res) => {
+    try {
+      const key = req.body.key || "";
+      if (!key) {
+        res.json({ ok: false, error: "API key is required" });
+        return;
+      }
+      const r = await fetch("https://stitch.googleapis.com/mcp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Goog-Api-Key": key,
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          method: "initialize",
+          id: 1,
+          params: {
+            protocolVersion: "2024-11-05",
+            capabilities: {},
+            clientInfo: { name: "arko-test", version: "1.0.0" },
+          },
+        }),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (r.ok) {
+        res.json({ ok: true });
+      } else {
+        const body = await r.text().catch(() => "");
+        res.json({ ok: false, error: body || `HTTP ${r.status}` });
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Connection failed";
+      res.json({ ok: false, error: message });
+    }
+  });
+
   app.post("/api/test/openai", async (req, res) => {
     try {
       const key = req.body.key || "";
