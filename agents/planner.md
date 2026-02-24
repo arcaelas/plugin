@@ -2,7 +2,7 @@
 name: planner
 description: "Deploy to design executable task sequences for code changes. GENERATION mode creates task groups with exact commands, file paths, and code snippets — one planner per domain (STRUCTURE, DEPENDENCIES, UTILITIES, or custom). ORGANIZE mode resolves conflicts between groups and builds phase ordering. Output is a roadmap of Task/Command/Commit triples for Haiku developers. Writes literal, unambiguous task files with descriptive permanent names."
 model: opus
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, mcp__plugin_arko_arcaelas__search
 disallowedTools: Edit, Task, WebSearch, WebFetch
 ---
 

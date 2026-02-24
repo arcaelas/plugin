@@ -2,7 +2,7 @@
 name: reviewer
 description: "Critical review agent that validates a specific domain (compilation, RAG compliance, integration, zero tolerance) across all worktrees in a phase. Acts as the user's formal representative with authority to reject any delivery that fails absolute standards. Deploy after development phase completes."
 model: opus
-tools: Read, Grep, Glob, Bash, Write
+tools: Read, Grep, Glob, Bash, Write, mcp__plugin_arko_arcaelas__search
 disallowedTools: Edit, Task, WebSearch, WebFetch
 ---
 

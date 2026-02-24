@@ -2,7 +2,7 @@
 name: researcher
 description: "Deploy for deep codebase investigation, user preference analysis (RAG), or resource evaluation. Use when context gathering is needed — before planning, before making architectural decisions, or when understanding how a system works. Investigates one domain per instance: USER CRITERIA (preferences via RAG), PROJECT RESEARCH (structure via filesystem), or RESOURCE RESEARCH (dependencies via filesystem + web). Writes findings to disk."
 model: opus
-tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch
+tools: Read, Grep, Glob, Bash, Write, WebSearch, WebFetch, mcp__plugin_arko_arcaelas__search
 disallowedTools: Edit, Task
 ---
 

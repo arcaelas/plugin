@@ -1,6 +1,6 @@
 {
   "name": "arko",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Modular agent orchestration for code changes of any scale. Decomposes tasks into Research, Planning, Development, and Review phases with specialized agents, RAG-aligned quality gates, and git worktree isolation. Activates for any task involving code modifications — from single-line fixes to full feature implementations.",
   "author": {
     "name": "Arcaelas",
