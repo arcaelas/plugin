@@ -1,13 +1,13 @@
 import type { Express } from "express";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { DEFAULTS, loadConfig, saveConfig } from "../lib/config.js";
+import config, { DEFAULTS, loadConfig, saveConfig } from "../lib/config.js";
 
 export function func(app: Express, _mcp: McpServer): void {
-  app.get("/api/config", (_req, res) => {
+  app.get("/v1/config", (_req, res) => {
     res.json(loadConfig());
   });
 
-  app.post("/api/config", (req, res) => {
+  app.post("/v1/config", (req, res) => {
     try {
       saveConfig(req.body);
       res.json({ ok: true });
@@ -17,7 +17,7 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  app.post("/api/test/ollama", async (req, res) => {
+  app.post("/v1/test/ollama", async (req, res) => {
     try {
       const url = req.body.url || DEFAULTS.ollama_base_url;
       const r = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
@@ -33,7 +33,7 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  app.post("/api/test/stitch", async (req, res) => {
+  app.post("/v1/test/stitch", async (req, res) => {
     try {
       const key = req.body.key || "";
       if (!key) {
@@ -53,7 +53,7 @@ export function func(app: Express, _mcp: McpServer): void {
           params: {
             protocolVersion: "2024-11-05",
             capabilities: {},
-            clientInfo: { name: "arko-test", version: "1.0.0" },
+            clientInfo: { name: config.server.name, version: config.server.version },
           },
         }),
         signal: AbortSignal.timeout(10000),
@@ -70,7 +70,7 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  app.post("/api/test/openai", async (req, res) => {
+  app.post("/v1/test/openai", async (req, res) => {
     try {
       const key = req.body.key || "";
       const baseUrl = req.body.base_url || DEFAULTS.openai_base_url;

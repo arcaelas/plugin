@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { z } from "zod";
-import { loadConfig } from "../lib/config.js";
+import config, { loadConfig } from "../lib/config.js";
 
 // Convert a JSON Schema object into a Zod shape for tool registration.
 // Property names and descriptions are preserved; types are kept as unknown
@@ -32,7 +32,7 @@ export async function func(_app: Express, mcp: McpServer): Promise<void> {
   if (!stitch_api_key) return;
 
   try {
-    const client = new Client({ name: "arko-stitch-proxy", version: "1.0.0" });
+    const client = new Client({ name: config.server.name, version: config.server.version });
     const transport = new StreamableHTTPClientTransport(
       new URL("https://stitch.googleapis.com/mcp"),
       { requestInit: { headers: { "X-Goog-Api-Key": stitch_api_key } } }

@@ -2,9 +2,8 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import type { Express, Request, Response } from "express";
-import config from "../lib/config.js";
-
 export function func(app: Express, mcp: McpServer): void {
+  if (process.argv.includes("--stdio")) return;
   const sessions = new Map<string, StreamableHTTPServerTransport>();
 
   app.post("/mcp", async (req: Request, res: Response) => {
@@ -46,12 +45,4 @@ export function func(app: Express, mcp: McpServer): void {
 
   app.get("/mcp", handleSession);
   app.delete("/mcp", handleSession);
-
-  app.get("/health", (_req: Request, res: Response) => {
-    res.json({
-      status: "ok",
-      name: config.server.name,
-      version: config.server.version,
-    });
-  });
 }

@@ -199,7 +199,7 @@
 
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        const res = await fetch('/api/config');
+        const res = await fetch('/v1/config');
         const config = await res.json();
         FIELDS.forEach(id => {
           const el = document.getElementById(id);
@@ -231,7 +231,7 @@
       const status = document.getElementById('stitch-status');
       setTestState(btn, status, 'loading');
       try {
-        const res = await fetch('/api/test/stitch', {
+        const res = await fetch('/v1/test/stitch', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -250,7 +250,7 @@
       const status = document.getElementById('openai-status');
       setTestState(btn, status, 'loading');
       try {
-        const res = await fetch('/api/test/openai', {
+        const res = await fetch('/v1/test/openai', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -270,7 +270,7 @@
       const status = document.getElementById('ollama-status');
       setTestState(btn, status, 'loading');
       try {
-        const res = await fetch('/api/test/ollama', {
+        const res = await fetch('/v1/test/ollama', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -293,7 +293,7 @@
       try {
         const config = {};
         FIELDS.forEach(id => { config[id] = document.getElementById(id).value; });
-        const res = await fetch('/api/config', {
+        const res = await fetch('/v1/config', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(config),
