@@ -155,13 +155,15 @@ function begin_pairing(session: PairSession): void {
  * Crea una sesion de pairing pendiente. La instancia se crea cuando el SSE conecta.
  */
 export function pair(phone: string): { token: string } {
-  if (accounts.has(phone)) throw new Error(`Account ${phone} is already linked.`);
+  const digits = phone.replace(/\D/g, "");
+  if (!digits) throw new Error("Invalid phone number.");
+  if (accounts.has(digits)) throw new Error(`Account ${digits} is already linked.`);
   for (const s of sessions.values()) {
-    if (s.phone === phone && s.status !== "expired" && s.status !== "connected") return { token: s.token };
+    if (s.phone === digits && s.status !== "expired" && s.status !== "connected") return { token: s.token };
   }
   const token = randomUUID();
   const session: PairSession = {
-    phone, token, code: null, status: "pending",
+    phone: digits, token, code: null, status: "pending",
     wa: null, pairing_dir: null, listeners: new Set(), expire_timer: null,
   };
   sessions.set(token, session);
