@@ -13,6 +13,10 @@ const ReactAction = z.object({ chat: z.string(), message: z.string(), react: z.s
 const DeleteMessageAction = z.object({ chat: z.string(), message: z.string(), delete: z.enum(["all"]), owner: O });
 const SendTextAction = z.object({ chat: z.string(), text: z.string(), owner: O });
 const SendImageAction = z.object({ chat: z.string(), image: z.string(), owner: O, caption: z.string().optional() });
+const SendVideoAction = z.object({ chat: z.string(), video: z.string(), owner: O, caption: z.string().optional() });
+const SendAudioAction = z.object({ chat: z.string(), audio: z.string(), owner: O, ptt: z.boolean().optional() });
+const SendLocationAction = z.object({ chat: z.string(), location: z.object({ lat: z.number(), lng: z.number(), caption: z.string().optional() }), owner: O });
+const SendPollAction = z.object({ chat: z.string(), poll: z.object({ caption: z.string(), options: z.array(z.string()).min(2) }), owner: O });
 const SeenAction = z.object({ chat: z.string(), seen: z.literal(true), owner: O });
 const ArchiveAction = z.object({ chat: z.string(), archive: z.boolean(), owner: O });
 const PinAction = z.object({ chat: z.string(), pin: z.boolean(), owner: O });
@@ -26,7 +30,7 @@ const CloseAction = z.object({ close: z.literal(true), owner: O });
 
 const Action = z.union([
   ReactAction, DeleteMessageAction,
-  SendTextAction, SendImageAction, SeenAction, ArchiveAction, PinAction, DeleteChatAction, MessagesAction,
+  SendTextAction, SendImageAction, SendVideoAction, SendAudioAction, SendLocationAction, SendPollAction, SeenAction, ArchiveAction, PinAction, DeleteChatAction, MessagesAction,
   ContactAction, PairAction, UnreadAction, AccountsAction, CloseAction,
 ]);
 
@@ -40,7 +44,16 @@ const CONTENT_TAGS: Record<string, string> = {
   image: "Image", video: "Video", audio: "Audio", location: "Location", poll: "Poll",
 };
 
-function format_content(type: string, caption: string): string {
+function format_content(msg: any): string | Record<string, unknown> {
+  const { type, caption } = msg;
+  if (type === "location") {
+    const loc = msg.raw?.message?.locationMessage ?? msg.raw?.message?.liveLocationMessage;
+    return { lat: loc?.degreesLatitude ?? 0, lng: loc?.degreesLongitude ?? 0, caption: caption || "" };
+  }
+  if (type === "poll") {
+    const poll = msg.raw?.message?.pollCreationMessage ?? msg.raw?.message?.pollCreationMessageV2 ?? msg.raw?.message?.pollCreationMessageV3;
+    return { caption: poll?.name ?? caption ?? "", options: poll?.options?.map((o: any) => o.optionName) ?? [] };
+  }
   const tag = CONTENT_TAGS[type];
   if (!tag) return caption || "";
   return caption ? `[<${tag} />] ${caption}` : `[<${tag} />]`;
@@ -89,7 +102,8 @@ async function handle(action: Record<string, unknown>): Promise<ActionResult> {
         const contact = await resolve_contact(account.wa, c.id);
         const msgs = await account.wa.Message.list(c.id, 0, 1);
         const last = msgs[0] as any;
-        const content = last ? format_content(last.type, last.caption).slice(0, 100) : "";
+        const raw_content = last ? format_content(last) : "";
+        const content = typeof raw_content === "string" ? raw_content.slice(0, 100) : raw_content;
         data.push({ id: c.id, contact, read: c.read, content });
       }
       return { ok: true, data };
@@ -120,6 +134,38 @@ async function handle(action: Record<string, unknown>): Promise<ActionResult> {
       return { ok: true, data: { id: msg.id, chat: msg.cid, status: msg.status } };
     }
 
+    if ("video" in action) {
+      const account = ws.resolve_phone(action.owner as string | undefined);
+      const buffer = await ws.read_file(action.video as string);
+      const msg = await account.wa.Message.video(action.chat as string, buffer, action.caption as string | undefined);
+      if (!msg) return { ok: false, error: "Failed to send video" };
+      return { ok: true, data: { id: msg.id, chat: msg.cid, status: msg.status } };
+    }
+
+    if ("audio" in action) {
+      const account = ws.resolve_phone(action.owner as string | undefined);
+      const buffer = await ws.read_file(action.audio as string);
+      const msg = await account.wa.Message.audio(action.chat as string, buffer, (action.ptt as boolean | undefined) ?? true);
+      if (!msg) return { ok: false, error: "Failed to send audio" };
+      return { ok: true, data: { id: msg.id, chat: msg.cid, status: msg.status } };
+    }
+
+    if ("location" in action) {
+      const account = ws.resolve_phone(action.owner as string | undefined);
+      const loc = action.location as { lat: number; lng: number };
+      const msg = await account.wa.Message.location(action.chat as string, loc);
+      if (!msg) return { ok: false, error: "Failed to send location" };
+      return { ok: true, data: { id: msg.id, chat: msg.cid, status: msg.status } };
+    }
+
+    if ("poll" in action) {
+      const account = ws.resolve_phone(action.owner as string | undefined);
+      const p = action.poll as { caption: string; options: string[] };
+      const msg = await account.wa.Message.poll(action.chat as string, { content: p.caption, options: p.options.map(o => ({ content: o })) });
+      if (!msg) return { ok: false, error: "Failed to send poll" };
+      return { ok: true, data: { id: msg.id, chat: msg.cid, status: msg.status } };
+    }
+
     if ("seen" in action) {
       const account = ws.resolve_phone(action.owner as string | undefined);
       return { ok: true, data: { seen: await account.wa.Chat.seen(action.chat as string) } };
@@ -146,7 +192,7 @@ async function handle(action: Record<string, unknown>): Promise<ActionResult> {
       const data = [];
       for (const m of msgs as any[]) {
         const contact = await resolve_contact(account.wa, m.author);
-        data.push({ id: m.id, contact, content: format_content(m.type, m.caption) });
+        data.push({ id: m.id, contact, content: format_content(m) });
       }
       return { ok: true, data };
     }
@@ -175,6 +221,10 @@ export async function func(app: Express, mcp: McpServer) {
       "  { pair }                              — Link new phone (returns URL for pairing page)",
       "  { chat, text, owner? }               — Send text message",
       "  { chat, image, owner?, caption? }     — Send image",
+      "  { chat, video, owner?, caption? }     — Send video",
+      "  { chat, audio, owner?, ptt? }         — Send audio (ptt=true for voice note, default true)",
+      "  { chat, location:{lat,lng}, owner? }  — Send location",
+      "  { chat, poll:{caption,options:[]}, owner? } — Send poll",
       "  { chat, message, react, owner? }      — React to a message",
       "  { chat, message, delete:'all', owner?} — Delete message for everyone",
       "  { chat, seen: true, owner? }          — Mark chat as read",

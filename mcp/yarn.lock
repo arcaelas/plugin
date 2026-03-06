@@ -18,8 +18,10 @@
   resolved "https://registry.yarnpkg.com/@arcaelas/utils/-/utils-2.0.8.tgz#c6c6cf6811770ee776f7aca65734f70e45952eb0"
   integrity sha512-kJdDFpOIJTx4hy1i6e4eh382qlmBtrtb3yChc16CTgrxJwqO+PS5nzmLjRLw2xgSmnJ/cuHXFMLIWFhzfx1NEw==
 
-"@arcaelas/whatsapp@file:../../whatsapp":
-  version "2.1.0"
+"@arcaelas/whatsapp@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@arcaelas/whatsapp/-/whatsapp-2.2.0.tgz#b242e4e36e82d79f2d398503b5720592118737dc"
+  integrity sha512-K3few199xdiePJS+HNeyis27Wq8H9F+lOHGN9w7q7/0H2W+PCQ/nlF3USCcXo8TOwT2GXfRl0HN+otKjKb/baA==
   dependencies:
     "@arcaelas/dynamite" "^1.0.9"
     "@arcaelas/utils" "^2.0.5"
