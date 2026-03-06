@@ -116,7 +116,7 @@ TASK: what was planned and built, what RAG preferences are critical for this dom
 
 You have direct access to the RAG `search()` tool. Use it for all your own queries — no intermediary agents needed.
 
-Sub-agents do not inherit MCP tools. They query RAG via HTTP using `MCP_PORT`. Before deploying any agent that requires `MCP_PORT`, determine the active port by reading `.mcp.json` or the MCP server configuration and pass it in the agent's prompt.
+Sub-agents do not inherit MCP tools. They query RAG via HTTP using `MCP_PORT`. Before deploying any agent that requires `MCP_PORT`, call the `health()` tool to obtain the active port and pass it in the agent's prompt.
 
 **When to consult RAG:**
 - On any user message, before any other action.
