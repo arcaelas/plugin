@@ -39,7 +39,7 @@ const CONFIG_PATH = resolve(homedir(), ".arcaelas", "mcp", "config.json");
 
 // --- Config management ---
 
-function applyToEnv(data: ConfigData): void {
+export function applyToEnv(data: ConfigData): void {
   for (const key of Object.keys(DEFAULTS) as (keyof ConfigData)[]) {
     process.env[ENV_MAP[key]] = data[key];
   }
@@ -60,7 +60,12 @@ export function loadConfig(): ConfigData {
 }
 
 export function saveConfig(data: Partial<ConfigData>): void {
-  const merged: ConfigData = { ...DEFAULTS, ...data };
+  const current = loadConfig();
+  const patch: Record<string, string> = {};
+  for (const [k, v] of Object.entries(data)) {
+    if (typeof v === "string" && v !== "") patch[k] = v;
+  }
+  const merged: ConfigData = { ...current, ...patch };
   mkdirSync(dirname(CONFIG_PATH), { recursive: true });
   writeFileSync(CONFIG_PATH, JSON.stringify(merged, null, 2));
   applyToEnv(merged);

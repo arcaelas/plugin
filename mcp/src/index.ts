@@ -8,7 +8,7 @@ import express, { type Express } from "express";
 import { z } from "zod";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import config, { initConfig, openBrowser } from "./lib/config.js";
+import config, { initConfig, openBrowser, loadConfig, applyToEnv } from "./lib/config.js";
 
 import * as api from "./func/api.js";
 import * as destroy from "./func/destroy.js";
@@ -31,6 +31,7 @@ const server = new McpServer({
 
 const app = express();
 app.use(express.json());
+app.use((_req, _res, next) => { applyToEnv(loadConfig()); next(); });
 app.use(express.static(resolve(dirname(fileURLToPath(import.meta.url)), "public")));
 
 // --- Register funcs ---

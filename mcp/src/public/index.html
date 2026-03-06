@@ -3,160 +3,398 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Arko Studio &mdash; Setup</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>Arko Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20,400,0,0" rel="stylesheet">
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
-          animation: { 'slide-in': 'slideIn 0.3s ease-out forwards' },
-          keyframes: {
-            slideIn: {
-              from: { transform: 'translateX(120%)', opacity: '0' },
-              to:   { transform: 'translateX(0)',    opacity: '1' },
-            },
-          },
-        },
-      },
-    }
-  </script>
   <style>
-    @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-    .fade-in-up { animation: fadeInUp 0.5s ease-out both; }
-    .fade-delay-1 { animation-delay: 0.08s; }
-    .fade-delay-2 { animation-delay: 0.16s; }
-    .fade-delay-3 { animation-delay: 0.24s; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --bg-card: rgba(255,255,255,.03);
+      --bg-input: rgba(0,0,0,.35);
+      --border: rgba(255,255,255,.06);
+      --border-hover: rgba(255,255,255,.12);
+      --border-focus: rgba(52,211,153,.35);
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --text-dim: #475569;
+      --accent: #34d399;
+      --accent-bg: rgba(52,211,153,.08);
+      --accent-border: rgba(52,211,153,.15);
+      --amber: #fbbf24;
+      --amber-bg: rgba(251,191,36,.08);
+      --amber-border: rgba(251,191,36,.15);
+      --purple: #a78bfa;
+      --purple-bg: rgba(167,139,250,.08);
+      --purple-border: rgba(167,139,250,.15);
+      --red: #f87171;
+      --red-bg: rgba(248,113,113,.08);
+      --red-border: rgba(248,113,113,.15);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --radius-xs: 8px;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* --- Background --- */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background:
+        radial-gradient(ellipse 600px 400px at 50% -5%, rgba(52,211,153,.04) 0%, transparent 70%),
+        radial-gradient(ellipse 300px 300px at 80% 20%, rgba(167,139,250,.03) 0%, transparent 70%),
+        linear-gradient(to bottom, rgba(52,211,153,.02) 0%, var(--bg) 40%);
+    }
+    .bg-grid {
+      position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .025;
+      background-image:
+        linear-gradient(rgba(255,255,255,.5) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.5) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 70%);
+      -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 70%);
+    }
+
+    /* --- Layout --- */
+    main { max-width: 520px; margin: 0 auto; padding: 56px 20px 40px; }
+
+    /* --- Header --- */
+    .header { text-align: center; margin-bottom: 48px; }
+    .header-logo {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 56px; height: 56px; border-radius: 18px;
+      background: var(--accent-bg); border: 1px solid var(--accent-border);
+      margin-bottom: 20px;
+      box-shadow: 0 0 40px rgba(52,211,153,.08);
+    }
+    .header-logo .material-symbols-outlined { font-size: 28px; color: var(--accent); }
+    .header h1 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; }
+    .header p { font-size: 14px; color: var(--text-muted); }
+
+    /* --- Cards --- */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-bottom: 12px;
+      backdrop-filter: blur(12px);
+      transition: border-color .2s;
+    }
+    .card:hover { border-color: var(--border-hover); }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .card-icon {
+      display: flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: var(--radius-xs);
+    }
+    .card-icon.amber { background: var(--amber-bg); border: 1px solid var(--amber-border); }
+    .card-icon.amber .material-symbols-outlined { color: var(--amber); }
+    .card-icon.purple { background: var(--purple-bg); border: 1px solid var(--purple-border); }
+    .card-icon.purple .material-symbols-outlined { color: var(--purple); }
+    .card-icon .material-symbols-outlined { font-size: 16px; }
+    .card-title h2 {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .1em; color: var(--text-muted);
+    }
+    .card-actions { display: flex; align-items: center; gap: 8px; }
+
+    /* --- Form --- */
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label {
+      display: block; font-size: 11px; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 6px; letter-spacing: .02em;
+    }
+    .input-wrap { position: relative; }
+    input[type="text"], input[type="url"], input[type="password"] {
+      width: 100%; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      padding: 10px 14px; font-size: 13px; font-family: inherit;
+      color: var(--text); outline: none; transition: all .2s;
+    }
+    input::placeholder { color: var(--text-dim); }
+    input:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(52,211,153,.08); }
+    input.pr-10 { padding-right: 40px; }
+    .hint { font-size: 11px; color: var(--text-dim); margin-top: 5px; padding-left: 2px; }
+    .toggle-btn {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--text-dim);
+      transition: color .2s; padding: 0; line-height: 1;
+    }
+    .toggle-btn:hover { color: var(--text-muted); }
+    .toggle-btn .material-symbols-outlined { font-size: 18px; }
+
+    /* --- Input with action --- */
+    .input-action { display: flex; gap: 8px; }
+    .input-action input { flex: 1; }
+
+    /* --- Buttons --- */
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 10px; font-size: 11px; font-weight: 600; font-family: inherit;
+      background: rgba(255,255,255,.04); border: 1px solid var(--border);
+      border-radius: var(--radius-xs); color: var(--text-muted);
+      cursor: pointer; transition: all .2s; white-space: nowrap;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,.08); color: var(--text); border-color: var(--border-hover); }
+    .btn-ghost:disabled { opacity: .4; pointer-events: none; }
+    .btn-ghost .material-symbols-outlined { font-size: 14px; }
+
+    .btn-primary {
+      width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 14px 20px; font-size: 14px; font-weight: 700; font-family: inherit;
+      background: linear-gradient(135deg, #059669 0%, #34d399 100%);
+      border: 1px solid rgba(52,211,153,.3); border-radius: var(--radius-sm);
+      color: #fff; cursor: pointer; transition: all .25s;
+      box-shadow: 0 4px 24px rgba(52,211,153,.15), inset 0 1px 0 rgba(255,255,255,.1);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 32px rgba(52,211,153,.25), inset 0 1px 0 rgba(255,255,255,.15); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: .5; pointer-events: none; transform: none; }
+    .btn-primary .material-symbols-outlined { font-size: 20px; }
+
+    /* --- Badges --- */
+    .badge {
+      display: none; align-items: center; gap: 4px;
+      padding: 3px 8px; font-size: 11px; font-weight: 500;
+      border-radius: 20px;
+    }
+    .badge.visible { display: inline-flex; }
+    .badge.ok { background: var(--accent-bg); color: var(--accent); border: 1px solid var(--accent-border); }
+    .badge.err { background: var(--red-bg); color: var(--red); border: 1px solid var(--red-border); }
+    .badge.warn { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-border); }
+    .badge .material-symbols-outlined { font-size: 12px; }
+    .badge-text { max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* --- Progress --- */
+    .progress { margin-top: 10px; display: none; }
+    .progress.visible { display: block; }
+    .progress-track {
+      width: 100%; height: 4px; border-radius: 4px;
+      background: rgba(255,255,255,.06); overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 4px; background: var(--accent);
+      transition: width .3s ease; width: 0;
+    }
+    .progress-fill.pulse {
+      width: 100% !important;
+      background: linear-gradient(90deg, transparent 0%, var(--accent) 50%, transparent 100%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    .progress-label { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+
+    /* --- Model status inline --- */
+    .model-status { margin-top: 8px; display: none; }
+    .model-status.visible { display: block; }
+
+    /* --- Skeleton --- */
+    .skeleton-block {
+      background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.06) 50%, rgba(255,255,255,.03) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.8s ease-in-out infinite;
+      border-radius: var(--radius-sm);
+    }
+    .skeleton-card {
+      background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; margin-bottom: 12px;
+    }
+    .skeleton-row { display: flex; gap: 12px; }
+    .sk-h { height: 14px; margin-bottom: 16px; width: 30%; }
+    .sk-input { height: 42px; width: 100%; margin-bottom: 14px; }
+    .sk-half { height: 42px; flex: 1; }
+
+    /* --- Toast --- */
+    .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
+    .toast {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: var(--radius-sm);
+      background: rgba(15,15,25,.95); border: 1px solid var(--border);
+      box-shadow: 0 16px 48px rgba(0,0,0,.4); backdrop-filter: blur(12px);
+      animation: toastIn .3s ease-out forwards;
+    }
+    .toast.out { animation: toastOut .25s ease-in forwards; }
+    .toast .material-symbols-outlined { font-size: 18px; }
+    .toast span:last-child { font-size: 13px; color: var(--text); }
+    @keyframes toastIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes toastOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
+
+    /* --- Animations --- */
+    .fade-up {
+      opacity: 0; transform: translateY(10px);
+      animation: fadeUp .5s ease-out forwards;
+    }
+    .fade-up.d1 { animation-delay: .05s; }
+    .fade-up.d2 { animation-delay: .1s; }
+    .fade-up.d3 { animation-delay: .15s; }
+    .fade-up.d4 { animation-delay: .2s; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    /* --- Footer --- */
+    .footer {
+      text-align: center; font-size: 11px; color: var(--text-dim);
+      margin-top: 20px;
+    }
+    .footer code {
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 10px; color: var(--text-muted);
+      background: rgba(255,255,255,.04); padding: 2px 8px;
+      border-radius: 6px; border: 1px solid var(--border);
+    }
+
+    /* --- Spin --- */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spin { animation: spin .8s linear infinite; display: inline-block; }
+
+    /* --- Responsive --- */
+    @media (max-width: 480px) {
+      main { padding: 32px 16px 24px; }
+      .field-row { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased">
+<body>
 
-  <!-- Background -->
-  <div class="fixed inset-0 -z-10 overflow-hidden">
-    <div class="absolute inset-0 bg-gradient-to-b from-emerald-950/20 via-slate-950 to-slate-950"></div>
-    <div class="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[500px] bg-emerald-500/[0.04] rounded-full blur-[120px]"></div>
-  </div>
+  <div class="bg-glow"></div>
+  <div class="bg-grid"></div>
 
-  <main class="max-w-lg mx-auto px-5 py-16">
-
+  <main>
     <!-- Header -->
-    <header class="text-center mb-12 fade-in-up">
-      <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 mb-5">
-        <span class="material-symbols-outlined text-emerald-400" style="font-size:28px">hub</span>
+    <header class="header fade-up">
+      <div class="header-logo">
+        <span class="material-symbols-outlined">hub</span>
       </div>
-      <h1 class="text-2xl font-bold tracking-tight mb-1.5">Arko Studio</h1>
-      <p class="text-slate-500 text-sm">Configure your AI services to get started</p>
+      <h1>Arko Studio</h1>
+      <p>Configure your AI services to get started</p>
     </header>
 
-    <!-- OpenAI -->
-    <section class="bg-slate-900/50 border border-slate-800/50 rounded-2xl p-5 mb-3 fade-in-up fade-delay-1">
-      <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-2.5">
-          <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/10">
-            <span class="material-symbols-outlined text-amber-400" style="font-size:16px">bolt</span>
-          </div>
-          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">OpenAI</h2>
-        </div>
-        <div class="flex items-center gap-2">
-          <span id="openai-status" class="hidden text-xs"></span>
-          <button onclick="testOpenai()" id="btn-test-openai"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700/40">
-            <span class="material-symbols-outlined" style="font-size:14px">science</span>Test
-          </button>
-        </div>
+    <!-- Skeleton -->
+    <div id="skeleton">
+      <div class="skeleton-card">
+        <div class="skeleton-block sk-h"></div>
+        <div class="skeleton-block sk-input"></div>
+        <div class="skeleton-block sk-input"></div>
+        <div class="skeleton-row"><div class="skeleton-block sk-half"></div><div class="skeleton-block sk-half"></div></div>
       </div>
+      <div class="skeleton-card">
+        <div class="skeleton-block sk-h"></div>
+        <div class="skeleton-block sk-input"></div>
+        <div class="skeleton-block sk-input"></div>
+      </div>
+    </div>
 
-      <div class="space-y-3.5">
-        <!-- API Key -->
-        <div>
-          <label for="openai_api_key" class="block text-xs font-medium text-slate-400 mb-1.5">API Key</label>
-          <div class="relative">
-            <input type="password" id="openai_api_key" placeholder="sk-..."
-              class="w-full bg-slate-950/60 border border-slate-700/40 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40 transition-all pr-10">
-            <button type="button" onclick="toggleKey()"
-              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-400 transition-colors">
-              <span id="eye-icon" class="material-symbols-outlined" style="font-size:18px">visibility_off</span>
+    <!-- Content -->
+    <div id="content" style="display:none">
+
+      <!-- OpenAI -->
+      <section class="card fade-up d1">
+        <div class="card-head">
+          <div class="card-title">
+            <div class="card-icon amber"><span class="material-symbols-outlined">bolt</span></div>
+            <h2>OpenAI</h2>
+          </div>
+          <div class="card-actions">
+            <span id="openai-badge" class="badge"></span>
+            <button onclick="testOpenai()" id="btn-test-openai" class="btn-ghost">
+              <span class="material-symbols-outlined">science</span>Test
             </button>
           </div>
         </div>
-
-        <!-- Base URL -->
-        <div>
-          <label for="openai_base_url" class="block text-xs font-medium text-slate-400 mb-1.5">Base URL</label>
-          <input type="url" id="openai_base_url" placeholder="https://api.openai.com/v1"
-            class="w-full bg-slate-950/60 border border-slate-700/40 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40 transition-all">
-          <p class="text-[11px] text-slate-600 mt-1 ml-1">Compatible with any OpenAI-compatible API</p>
-        </div>
-
-        <!-- Models -->
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label for="openai_model_image" class="block text-xs font-medium text-slate-400 mb-1.5">Image Model</label>
-            <input type="text" id="openai_model_image" placeholder="dall-e-3"
-              class="w-full bg-slate-950/60 border border-slate-700/40 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40 transition-all">
-          </div>
-          <div>
-            <label for="openai_model_audio" class="block text-xs font-medium text-slate-400 mb-1.5">Audio Model</label>
-            <input type="text" id="openai_model_audio" placeholder="gpt-4o-mini-audio"
-              class="w-full bg-slate-950/60 border border-slate-700/40 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40 transition-all">
+        <div class="field">
+          <label for="openai_api_key">API Key</label>
+          <div class="input-wrap">
+            <input type="password" id="openai_api_key" placeholder="sk-..." class="pr-10">
+            <button type="button" onclick="toggleKey()" class="toggle-btn">
+              <span id="eye-icon" class="material-symbols-outlined">visibility_off</span>
+            </button>
           </div>
         </div>
-      </div>
-    </section>
-
-    <!-- Ollama -->
-    <section class="bg-slate-900/50 border border-slate-800/50 rounded-2xl p-5 mb-6 fade-in-up fade-delay-2">
-      <div class="flex items-center justify-between mb-5">
-        <div class="flex items-center gap-2.5">
-          <div class="flex items-center justify-center w-7 h-7 rounded-lg bg-purple-500/10">
-            <span class="material-symbols-outlined text-purple-400" style="font-size:16px">memory</span>
+        <div class="field">
+          <label for="openai_base_url">Base URL</label>
+          <input type="url" id="openai_base_url" placeholder="https://api.openai.com/v1">
+          <p class="hint">Compatible with any OpenAI-compatible API</p>
+        </div>
+        <div class="field">
+          <div class="field-row">
+            <div>
+              <label for="openai_model_image">Image Model</label>
+              <input type="text" id="openai_model_image" placeholder="dall-e-3">
+            </div>
+            <div>
+              <label for="openai_model_audio">Audio Model</label>
+              <input type="text" id="openai_model_audio" placeholder="gpt-4o-mini-audio">
+            </div>
           </div>
-          <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-300">Ollama</h2>
         </div>
-        <div class="flex items-center gap-2">
-          <span id="ollama-status" class="hidden text-xs"></span>
-          <button onclick="testOllama()" id="btn-test-ollama"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-800/80 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700/40">
-            <span class="material-symbols-outlined" style="font-size:14px">science</span>Test
-          </button>
-        </div>
-      </div>
+      </section>
 
-      <div class="space-y-3.5">
-        <div>
-          <label for="ollama_base_url" class="block text-xs font-medium text-slate-400 mb-1.5">Base URL</label>
-          <input type="url" id="ollama_base_url" placeholder="http://localhost:11434"
-            class="w-full bg-slate-950/60 border border-slate-700/40 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40 transition-all">
+      <!-- Ollama -->
+      <section class="card fade-up d2">
+        <div class="card-head">
+          <div class="card-title">
+            <div class="card-icon purple"><span class="material-symbols-outlined">memory</span></div>
+            <h2>Ollama</h2>
+          </div>
+          <div class="card-actions">
+            <span id="ollama-badge" class="badge"></span>
+            <button onclick="testOllama()" id="btn-test-ollama" class="btn-ghost">
+              <span class="material-symbols-outlined">science</span>Test
+            </button>
+          </div>
         </div>
-        <div>
-          <label for="ollama_embedding_model" class="block text-xs font-medium text-slate-400 mb-1.5">Embedding Model</label>
-          <input type="text" id="ollama_embedding_model" placeholder="mxbai-embed-large"
-            class="w-full bg-slate-950/60 border border-slate-700/40 rounded-xl px-3.5 py-2.5 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500/40 transition-all">
-          <p class="text-[11px] text-slate-600 mt-1 ml-1">Used for RAG semantic embeddings</p>
+        <div class="field">
+          <label for="ollama_base_url">Base URL</label>
+          <input type="url" id="ollama_base_url" placeholder="http://localhost:11434">
         </div>
-      </div>
-    </section>
+        <div class="field">
+          <label for="ollama_embedding_model">Embedding Model</label>
+          <div class="input-action">
+            <input type="text" id="ollama_embedding_model" placeholder="mxbai-embed-large" oninput="checkModelStatus()">
+            <button onclick="pullModel()" id="btn-pull" class="btn-ghost" style="display:none">
+              <span class="material-symbols-outlined">download</span>Pull
+            </button>
+          </div>
+          <div id="model-status" class="model-status"></div>
+          <div id="pull-progress" class="progress">
+            <div class="progress-track"><div id="pull-bar" class="progress-fill pulse"></div></div>
+            <p id="pull-text" class="progress-label">Starting download...</p>
+          </div>
+          <p class="hint">Used for RAG semantic embeddings</p>
+        </div>
+      </section>
 
-    <!-- Save -->
-    <button onclick="save()" id="btn-save"
-      class="w-full flex items-center justify-center gap-2.5 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-emerald-600/20 hover:shadow-emerald-500/30 fade-in-up" style="animation-delay:0.32s">
-      <span class="material-symbols-outlined" style="font-size:20px">save</span>
-      Save Configuration
-    </button>
+      <!-- Save -->
+      <button onclick="save()" id="btn-save" class="btn-primary fade-up d3">
+        <span class="material-symbols-outlined">save</span>
+        Save Configuration
+      </button>
 
-    <!-- Footer -->
-    <p class="text-center text-slate-600 text-[11px] mt-5">
-      Configuration stored at <code class="text-slate-500 bg-slate-900/50 px-1.5 py-0.5 rounded">~/.arcaelas/mcp/config.json</code>
-    </p>
+      <p class="footer fade-up d4">
+        Configuration stored at <code>~/.arcaelas/mcp/config.json</code>
+      </p>
+    </div>
   </main>
 
-  <!-- Toast -->
-  <div id="toast-container" class="fixed bottom-5 right-5 flex flex-col gap-2 z-50"></div>
+  <div id="toast-container" class="toast-container"></div>
 
   <script>
     const FIELDS = [
@@ -164,121 +402,202 @@
       'openai_model_audio', 'ollama_base_url', 'ollama_embedding_model',
     ];
 
-    document.addEventListener('DOMContentLoaded', async () => {
+    let installedModels = [];
+
+    document.addEventListener('DOMContentLoaded', loadSettings);
+
+    async function loadSettings() {
       try {
-        const res = await fetch('/v1/config');
-        const config = await res.json();
+        const res = await fetch('/v1/settings');
+        const data = await res.json();
         FIELDS.forEach(id => {
           const el = document.getElementById(id);
-          if (el && config[id]) el.value = config[id];
+          if (el && data[id]) el.value = data[id];
         });
+        installedModels = data.models || [];
+        document.getElementById('skeleton').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+        checkModelStatus();
       } catch {
-        showToast('Failed to load configuration', 'error');
+        document.getElementById('skeleton').innerHTML =
+          '<div class="card" style="text-align:center;padding:48px 24px">' +
+          '<span class="material-symbols-outlined" style="font-size:36px;color:var(--red);margin-bottom:8px;display:block">cloud_off</span>' +
+          '<p style="font-size:14px;color:var(--text-muted)">Could not connect to server</p></div>';
       }
-    });
-
-    function toggleKey() {
-      const input = document.getElementById('openai_api_key');
-      const icon = document.getElementById('eye-icon');
-      const hidden = input.type === 'password';
-      input.type = hidden ? 'text' : 'password';
-      icon.textContent = hidden ? 'visibility' : 'visibility_off';
     }
 
-    async function testOpenai() {
-      const btn = document.getElementById('btn-test-openai');
-      const status = document.getElementById('openai-status');
-      setTestState(btn, status, 'loading');
+    function checkModelStatus() {
+      const model = document.getElementById('ollama_embedding_model').value.trim();
+      const statusEl = document.getElementById('model-status');
+      const pullBtn = document.getElementById('btn-pull');
+      if (!model) { statusEl.classList.remove('visible'); pullBtn.style.display = 'none'; return; }
+      const match = installedModels.some(m => m === model || m === model + ':latest' || m.split(':')[0] === model);
+      if (match) {
+        statusEl.innerHTML = '<span class="badge ok visible"><span class="material-symbols-outlined">check_circle</span>Installed</span>';
+        statusEl.classList.add('visible');
+        pullBtn.style.display = 'none';
+      } else {
+        statusEl.innerHTML = '<span class="badge warn visible"><span class="material-symbols-outlined">warning</span>Not installed</span>';
+        statusEl.classList.add('visible');
+        pullBtn.style.display = '';
+      }
+    }
+
+    async function pullModel() {
+      const model = document.getElementById('ollama_embedding_model').value.trim();
+      if (!model) return;
+      const pullBtn = document.getElementById('btn-pull');
+      const prog = document.getElementById('pull-progress');
+      const bar = document.getElementById('pull-bar');
+      const txt = document.getElementById('pull-text');
+      pullBtn.style.display = 'none';
+      prog.classList.add('visible');
+      bar.className = 'progress-fill pulse'; bar.style.width = '';
+      txt.textContent = 'Starting download...';
       try {
-        const res = await fetch('/v1/test/openai', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            key: document.getElementById('openai_api_key').value,
-            base_url: document.getElementById('openai_base_url').value,
-          }),
+        const res = await fetch('/v1/model', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: model }),
         });
-        const data = await res.json();
-        setTestState(btn, status, data.ok ? 'success' : 'error', data.ok ? 'Connected' : data.error);
+        const ct = res.headers.get('content-type') || '';
+        if (ct.includes('application/json')) {
+          const data = await res.json();
+          if (data.ok) {
+            bar.className = 'progress-fill'; bar.style.width = '100%';
+            txt.textContent = data.status === 'already_installed' ? 'Already installed' : 'Complete';
+            if (!installedModels.includes(model)) installedModels.push(model);
+            checkModelStatus();
+            setTimeout(() => prog.classList.remove('visible'), 2500);
+            return;
+          }
+          showToast(data.error || 'Pull failed', 'error');
+          prog.classList.remove('visible'); pullBtn.style.display = ''; return;
+        }
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n'); buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const msg = JSON.parse(line);
+              if (msg.total && msg.completed) {
+                const pct = Math.round((msg.completed / msg.total) * 100);
+                bar.className = 'progress-fill'; bar.style.width = pct + '%';
+                txt.textContent = (msg.status || 'Downloading') + ' \u2014 ' + pct + '%';
+              } else if (msg.status) { txt.textContent = msg.status; }
+            } catch {}
+          }
+        }
+        bar.className = 'progress-fill'; bar.style.width = '100%';
+        txt.textContent = 'Complete';
+        if (!installedModels.includes(model)) installedModels.push(model);
+        checkModelStatus(); showToast('Model pulled successfully', 'success');
+        setTimeout(() => prog.classList.remove('visible'), 2500);
       } catch (err) {
-        setTestState(btn, status, 'error', err.message);
+        showToast(err.message || 'Pull failed', 'error');
+        prog.classList.remove('visible'); pullBtn.style.display = '';
       }
     }
 
     async function testOllama() {
       const btn = document.getElementById('btn-test-ollama');
-      const status = document.getElementById('ollama-status');
-      setTestState(btn, status, 'loading');
+      const badge = document.getElementById('ollama-badge');
+      setBtnLoading(btn, true); hideBadge(badge);
       try {
-        const res = await fetch('/v1/test/ollama', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch('/v1/ollama', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             url: document.getElementById('ollama_base_url').value,
+            model: document.getElementById('ollama_embedding_model').value,
           }),
         });
-        const data = await res.json();
-        const msg = data.ok ? `${data.models.length} models available` : data.error;
-        setTestState(btn, status, data.ok ? 'success' : 'error', msg);
-      } catch (err) {
-        setTestState(btn, status, 'error', err.message);
-      }
+        const d = await res.json();
+        d.ok ? showBadge(badge, 'ok', d.dims + 'd \u00b7 ' + d.elapsed_ms + 'ms')
+             : showBadge(badge, 'err', d.error);
+      } catch (e) { showBadge(badge, 'err', e.message); }
+      setBtnLoading(btn, false);
+    }
+
+    async function testOpenai() {
+      const btn = document.getElementById('btn-test-openai');
+      const badge = document.getElementById('openai-badge');
+      setBtnLoading(btn, true); hideBadge(badge);
+      try {
+        const res = await fetch('/v1/openai', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: document.getElementById('openai_api_key').value,
+            url: document.getElementById('openai_base_url').value,
+            models: {
+              image: document.getElementById('openai_model_image').value,
+              audio: document.getElementById('openai_model_audio').value,
+            },
+          }),
+        });
+        const d = await res.json();
+        d.ok ? showBadge(badge, 'ok', d.model + ' \u00b7 ' + d.elapsed_ms + 'ms')
+             : showBadge(badge, 'err', d.error);
+      } catch (e) { showBadge(badge, 'err', e.message); }
+      setBtnLoading(btn, false);
     }
 
     async function save() {
       const btn = document.getElementById('btn-save');
-      const original = btn.innerHTML;
+      const orig = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = '<span class="material-symbols-outlined animate-spin" style="font-size:20px">progress_activity</span>Saving\u2026';
+      btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:20px">progress_activity</span>Saving\u2026';
       try {
-        const config = {};
-        FIELDS.forEach(id => { config[id] = document.getElementById(id).value; });
-        const res = await fetch('/v1/config', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(config),
+        const cfg = {};
+        FIELDS.forEach(id => { cfg[id] = document.getElementById(id).value; });
+        const res = await fetch('/v1/settings', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(cfg),
         });
-        const data = await res.json();
-        showToast(data.ok ? 'Configuration saved' : 'Failed to save', data.ok ? 'success' : 'error');
-      } catch (err) {
-        showToast(err.message, 'error');
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = original;
-      }
+        const d = await res.json();
+        showToast(d.ok ? 'Configuration saved' : 'Failed to save', d.ok ? 'success' : 'error');
+      } catch (e) { showToast(e.message, 'error'); }
+      finally { btn.disabled = false; btn.innerHTML = orig; }
     }
 
-    function setTestState(btn, status, state, message) {
-      if (state === 'loading') {
-        btn.disabled = true;
-        btn.innerHTML = '<span class="material-symbols-outlined animate-spin" style="font-size:14px">progress_activity</span>';
-        status.className = 'hidden text-xs';
-        return;
-      }
-      btn.disabled = false;
-      btn.innerHTML = '<span class="material-symbols-outlined" style="font-size:14px">science</span>Test';
-      if (state === 'success') {
-        status.className = 'inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-        status.innerHTML = '<span class="material-symbols-outlined" style="font-size:12px">check_circle</span>' + (message || 'OK');
-      } else {
-        status.className = 'inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-red-500/10 text-red-400 border border-red-500/20 max-w-[180px] truncate';
-        status.innerHTML = '<span class="material-symbols-outlined" style="font-size:12px">error</span>' + (message || 'Error');
-      }
-      setTimeout(() => { status.className = 'hidden text-xs'; status.innerHTML = ''; }, 6000);
+    function toggleKey() {
+      const inp = document.getElementById('openai_api_key');
+      const ico = document.getElementById('eye-icon');
+      const show = inp.type === 'password';
+      inp.type = show ? 'text' : 'password';
+      ico.textContent = show ? 'visibility' : 'visibility_off';
     }
 
-    function showToast(message, type) {
-      const container = document.getElementById('toast-container');
-      const colors = { success: 'text-emerald-400', error: 'text-red-400', info: 'text-slate-400' };
-      const icons  = { success: 'check_circle',     error: 'error',        info: 'info' };
+    function setBtnLoading(btn, on) {
+      btn.disabled = on;
+      if (on) {
+        btn._orig = btn.innerHTML;
+        btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:14px">progress_activity</span>';
+      } else { btn.innerHTML = btn._orig || btn.innerHTML; }
+    }
+
+    function showBadge(el, type, text) {
+      el.className = 'badge visible ' + type;
+      const icon = type === 'ok' ? 'check_circle' : 'error';
+      el.innerHTML = '<span class="material-symbols-outlined">' + icon + '</span><span class="badge-text">' + text + '</span>';
+      clearTimeout(el._t);
+      el._t = setTimeout(() => hideBadge(el), 8000);
+    }
+    function hideBadge(el) { el.className = 'badge'; el.innerHTML = ''; }
+
+    function showToast(msg, type) {
+      const c = document.getElementById('toast-container');
+      const colors = { success: 'color:var(--accent)', error: 'color:var(--red)', info: 'color:var(--text-muted)' };
+      const icons = { success: 'check_circle', error: 'error', info: 'info' };
       const el = document.createElement('div');
-      el.className = 'flex items-center gap-2.5 px-4 py-3 rounded-xl bg-slate-800/95 border border-slate-700/50 shadow-2xl backdrop-blur-sm animate-slide-in';
-      el.innerHTML = `<span class="material-symbols-outlined ${colors[type] || colors.info}" style="font-size:18px">${icons[type] || icons.info}</span><span class="text-sm text-slate-200">${message}</span>`;
-      container.appendChild(el);
-      setTimeout(() => {
-        el.style.animation = 'slideOut 0.3s ease-in forwards';
-        setTimeout(() => el.remove(), 300);
-      }, 3500);
+      el.className = 'toast';
+      el.innerHTML = '<span class="material-symbols-outlined" style="' + (colors[type] || colors.info) + '">' + (icons[type] || icons.info) + '</span><span>' + msg + '</span>';
+      c.appendChild(el);
+      setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 250); }, 3500);
     }
   </script>
 </body>
