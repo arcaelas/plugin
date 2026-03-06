@@ -155,13 +155,38 @@ Domain-specific instructions:
 - **QUALITY**: read the plans in PLAN to determine what code will be used in future phases before classifying something as dead code.
 - **LOGIC**: read the data models, schemas, and types defined in the project. Verify that every endpoint, form, and transformation operates on data that exists and makes sense in the business domain.
 
+Any of the following is a defect — this list is non-exhaustive, use your judgment to identify others:
+
+- Compilation errors or warnings (including deprecation warnings from project code).
+- Linter errors or warnings.
+- Failed, skipped, or absent tests.
+- Type errors, `any` types, `@ts-ignore`, `@ts-expect-error`.
+- Incorrect, missing, or circular imports/exports.
+- Dead code not referenced in the plan's future phases.
+- Race conditions, deadlocks, or concurrency bugs.
+- Anti-patterns, over-engineering, or unnecessary complexity.
+- Logic bugs that produce incorrect results or data corruption.
+- Library or API misuse contrary to official documentation.
+- Missing or incorrect error handling.
+- Hardcoded secrets, API keys, or environment-dependent values.
+- Debug artifacts (`console.log`, `debugger`, etc.) outside a dedicated logging system.
+- Annotations (`TODO`, `FIXME`, `HACK`, `XXX`) or commented-out code.
+- RAG preference violations (naming, style, libraries, architecture, conventions).
+- USER PROMPT or CLARIFICATION requirements not fulfilled.
+- Features added outside the requested scope.
+- Form fields, API endpoints, or data models that don't relate to the business domain.
+- N+1 queries, unnecessary re-renders, memory leaks, inefficient algorithms.
+- AI attribution markers in code, comments, or commit messages.
+- Unused dependencies in package manifests.
+- Deprecated API calls from project code.
+
 Each defect found is classified by severity:
 
-- **CRITICAL**: blocks execution, corrupts data, violates security, omits a feature requested by the user, or contradicts a CLARIFICATION answer. A recurring defect from a previous cycle is automatically CRITICAL.
-- **HIGH**: violates a RAG preference, introduces an incorrect pattern, has a logic bug that produces incorrect results, or uses a library contrary to its documentation.
-- **MEDIUM**: code smell, unnecessary complexity, minor convention ignored, maintainability concern.
+- **CRITICAL**: blocks execution, corrupts data, violates security, omits a feature requested by the user, contradicts a CLARIFICATION answer, race conditions, deadlocks. A recurring defect from a previous cycle is automatically CRITICAL.
+- **HIGH**: violates a RAG preference, introduces an incorrect pattern, has a logic bug that produces incorrect results, uses a library contrary to its documentation, over-engineering, anti-patterns.
+- **MEDIUM**: code smell, unnecessary complexity, minor convention deviation, maintainability concern.
 
-A single CRITICAL or HIGH defect produces a REJECTED verdict. MEDIUM defects alone can produce APPROVED with observations, but excessive accumulation of MEDIUM defects produces REJECTED — justify the threshold in your report.
+**The minimum for rejection is one defect.** A single defect of any severity — CRITICAL, HIGH, or MEDIUM — produces a REJECTED verdict. There is no "approved with observations". The only path to APPROVED is zero defects.
 
 Generate a file in `{OUTPUT}` with all defects found, classified by severity and worktree.
 
