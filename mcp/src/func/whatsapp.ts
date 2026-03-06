@@ -1,11 +1,7 @@
 import type { Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import * as ws from "../lib/whatsapp.js";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ═══════════════════════════════════════════════════════════════════════
 // Action schemas — ordered most-specific first for z.union matching
@@ -183,8 +179,8 @@ export async function func(app: Express, mcp: McpServer) {
     return { content: [{ type: "text" as const, text: JSON.stringify(results) }] };
   });
 
-  app.get("/whatsapp", (_req, res) => {
-    res.sendFile(resolve(__dirname, "..", "public", "whatsapp.html"));
+  app.get("/whatsapp", (req, res) => {
+    res.redirect(`/whatsapp.html?${new URLSearchParams(req.query as Record<string, string>)}`);
   });
 
   app.get("/whatsapp/sse", (req, res) => {
