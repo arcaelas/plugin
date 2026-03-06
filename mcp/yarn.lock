@@ -18,10 +18,8 @@
   resolved "https://registry.yarnpkg.com/@arcaelas/utils/-/utils-2.0.8.tgz#c6c6cf6811770ee776f7aca65734f70e45952eb0"
   integrity sha512-kJdDFpOIJTx4hy1i6e4eh382qlmBtrtb3yChc16CTgrxJwqO+PS5nzmLjRLw2xgSmnJ/cuHXFMLIWFhzfx1NEw==
 
-"@arcaelas/whatsapp@^2.1.0":
+"@arcaelas/whatsapp@file:../../whatsapp":
   version "2.1.0"
-  resolved "https://registry.yarnpkg.com/@arcaelas/whatsapp/-/whatsapp-2.1.0.tgz#b96a07a3209a8490a0de8baf424c57287e294a9c"
-  integrity sha512-+WTycgY57XZlHOgqwXoho7tDIVvkM+cncPodY2OTiqM32z6MmblSNw5sIDnUy1N+RhrEmf8pjBU9o5c9DUJmEg==
   dependencies:
     "@arcaelas/dynamite" "^1.0.9"
     "@arcaelas/utils" "^2.0.5"
@@ -2053,9 +2051,9 @@ keyv@^5.5.5, keyv@^5.6.0:
   dependencies:
     "@keyv/serialize" "^1.1.1"
 
-"libsignal@git+https://github.com/whiskeysockets/libsignal-node.git":
+"libsignal@git+https://github.com/whiskeysockets/libsignal-node":
   version "2.0.1"
-  resolved "git+https://github.com/whiskeysockets/libsignal-node.git#1c30d7d7e76a3b0aa120b04dc6a26f5a12dccf67"
+  resolved "git+https://github.com/whiskeysockets/libsignal-node#1c30d7d7e76a3b0aa120b04dc6a26f5a12dccf67"
   dependencies:
     curve25519-js "^0.0.4"
     protobufjs "6.8.8"

@@ -65,6 +65,7 @@ export async function close_account(phone?: string): Promise<string> {
   return account.phone;
 }
 
+
 /**
  * @description
  * Reads a file as Buffer (for sending media).

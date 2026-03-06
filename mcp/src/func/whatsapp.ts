@@ -41,8 +41,18 @@ const CONTENT_TAGS: Record<string, string> = {
 };
 
 function format_content(type: string, caption: string): string {
-  if (type === "text") return caption;
-  return `[<${CONTENT_TAGS[type] || "File"} />]`;
+  const tag = CONTENT_TAGS[type];
+  if (!tag) return caption || "";
+  return caption ? `[<${tag} />] ${caption}` : `[<${tag} />]`;
+}
+
+async function resolve_contact(wa: any, jid: string): Promise<{ phone: string; name: string }> {
+  const phone = jid.split("@")[0];
+  try {
+    const c = await wa.Contact.get(jid);
+    if (c) return { phone: c.phone, name: c.name };
+  } catch {}
+  return { phone, name: phone };
 }
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -73,9 +83,15 @@ async function handle(action: Record<string, unknown>): Promise<ActionResult> {
 
     if ("unread" in action) {
       const account = ws.resolve_phone(action.owner as string | undefined);
-      const data = (await account.wa.Chat.list(0, 500)).filter((c: any) => !c.read).map((c: any) => ({
-        id: c.id, name: c.name, type: c.type, unread: c.raw.unreadCount ?? 0,
-      }));
+      const chats = await account.wa.Chat.list(0, 500);
+      const data = [];
+      for (const c of chats as any[]) {
+        const contact = await resolve_contact(account.wa, c.id);
+        const msgs = await account.wa.Message.list(c.id, 0, 1);
+        const last = msgs[0] as any;
+        const content = last ? format_content(last.type, last.caption).slice(0, 100) : "";
+        data.push({ id: c.id, contact, read: c.read, content });
+      }
       return { ok: true, data };
     }
 
@@ -127,10 +143,12 @@ async function handle(action: Record<string, unknown>): Promise<ActionResult> {
     if ("messages" in action) {
       const account = ws.resolve_phone(action.owner as string | undefined);
       const msgs = await account.wa.Message.list(action.chat as string, (action.offset as number | undefined) ?? 0, action.messages as number);
-      return { ok: true, data: msgs.map((m: any) => ({
-        id: m.id, author: m.me ? "me" : m.author, me: m.me,
-        content: format_content(m.type, m.caption), time: m.created_at,
-      })) };
+      const data = [];
+      for (const m of msgs as any[]) {
+        const contact = await resolve_contact(account.wa, m.author);
+        data.push({ id: m.id, contact, content: format_content(m.type, m.caption) });
+      }
+      return { ok: true, data };
     }
 
     if ("contact" in action) {
