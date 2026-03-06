@@ -20,6 +20,7 @@ import * as remember from "./func/remember.js";
 import * as search from "./func/search.js";
 import * as transport from "./func/transport.js";
 import * as upload from "./func/upload.js";
+import * as whatsapp from "./func/whatsapp.js";
 
 // --- Init ---
 const isFirstRun = initConfig();
@@ -36,7 +37,7 @@ app.use(express.static(resolve(dirname(fileURLToPath(import.meta.url)), "public"
 
 // --- Register funcs ---
 const funcs: Array<{ func: (_app: Express, _mcp: McpServer) => void | Promise<void> }> = [
-  api, remember, search, destroy, upload, download, draw, redraw, health, transport,
+  api, remember, search, destroy, upload, download, draw, redraw, health, transport, whatsapp,
 ];
 for (const f of funcs) {
   await f.func(app, server);
@@ -67,7 +68,7 @@ app.post("/mcp/:tool", async (req, res) => {
   }
   try {
     const schema = normalizeObjectSchema(tool.inputSchema as never);
-    const input = schema ? schema.parse(req.body) : req.body;
+    const input = schema ? z.parse(schema as z.core.$ZodType, req.body) : req.body;
     const result = await tool.handler(input) as { content?: Array<{ text?: string }> };
     const text = result?.content?.[0]?.text;
     res.json(text ? JSON.parse(text) : result);
