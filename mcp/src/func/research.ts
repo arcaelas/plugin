@@ -1,7 +1,8 @@
 import type { Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
-import { Agent, Tool, Rule, ClaudeCode } from "@arcaelas/agent";
+import pkg from "@arcaelas/agent";
+const { Agent, Tool, Rule, ClaudeCode } = pkg;
 import * as rag from "../lib/rag.js";
 import config from "../lib/config.js";
 
