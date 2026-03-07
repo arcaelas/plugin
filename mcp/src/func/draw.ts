@@ -16,12 +16,17 @@ export function func(_app: Express, mcp: McpServer) {
     description: "Generate an image from a text prompt using AI. Returns the file path to the generated image.",
     inputSchema: schema,
   }, async (input) => {
+    const p = config.provider(config.image);
+    if (!p) throw new Error("No image provider configured");
+    const model = p.models?.image;
+    if (!model) throw new Error("No image model configured");
+
     const dir = await mkdtemp(join(tmpdir(), "mcp-draw-"));
     const filename = join(dir, "draw.png");
 
-    const res = await openai("/images/generations", {
+    const res = await openai(p, "/images/generations", {
       body: JSON.stringify({
-        model: config.openai.model.image,
+        model,
         prompt: input.content,
         n: 1,
         response_format: "b64_json",

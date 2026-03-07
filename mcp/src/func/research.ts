@@ -18,12 +18,14 @@ export function func(_app: Express, mcp: McpServer) {
       score: z.number().min(0).max(1).default(0.7).optional(),
     }),
   }, async (input) => {
-    const score = input.score ?? 0.7;
+    const p = config.provider(config.research.provider);
+    if (!p) throw new Error("No research provider configured");
+    const score = input.score ?? config.research.score;
 
     const agent = new Agent({
       name: "researcher",
       description: "Searches semantic memory and synthesizes findings",
-      providers: [new ClaudeCode({ model: input.model ?? "haiku", think: input.think ?? "none", dirname: config.claude.dirname })],
+      providers: [new ClaudeCode({ model: input.model ?? config.research.model, think: input.think ?? config.research.think, dirname: p.base_url })],
       rules: [new Rule(
         "You are a research agent with access to semantic memory (RAG). " +
         "Search multiple times using varied phrasing to gather comprehensive information. " +

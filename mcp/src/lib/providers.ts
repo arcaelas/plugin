@@ -1,13 +1,15 @@
 import config from "./config.js";
+import type { ProviderEntry } from "./config.js";
 
 export async function openai(
+  provider: ProviderEntry,
   endpoint: string,
   options: { method?: string; body?: string; headers?: Record<string, string> } = {}
 ): Promise<Response> {
-  return fetch(`${config.openai.base_url}${endpoint}`, {
+  return fetch(`${provider.base_url}${endpoint}`, {
     method: options.method || "POST",
     headers: {
-      Authorization: `Bearer ${config.openai.api_key}`,
+      Authorization: `Bearer ${provider.api_key}`,
       "Content-Type": "application/json",
       ...options.headers,
     },

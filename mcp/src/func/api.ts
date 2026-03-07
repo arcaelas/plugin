@@ -20,22 +20,19 @@ export function func(app: Express, _mcp: McpServer): void {
 
   app.patch("/v1/settings", (req, res) => {
     try {
-      const body = req.body as Record<string, any>;
-      for (const [section, values] of Object.entries(body)) {
-        if (typeof values === "object" && values !== null) {
-          for (const [key, val] of Object.entries(values)) {
-            if (typeof val === "object" && val !== null) {
-              for (const [subkey, subval] of Object.entries(val)) {
-                if (typeof subval === "string" && subval !== "") {
-                  (config as any)[section]?.[key] && ((config as any)[section][key][subkey] = subval);
-                }
-              }
-            } else if (typeof val === "string" && val !== "") {
-              (config as any)[section] && ((config as any)[section][key] = val);
-            }
-          }
+      const body = req.body as Record<string, unknown>;
+
+      if (Array.isArray(body.providers)) {
+        const names = (body.providers as Array<{ name?: string }>)
+          .map((p) => p.name?.trim())
+          .filter(Boolean);
+        if (new Set(names).size !== names.length) {
+          res.status(400).json({ ok: false, error: "Duplicate provider names" });
+          return;
         }
       }
+
+      config.save(body);
       res.json({ ok: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -122,43 +119,4 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  app.post("/v1/openai", async (req, res) => {
-    const access_token = (req.body.access_token as string) || "";
-    const url = (req.body.url as string) || config.openai.base_url;
-    const models = (req.body.models as { image?: string; audio?: string }) || {};
-    if (!access_token) {
-      res.json({ ok: false, error: "access_token is required" });
-      return;
-    }
-    const testModel = models.image || models.audio;
-    if (!testModel) {
-      res.json({ ok: false, error: "At least one model (image or audio) is required" });
-      return;
-    }
-    try {
-      const headers = { Authorization: `Bearer ${access_token}`, "Content-Type": "application/json" };
-      const start = performance.now();
-      const r = await fetch(`${url}/chat/completions`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          model: testModel,
-          messages: [{ role: "user", content: "Reply with only: ok" }],
-          max_tokens: 3,
-        }),
-        signal: AbortSignal.timeout(15000),
-      });
-      const elapsed = Math.round(performance.now() - start);
-      if (!r.ok) {
-        const body = (await r.json().catch(() => ({}))) as { error?: { message?: string }; message?: string };
-        res.json({ ok: false, model: testModel, error: body?.error?.message || body?.message || `HTTP ${r.status}` });
-        return;
-      }
-      const body = (await r.json()) as { model?: string; usage?: { total_tokens?: number } };
-      res.json({ ok: true, model: body.model || testModel, usage: body.usage, elapsed_ms: elapsed });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Connection failed";
-      res.json({ ok: false, error: message });
-    }
-  });
 }

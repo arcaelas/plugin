@@ -25,12 +25,17 @@ export function func(_app: Express, mcp: McpServer) {
       images.push(`data:${mime};base64,${buf.toString("base64")}`);
     }
 
+    const p = config.provider(config.image);
+    if (!p) throw new Error("No image provider configured");
+    const model = p.models?.image;
+    if (!model) throw new Error("No image model configured");
+
     const dir = await mkdtemp(join(tmpdir(), "mcp-redraw-"));
     const filename = join(dir, "redraw.png");
 
-    const res = await openai("/images/generations", {
+    const res = await openai(p, "/images/generations", {
       body: JSON.stringify({
-        model: config.openai.model.image,
+        model,
         prompt: input.content,
         image: images,
         n: 1,
