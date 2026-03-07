@@ -4,10 +4,10 @@ export async function openai(
   endpoint: string,
   options: { method?: string; body?: string; headers?: Record<string, string> } = {}
 ): Promise<Response> {
-  return fetch(`${config.openai_base_url}${endpoint}`, {
+  return fetch(`${config.openai.base_url}${endpoint}`, {
     method: options.method || "POST",
     headers: {
-      Authorization: `Bearer ${config.openai_api_key}`,
+      Authorization: `Bearer ${config.openai.api_key}`,
       "Content-Type": "application/json",
       ...options.headers,
     },
@@ -17,7 +17,7 @@ export async function openai(
 }
 
 export async function ollama(endpoint: string, body?: unknown): Promise<Response> {
-  return fetch(`${config.ollama_base_url}${endpoint}`, {
+  return fetch(`${config.ollama.base_url}${endpoint}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined,

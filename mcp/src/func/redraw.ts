@@ -30,7 +30,7 @@ export function func(_app: Express, mcp: McpServer) {
 
     const res = await openai("/images/generations", {
       body: JSON.stringify({
-        model: config.openai_model_image,
+        model: config.openai.model.image,
         prompt: input.content,
         image: images,
         n: 1,

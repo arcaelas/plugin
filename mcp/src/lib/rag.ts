@@ -117,7 +117,7 @@ async function ensure_init(): Promise<void> {
 }
 
 async function embed(input: string | string[]): Promise<number[][]> {
-  const res = await ollama("/api/embed", { model: config.ollama_embedding_model, input });
+  const res = await ollama("/api/embed", { model: config.ollama.model.embedding, input });
   return ((await res.json()) as { embeddings: number[][] }).embeddings;
 }
 

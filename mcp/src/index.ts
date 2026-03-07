@@ -8,7 +8,7 @@ import express, { type Express } from "express";
 import { z } from "zod";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import config, { initConfig, openBrowser, loadConfig, applyToEnv } from "./lib/config.js";
+import config, { openBrowser } from "./lib/config.js";
 
 import * as api from "./func/api.js";
 import * as destroy from "./func/destroy.js";
@@ -21,9 +21,7 @@ import * as search from "./func/search.js";
 import * as transport from "./func/transport.js";
 import * as upload from "./func/upload.js";
 import * as whatsapp from "./func/whatsapp.js";
-
-// --- Init ---
-const isFirstRun = initConfig();
+import * as research from "./func/research.js";
 
 const server = new McpServer({
   name: config.server.name,
@@ -32,12 +30,11 @@ const server = new McpServer({
 
 const app = express();
 app.use(express.json());
-app.use((_req, _res, next) => { applyToEnv(loadConfig()); next(); });
 app.use(express.static(resolve(dirname(fileURLToPath(import.meta.url)), "public")));
 
 // --- Register funcs ---
 const funcs: Array<{ func: (_app: Express, _mcp: McpServer) => void | Promise<void> }> = [
-  api, remember, search, destroy, upload, download, draw, redraw, health, transport, whatsapp,
+  api, remember, search, destroy, upload, download, draw, redraw, health, transport, whatsapp, research,
 ];
 for (const f of funcs) {
   await f.func(app, server);
@@ -100,7 +97,7 @@ try {
     const port = typeof addr === "object" && addr ? addr.port : requestedPort;
     process.env.PORT = String(port);
     console.error(`Config: http://localhost:${port}`);
-    if (isFirstRun) {
+    if (!config.booted) {
       console.error("First run — opening configuration in browser...");
       openBrowser(`http://localhost:${port}`);
     }

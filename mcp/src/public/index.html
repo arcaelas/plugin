@@ -320,28 +320,28 @@
           </div>
         </div>
         <div class="field">
-          <label for="openai_api_key">API Key</label>
+          <label for="openai-api_key">API Key</label>
           <div class="input-wrap">
-            <input type="password" id="openai_api_key" placeholder="sk-..." class="pr-10">
+            <input type="password" id="openai-api_key" placeholder="sk-..." class="pr-10">
             <button type="button" onclick="toggleKey()" class="toggle-btn">
               <span id="eye-icon" class="material-symbols-outlined">visibility_off</span>
             </button>
           </div>
         </div>
         <div class="field">
-          <label for="openai_base_url">Base URL</label>
-          <input type="url" id="openai_base_url" placeholder="https://api.openai.com/v1">
+          <label for="openai-base_url">Base URL</label>
+          <input type="url" id="openai-base_url" placeholder="https://api.openai.com/v1">
           <p class="hint">Compatible with any OpenAI-compatible API</p>
         </div>
         <div class="field">
           <div class="field-row">
             <div>
-              <label for="openai_model_image">Image Model</label>
-              <input type="text" id="openai_model_image" placeholder="dall-e-3">
+              <label for="openai-model-image">Image Model</label>
+              <input type="text" id="openai-model-image" placeholder="dall-e-3">
             </div>
             <div>
-              <label for="openai_model_audio">Audio Model</label>
-              <input type="text" id="openai_model_audio" placeholder="gpt-4o-mini-audio">
+              <label for="openai-model-audio">Audio Model</label>
+              <input type="text" id="openai-model-audio" placeholder="gpt-4o-mini-audio">
             </div>
           </div>
         </div>
@@ -362,13 +362,13 @@
           </div>
         </div>
         <div class="field">
-          <label for="ollama_base_url">Base URL</label>
-          <input type="url" id="ollama_base_url" placeholder="http://localhost:11434">
+          <label for="ollama-base_url">Base URL</label>
+          <input type="url" id="ollama-base_url" placeholder="http://localhost:11434">
         </div>
         <div class="field">
-          <label for="ollama_embedding_model">Embedding Model</label>
+          <label for="ollama-model-embedding">Embedding Model</label>
           <div class="input-action">
-            <input type="text" id="ollama_embedding_model" placeholder="mxbai-embed-large" oninput="checkModelStatus()">
+            <input type="text" id="ollama-model-embedding" placeholder="mxbai-embed-large" oninput="checkModelStatus()">
             <button onclick="pullModel()" id="btn-pull" class="btn-ghost" style="display:none">
               <span class="material-symbols-outlined">download</span>Pull
             </button>
@@ -397,12 +397,30 @@
   <div id="toast-container" class="toast-container"></div>
 
   <script>
-    const FIELDS = [
-      'openai_api_key', 'openai_base_url', 'openai_model_image',
-      'openai_model_audio', 'ollama_base_url', 'ollama_embedding_model',
-    ];
+    // ID → JSON path mapping: "openai-api_key" → ["openai", "api_key"]
+    const FIELDS = {
+      'openai-api_key':       ['openai', 'api_key'],
+      'openai-base_url':      ['openai', 'base_url'],
+      'openai-model-image':   ['openai', 'model', 'image'],
+      'openai-model-audio':   ['openai', 'model', 'audio'],
+      'ollama-base_url':      ['ollama', 'base_url'],
+      'ollama-model-embedding': ['ollama', 'model', 'embedding'],
+    };
 
     let installedModels = [];
+
+    function getPath(obj, path) {
+      for (const p of path) { if (obj == null) return undefined; obj = obj[p]; }
+      return obj;
+    }
+
+    function setPath(obj, path, value) {
+      for (let i = 0; i < path.length - 1; i++) {
+        if (!obj[path[i]] || typeof obj[path[i]] !== 'object') obj[path[i]] = {};
+        obj = obj[path[i]];
+      }
+      obj[path[path.length - 1]] = value;
+    }
 
     document.addEventListener('DOMContentLoaded', loadSettings);
 
@@ -410,10 +428,11 @@
       try {
         const res = await fetch('/v1/settings');
         const data = await res.json();
-        FIELDS.forEach(id => {
+        for (const [id, path] of Object.entries(FIELDS)) {
           const el = document.getElementById(id);
-          if (el && data[id]) el.value = data[id];
-        });
+          const val = getPath(data, path);
+          if (el && val) el.value = val;
+        }
         installedModels = data.models || [];
         document.getElementById('skeleton').style.display = 'none';
         document.getElementById('content').style.display = 'block';
@@ -427,7 +446,7 @@
     }
 
     function checkModelStatus() {
-      const model = document.getElementById('ollama_embedding_model').value.trim();
+      const model = document.getElementById('ollama-model-embedding').value.trim();
       const statusEl = document.getElementById('model-status');
       const pullBtn = document.getElementById('btn-pull');
       if (!model) { statusEl.classList.remove('visible'); pullBtn.style.display = 'none'; return; }
@@ -444,7 +463,7 @@
     }
 
     async function pullModel() {
-      const model = document.getElementById('ollama_embedding_model').value.trim();
+      const model = document.getElementById('ollama-model-embedding').value.trim();
       if (!model) return;
       const pullBtn = document.getElementById('btn-pull');
       const prog = document.getElementById('pull-progress');
@@ -512,8 +531,8 @@
         const res = await fetch('/v1/ollama', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            url: document.getElementById('ollama_base_url').value,
-            model: document.getElementById('ollama_embedding_model').value,
+            url: document.getElementById('ollama-base_url').value,
+            model: document.getElementById('ollama-model-embedding').value,
           }),
         });
         const d = await res.json();
@@ -531,11 +550,11 @@
         const res = await fetch('/v1/openai', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            access_token: document.getElementById('openai_api_key').value,
-            url: document.getElementById('openai_base_url').value,
+            access_token: document.getElementById('openai-api_key').value,
+            url: document.getElementById('openai-base_url').value,
             models: {
-              image: document.getElementById('openai_model_image').value,
-              audio: document.getElementById('openai_model_audio').value,
+              image: document.getElementById('openai-model-image').value,
+              audio: document.getElementById('openai-model-audio').value,
             },
           }),
         });
@@ -553,7 +572,10 @@
       btn.innerHTML = '<span class="material-symbols-outlined spin" style="font-size:20px">progress_activity</span>Saving\u2026';
       try {
         const cfg = {};
-        FIELDS.forEach(id => { cfg[id] = document.getElementById(id).value; });
+        for (const [id, path] of Object.entries(FIELDS)) {
+          const val = document.getElementById(id).value;
+          if (val) setPath(cfg, path, val);
+        }
         const res = await fetch('/v1/settings', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(cfg),
@@ -565,7 +587,7 @@
     }
 
     function toggleKey() {
-      const inp = document.getElementById('openai_api_key');
+      const inp = document.getElementById('openai-api_key');
       const ico = document.getElementById('eye-icon');
       const show = inp.type === 'password';
       inp.type = show ? 'text' : 'password';

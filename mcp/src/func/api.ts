@@ -1,38 +1,41 @@
 import type { Express } from "express";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import config, { DEFAULTS, loadConfig, saveConfig } from "../lib/config.js";
+import config from "../lib/config.js";
 
-/**
- * Registers HTTP API endpoints for settings, model management, and provider testing.
- * Registra endpoints HTTP para ajustes, gestión de modelos y pruebas de proveedores.
- */
 export function func(app: Express, _mcp: McpServer): void {
 
-  /**
-   * Returns current settings and installed Ollama models.
-   * Retorna ajustes actuales y modelos de Ollama instalados.
-   */
   app.get("/v1/settings", async (_req, res) => {
-    const settings = loadConfig();
+    const settings = config.config();
     let models: string[] = [];
     try {
-      const url = settings.ollama_base_url || DEFAULTS.ollama_base_url;
+      const url = config.ollama.base_url;
       const r = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
       if (r.ok) {
         const body = (await r.json()) as { models?: { name: string }[] };
         models = body.models?.map((m) => m.name) ?? [];
       }
-    } catch { /* ollama unreachable */ }
+    } catch {}
     res.json({ ...settings, models });
   });
 
-  /**
-   * Saves partial settings to disk and applies them in-memory.
-   * Guarda ajustes parciales a disco y los aplica en memoria.
-   */
   app.patch("/v1/settings", (req, res) => {
     try {
-      saveConfig(req.body);
+      const body = req.body as Record<string, any>;
+      for (const [section, values] of Object.entries(body)) {
+        if (typeof values === "object" && values !== null) {
+          for (const [key, val] of Object.entries(values)) {
+            if (typeof val === "object" && val !== null) {
+              for (const [subkey, subval] of Object.entries(val)) {
+                if (typeof subval === "string" && subval !== "") {
+                  (config as any)[section]?.[key] && ((config as any)[section][key][subkey] = subval);
+                }
+              }
+            } else if (typeof val === "string" && val !== "") {
+              (config as any)[section] && ((config as any)[section][key] = val);
+            }
+          }
+        }
+      }
       res.json({ ok: true });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Unknown error";
@@ -40,17 +43,13 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  /**
-   * Pulls a model in Ollama. Returns ok if already installed.
-   * Descarga un modelo en Ollama. Retorna ok si ya está instalado.
-   */
   app.post("/v1/model", async (req, res) => {
     const id = req.body.id as string;
     if (!id) {
       res.status(400).json({ ok: false, error: "Model id is required" });
       return;
     }
-    const url = config.ollama_base_url || DEFAULTS.ollama_base_url;
+    const url = config.ollama.base_url;
     try {
       const tags = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
       if (tags.ok) {
@@ -61,7 +60,7 @@ export function func(app: Express, _mcp: McpServer): void {
           return;
         }
       }
-    } catch { /* continue to pull */ }
+    } catch {}
 
     try {
       const r = await fetch(`${url}/api/pull`, {
@@ -97,13 +96,9 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  /**
-   * Tests Ollama connectivity and model embedding capability.
-   * Prueba conectividad de Ollama y capacidad de embedding del modelo.
-   */
   app.post("/v1/ollama", async (req, res) => {
-    const url = (req.body.url as string) || config.ollama_base_url || DEFAULTS.ollama_base_url;
-    const model = (req.body.model as string) || config.ollama_embedding_model || DEFAULTS.ollama_embedding_model;
+    const url = (req.body.url as string) || config.ollama.base_url;
+    const model = (req.body.model as string) || config.ollama.model.embedding;
     try {
       const start = performance.now();
       const r = await fetch(`${url}/api/embed`, {
@@ -127,13 +122,9 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  /**
-   * Tests OpenAI API with a real chat completion using user-configured models.
-   * Prueba la API de OpenAI con un chat completion real usando los modelos del usuario.
-   */
   app.post("/v1/openai", async (req, res) => {
     const access_token = (req.body.access_token as string) || "";
-    const url = (req.body.url as string) || config.openai_base_url || DEFAULTS.openai_base_url;
+    const url = (req.body.url as string) || config.openai.base_url;
     const models = (req.body.models as { image?: string; audio?: string }) || {};
     if (!access_token) {
       res.json({ ok: false, error: "access_token is required" });

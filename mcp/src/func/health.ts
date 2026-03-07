@@ -18,7 +18,7 @@ export function func(_app: Express, mcp: McpServer) {
 
     let ragStatus = "unknown";
     try {
-      const url = config.ollama_base_url || "http://localhost:11434";
+      const url = config.ollama.base_url;
       const res = await fetch(`${url}/api/version`, { signal: AbortSignal.timeout(3000) });
       ragStatus = res.ok ? "connected" : `error: HTTP ${res.status}`;
     } catch {
