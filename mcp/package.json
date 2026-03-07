@@ -1,6 +1,6 @@
 {
   "name": "@arcaelas/mcp",
-  "version": "5.6.0",
+  "version": "5.7.0",
   "description": "Unified MCP server for Arko Studio — semantic memory (RAG via Ollama + Vectra), AI image generation, and knowledge base management.",
   "type": "module",
   "main": "src/index.ts",
