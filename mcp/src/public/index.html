@@ -247,6 +247,7 @@
     .fade-up.d2 { animation-delay: .1s; }
     .fade-up.d3 { animation-delay: .15s; }
     .fade-up.d4 { animation-delay: .2s; }
+    .fade-up.d5 { animation-delay: .25s; }
     @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
     /* --- Footer --- */
@@ -382,13 +383,37 @@
         </div>
       </section>
 
+      <!-- Claude -->
+      <section class="card fade-up d3">
+        <div class="card-head">
+          <div class="card-title">
+            <div class="card-icon" style="background:var(--accent-bg);border:1px solid var(--accent-border)">
+              <span class="material-symbols-outlined" style="color:var(--accent)">terminal</span>
+            </div>
+            <h2>Claude</h2>
+          </div>
+        </div>
+        <div class="field">
+          <label for="claude-dirname">Profile Directory</label>
+          <div class="input-wrap">
+            <input type="text" id="claude-dirname" placeholder="~/.claude" class="pr-10">
+            <button type="button" onclick="document.getElementById('claude-dirname-picker').click()" class="toggle-btn">
+              <span class="material-symbols-outlined">folder_open</span>
+            </button>
+            <input type="file" id="claude-dirname-picker" webkitdirectory style="display:none"
+              onchange="if(this.files.length){document.getElementById('claude-dirname').value=this.files[0].webkitRelativePath.split('/')[0]}">
+          </div>
+          <p class="hint">Path to your Claude profile (contains .credentials.json)</p>
+        </div>
+      </section>
+
       <!-- Save -->
-      <button onclick="save()" id="btn-save" class="btn-primary fade-up d3">
+      <button onclick="save()" id="btn-save" class="btn-primary fade-up d4">
         <span class="material-symbols-outlined">save</span>
         Save Configuration
       </button>
 
-      <p class="footer fade-up d4">
+      <p class="footer fade-up d5">
         Configuration stored at <code>~/.arcaelas/mcp/config.json</code>
       </p>
     </div>
@@ -405,6 +430,7 @@
       'openai-model-audio':   ['openai', 'model', 'audio'],
       'ollama-base_url':      ['ollama', 'base_url'],
       'ollama-model-embedding': ['ollama', 'model', 'embedding'],
+      'claude-dirname':         ['claude', 'dirname'],
     };
 
     let installedModels = [];
