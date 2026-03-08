@@ -153,6 +153,42 @@
     .footer{text-align:center;font-size:11px;color:var(--text-d);padding:12px 0 0}
     .footer code{font-family:'SF Mono','Fira Code',monospace;font-size:10px;color:var(--text-s);background:var(--surface);padding:2px 8px;border-radius:6px;border:1px solid var(--border)}
 
+    .wa-list{display:flex;flex-direction:column;gap:8px}
+    .wa-entry{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;animation:slideIn .25s ease-out}
+    .wa-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-s);border:1px solid var(--accent-b);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .wa-avatar .material-symbols-outlined{font-size:18px;color:var(--accent)}
+    .wa-info{flex:1;min-width:0}
+    .wa-phone{font-size:13px;font-weight:600;color:var(--text)}
+    .wa-meta{display:flex;align-items:center;gap:8px;margin-top:2px}
+    .wa-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-d)}
+    .wa-status .dot{width:6px;height:6px;border-radius:50%}
+    .wa-status .dot.ok{background:var(--accent)}
+    .wa-status .dot.warn{background:var(--amber);animation:blink 1.5s infinite}
+    .wa-status .dot.off{background:var(--text-d)}
+    .wa-unread{font-size:10px;font-weight:700;background:var(--accent);color:#0a0a0f;border-radius:10px;padding:1px 7px;line-height:1.5}
+
+    .wa-pairing{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;animation:slideIn .25s ease-out}
+    .wa-pair-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+    .wa-pair-head .field{flex:1;margin:0}
+    .wa-pair-close{display:flex;align-items:center;justify-content:center;width:30px;height:30px;flex-shrink:0;background:none;border:1px solid transparent;border-radius:7px;color:var(--text-d);cursor:pointer;transition:all .15s}
+    .wa-pair-close:hover{background:var(--red-s);border-color:var(--red-b);color:var(--red)}
+    .wa-pair-close .material-symbols-outlined{font-size:16px}
+    .wa-pair-body{text-align:center;padding:8px 0}
+    .wa-pair-status{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-s);padding:8px 16px;border-radius:20px;background:var(--raised)}
+    .wa-pair-code{font-family:'SF Mono',Monaco,'Cascadia Code',monospace;font-size:32px;font-weight:700;letter-spacing:5px;color:var(--accent);padding:16px 0;margin:12px 0;border:1px dashed var(--border);border-radius:var(--r);background:var(--raised);transition:all .3s ease}
+    .wa-pair-code.pulse{animation:pulse .6s ease}
+    @keyframes pulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.7}100%{transform:scale(1);opacity:1}}
+    .wa-pair-instructions{font-size:12px;color:var(--text-d);line-height:1.6;margin-bottom:16px}
+    .wa-pair-instructions strong{color:var(--text-s)}
+    .wa-pair-timer{font-size:11px;color:var(--text-d);margin-top:8px}
+    .wa-pair-success{color:var(--accent);font-size:14px;font-weight:500;margin-top:8px}
+    .wa-pair-error{color:var(--red);font-size:12px;margin-top:8px}
+    .wa-pair-actions{margin-top:12px}
+
+    .wa-input-row{display:flex;gap:8px}
+    .wa-input-row input{flex:1;min-width:0}
+    .wa-input-row .btn-ghost{padding:9px 14px;flex-shrink:0}
+
     @media(max-width:560px){
       .wrap{padding:0 16px 32px}.topbar-inner{padding:12px 16px}.section{padding:28px 0 22px}
       .field-row,.provider-bottom,.ollama-fields,.provider-models-grid{grid-template-columns:1fr}
@@ -300,6 +336,56 @@
           <input type="range" id="research-score" min="0" max="1" step="0.05" value="0.7" style="--val:0.7"
             oninput="state.research.score=parseFloat(this.value);this.style.setProperty('--val',this.value);document.getElementById('score-value').textContent=parseFloat(this.value).toFixed(2)">
           <p class="hint">Umbral de confianza para detener la investigacion</p>
+        </div>
+      </section>
+
+      <!-- WhatsApp -->
+      <section class="section">
+        <div class="section-head">
+          <div class="section-icon green"><span class="material-symbols-outlined">chat</span></div>
+          <div class="section-info"><h2>WhatsApp</h2><p>Cuentas vinculadas y sesiones activas</p></div>
+          <div class="section-actions"><button class="btn-ghost" id="btn-wa-add" onclick="waStartPairing()"><span class="material-symbols-outlined">add</span>Vincular</button></div>
+        </div>
+        <div id="wa-list" class="wa-list"></div>
+        <div id="wa-empty" class="empty-state"><span class="material-symbols-outlined">phone_disabled</span><p>Sin cuentas vinculadas</p></div>
+        <div id="wa-pairing" class="wa-pairing" style="display:none">
+          <div class="wa-pair-head">
+            <div class="field">
+              <label>Numero de telefono</label>
+              <div class="wa-input-row">
+                <input type="text" id="wa-phone-input" placeholder="+52 1 234 567 8900" onkeydown="if(event.key==='Enter')waConnect()">
+                <button class="btn-ghost" id="btn-wa-connect" onclick="waConnect()"><span class="material-symbols-outlined">link</span>Conectar</button>
+              </div>
+            </div>
+            <button class="wa-pair-close" onclick="waCancelPairing()"><span class="material-symbols-outlined">close</span></button>
+          </div>
+          <div id="wa-pair-body" class="wa-pair-body" style="display:none">
+            <div id="wa-pair-waiting" style="display:none">
+              <div class="wa-pair-status"><span class="dot warn"></span>Conectando...</div>
+            </div>
+            <div id="wa-pair-code-section" style="display:none">
+              <div class="wa-pair-code" id="wa-pair-code"></div>
+              <div class="wa-pair-instructions">
+                Abre <strong>WhatsApp</strong> en tu telefono<br>
+                Ve a <strong>Dispositivos vinculados</strong> &rarr; <strong>Vincular dispositivo</strong><br>
+                Toca <strong>Vincular con numero de telefono</strong><br>
+                Ingresa el codigo de arriba
+              </div>
+              <div class="wa-pair-status"><span class="dot warn"></span>Esperando confirmacion...</div>
+              <div class="wa-pair-timer" id="wa-pair-timer"></div>
+            </div>
+            <div id="wa-pair-connected" style="display:none">
+              <div class="wa-pair-code" style="color:var(--accent);font-size:22px;letter-spacing:2px">&#10003; Conectado</div>
+              <p class="wa-pair-success">Cuenta vinculada correctamente</p>
+            </div>
+            <div id="wa-pair-expired" style="display:none">
+              <div class="wa-pair-status"><span class="dot off"></span>Codigo expirado</div>
+              <p class="wa-pair-error">El codigo expiro antes de ser ingresado.</p>
+              <div class="wa-pair-actions">
+                <button class="btn-ghost" onclick="waRetry()"><span class="material-symbols-outlined">refresh</span>Nuevo codigo</button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -464,6 +550,7 @@
       var menu=document.getElementById(menuId),panel=menu.querySelector('.menu-panel');
       panel.innerHTML=items.html;
       if(!items.exists){menu.dataset.value='';state[stateKey]='';menu.querySelector('.menu-label').textContent='Seleccionar proveedor';menu.querySelector('.menu-icon').textContent='dns'}
+      else{var sel=panel.querySelector('.menu-item.selected');if(sel){menu.dataset.value=sel.dataset.value;menu.querySelector('.menu-label').textContent=sel.querySelector('.menu-item-name').textContent;menu.querySelector('.menu-icon').textContent=sel.querySelector('.material-symbols-outlined').textContent}}
     }
 
     function refreshOpenaiRef(){
@@ -480,7 +567,7 @@
         var first=panel.querySelector('.menu-item');
         if(first)pickResearchProv(first);
         else{menu.dataset.value='';state.research.provider='';menu.querySelector('.menu-label').textContent='Seleccionar proveedor';menu.querySelector('.menu-icon').textContent='dns'}
-      }
+      }else{var sel=panel.querySelector('.menu-item.selected');if(sel){menu.dataset.value=sel.dataset.value;menu.querySelector('.menu-label').textContent=sel.querySelector('.menu-item-name').textContent;menu.querySelector('.menu-icon').textContent=sel.querySelector('.material-symbols-outlined').textContent}}
     }
     function pickResearchProv(item){pickRef(item,'research-provider-menu','research.provider')}
 
@@ -509,7 +596,7 @@
     async function fetchOllamaModels(){
       var url=state.ollama.base_url||'http://localhost:11434';
       try{var r=await fetch(url+'/api/tags',{signal:AbortSignal.timeout(3000)});if(r.ok){var b=await r.json();installedModels=(b.models||[]).map(function(m){return m.name})}}
-      catch{try{var r2=await fetch('/v1/settings');if(r2.ok){var d=await r2.json();installedModels=d.models||[]}}catch{}}
+      catch{try{var r2=await fetch('/v1/setting');if(r2.ok){var d=await r2.json();installedModels=d.models||[]}}catch{}}
       renderModelList();checkModelStatus();
     }
     function checkModelStatus(){
@@ -527,7 +614,7 @@
     document.addEventListener('DOMContentLoaded',loadSettings);
     async function loadSettings(){
       try{
-        var r=await fetch('/v1/settings'),data=await r.json();
+        var r=await fetch('/v1/setting'),data=await r.json();
         state.providers=(data.providers||[]).map(function(p){return{name:p.name||'',provider:p.provider||'openai',base_url:p.base_url||'',api_key:p.api_key||'',models:p.models||{}}});
         state.ollama={base_url:(data.ollama&&data.ollama.base_url)||'',model:{embedding:(data.ollama&&data.ollama.model&&data.ollama.model.embedding)||''}};
         state.research={provider:(data.research&&data.research.provider)||'',model:(data.research&&data.research.model)||'haiku',think:(data.research&&data.research.think)||'none',score:data.research&&data.research.score!=null?data.research.score:0.7};
@@ -542,7 +629,7 @@
         if(state.research.think)setMenuValue('research-think-menu',state.research.think);
         var s=document.getElementById('research-score');s.value=state.research.score;s.style.setProperty('--val',state.research.score);
         document.getElementById('score-value').textContent=parseFloat(state.research.score).toFixed(2);
-        refreshRefs();renderModelList();checkModelStatus();
+        refreshRefs();renderModelList();checkModelStatus();waLoadAccounts();
 
         document.getElementById('skeleton').style.display='none';
         document.getElementById('content').style.display='block';
@@ -560,7 +647,7 @@
       var btn=document.getElementById('btn-save'),orig=btn.innerHTML;
       btn.disabled=true;btn.innerHTML='<span class="material-symbols-outlined spin" style="font-size:16px">progress_activity</span>';
       try{
-        var r=await fetch('/v1/settings',{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});
+        var r=await fetch('/v1/setting',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});
         var d=await r.json();showToast(d.ok?'Configuracion guardada':'Error al guardar',d.ok?'success':'error');
       }catch(e){showToast(e.message,'error')}
       finally{btn.disabled=false;btn.innerHTML=orig}
@@ -578,13 +665,171 @@
       var pb=document.getElementById('btn-pull'),prog=document.getElementById('pull-progress'),bar=document.getElementById('pull-bar'),txt=document.getElementById('pull-text');
       pb.style.display='none';prog.classList.add('visible');bar.className='progress-fill pulse';bar.style.width='';txt.textContent='Iniciando descarga...';
       try{
-        var res=await fetch('/v1/model',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:model})});
+        var res=await fetch('/v1/ollama',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model})});
         var ct=res.headers.get('content-type')||'';
         if(ct.includes('application/json')){var d=await res.json();if(d.ok){bar.className='progress-fill';bar.style.width='100%';txt.textContent=d.status==='already_installed'?'Ya instalado':'Completo';if(!installedModels.includes(model))installedModels.push(model);checkModelStatus();renderModelList();setTimeout(function(){prog.classList.remove('visible')},2500);return}showToast(d.error||'Error','error');prog.classList.remove('visible');pb.style.display='';return}
         var reader=res.body.getReader(),decoder=new TextDecoder(),buffer='';
         while(true){var chunk=await reader.read();if(chunk.done)break;buffer+=decoder.decode(chunk.value,{stream:true});var lines=buffer.split('\n');buffer=lines.pop()||'';for(var j=0;j<lines.length;j++){if(!lines[j].trim())continue;try{var msg=JSON.parse(lines[j]);if(msg.total&&msg.completed){var pct=Math.round(msg.completed/msg.total*100);bar.className='progress-fill';bar.style.width=pct+'%';txt.textContent=(msg.status||'Descargando')+' — '+pct+'%'}else if(msg.status){txt.textContent=msg.status}}catch(e){}}}
         bar.className='progress-fill';bar.style.width='100%';txt.textContent='Completo';if(!installedModels.includes(model))installedModels.push(model);checkModelStatus();renderModelList();showToast('Modelo descargado','success');setTimeout(function(){prog.classList.remove('visible')},2500);
       }catch(err){showToast(err.message||'Error','error');prog.classList.remove('visible');pb.style.display=''}
+    }
+
+    /* ── WhatsApp ── */
+    var waAccounts = [];
+    var waPairing = { timer: null, sse: null, phone: null };
+
+    async function waLoadAccounts() {
+      try {
+        var r = await fetch('/mcp/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actions: [{ accounts: true }] }) });
+        var d = await r.json();
+        if (Array.isArray(d)) d = d[0];
+        waAccounts = (d && d.ok && Array.isArray(d.data)) ? d.data : [];
+      } catch { waAccounts = []; }
+      waRender();
+    }
+
+    function waRender() {
+      var list = document.getElementById('wa-list');
+      list.innerHTML = '';
+      waAccounts.forEach(function(a, i) {
+        var dot = a.status === 'connected' ? 'ok' : a.status === 'connecting' ? 'warn' : 'off';
+        var label = a.status === 'connected' ? 'Conectado' : a.status === 'connecting' ? 'Conectando...' : 'Desconectado';
+        var el = document.createElement('div');
+        el.className = 'wa-entry';
+        el.innerHTML =
+          '<div class="wa-avatar"><span class="material-symbols-outlined">person</span></div>' +
+          '<div class="wa-info">' +
+            '<div class="wa-phone">+' + escH(a.phone) + '</div>' +
+            '<div class="wa-meta">' +
+              '<span class="wa-status"><span class="dot ' + dot + '"></span>' + label + '</span>' +
+              (a.unread > 0 ? '<span class="wa-unread">' + a.unread + '</span>' : '') +
+            '</div>' +
+          '</div>' +
+          '<button class="btn-delete" onclick="waDisconnect(\'' + esc(a.phone) + '\')"><span class="material-symbols-outlined">close</span></button>';
+        list.appendChild(el);
+      });
+      document.getElementById('wa-empty').style.display = waAccounts.length ? 'none' : 'block';
+    }
+
+    function waStartPairing() {
+      document.getElementById('wa-pairing').style.display = 'block';
+      document.getElementById('wa-pair-body').style.display = 'none';
+      document.getElementById('btn-wa-add').disabled = true;
+      var inp = document.getElementById('wa-phone-input');
+      inp.value = '';
+      setTimeout(function() { inp.focus(); }, 100);
+    }
+
+    function waCancelPairing() {
+      waCleanup();
+      document.getElementById('wa-pairing').style.display = 'none';
+      document.getElementById('btn-wa-add').disabled = false;
+      document.getElementById('btn-wa-connect').disabled = false;
+      document.getElementById('wa-phone-input').disabled = false;
+    }
+
+    function waCleanup() {
+      if (waPairing.timer) { clearInterval(waPairing.timer); waPairing.timer = null; }
+      if (waPairing.sse) { waPairing.sse.close(); waPairing.sse = null; }
+      waPairing.phone = null;
+    }
+
+    function waShowStep(step) {
+      ['wa-pair-waiting', 'wa-pair-code-section', 'wa-pair-connected', 'wa-pair-expired'].forEach(function(id) {
+        document.getElementById(id).style.display = 'none';
+      });
+      document.getElementById('wa-pair-body').style.display = 'block';
+      if (step) document.getElementById(step).style.display = 'block';
+    }
+
+    async function waConnect() {
+      var raw = document.getElementById('wa-phone-input').value.replace(/\D/g, '');
+      if (!raw || raw.length < 8) { showToast('Ingresa un numero de telefono valido', 'error'); document.getElementById('wa-phone-input').focus(); return; }
+
+      var btn = document.getElementById('btn-wa-connect');
+      btn.disabled = true;
+      document.getElementById('wa-phone-input').disabled = true;
+      waShowStep('wa-pair-waiting');
+
+      try {
+        var r = await fetch('/v1/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: raw }) });
+        var d = await r.json();
+        if (!d.ok) { showToast(d.error || 'Error al vincular', 'error'); waCancelPairing(); return; }
+        waPairing.phone = raw;
+        waListenSSE(d.token);
+      } catch (e) { showToast(e.message || 'Error de conexion', 'error'); waCancelPairing(); }
+    }
+
+    function waListenSSE(token) {
+      var source = new EventSource('/v1/whatsapp?access_token=' + encodeURIComponent(token));
+      waPairing.sse = source;
+
+      source.addEventListener('code', function(e) {
+        var data = JSON.parse(e.data);
+        var el = document.getElementById('wa-pair-code');
+        el.textContent = data.code.replace(/(.{4})/g, '$1 ').trim();
+        el.classList.add('pulse');
+        setTimeout(function() { el.classList.remove('pulse'); }, 600);
+        waShowStep('wa-pair-code-section');
+        waStartCountdown(60);
+      });
+
+      source.addEventListener('connected', function() {
+        waStopCountdown();
+        source.close();
+        waPairing.sse = null;
+        waShowStep('wa-pair-connected');
+        waLoadAccounts();
+        setTimeout(function() {
+          waCancelPairing();
+          showToast('Cuenta +' + waPairing.phone + ' vinculada', 'success');
+        }, 2000);
+      });
+
+      source.addEventListener('expired', function() {
+        waStopCountdown();
+        waShowStep('wa-pair-expired');
+      });
+
+      source.onerror = function() {
+        if (source.readyState === EventSource.CLOSED) {
+          waStopCountdown();
+          showToast('Conexion perdida', 'error');
+          waCancelPairing();
+        }
+      };
+    }
+
+    function waStartCountdown(seconds) {
+      waStopCountdown();
+      var remaining = seconds;
+      var el = document.getElementById('wa-pair-timer');
+      el.textContent = remaining + 's restantes';
+      waPairing.timer = setInterval(function() {
+        remaining--;
+        if (remaining <= 0) { waStopCountdown(); el.textContent = ''; return; }
+        el.textContent = remaining + 's restantes';
+      }, 1000);
+    }
+
+    function waStopCountdown() {
+      if (waPairing.timer) { clearInterval(waPairing.timer); waPairing.timer = null; }
+    }
+
+    function waRetry() {
+      waCleanup();
+      waConnect();
+    }
+
+    async function waDisconnect(phone) {
+      try {
+        var r = await fetch('/mcp/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actions: [{ close: true, owner: phone }] }) });
+        var d = await r.json();
+        if (Array.isArray(d)) d = d[0];
+        if (d && d.ok) { showToast('Cuenta +' + phone + ' desvinculada', 'success'); }
+        else { showToast((d && d.error) || 'Error al desvincular', 'error'); }
+      } catch (e) { showToast(e.message || 'Error', 'error'); }
+      waLoadAccounts();
     }
 
     /* ── Helpers ── */

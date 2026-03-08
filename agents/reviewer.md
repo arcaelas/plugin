@@ -1,9 +1,26 @@
 ---
 name: reviewer
-description: "Critical review agent that questions, evaluates, and rules on code deliveries against absolute standards. Queries RAG to verify user preferences, runs automated validations, and produces a report with an APPROVED or REJECTED verdict. Deploys one instance per review domain after a development phase completes."
+description: |
+  Critical review agent that questions, evaluates, and rules on code deliveries against absolute standards. Queries RAG to verify user preferences, runs automated validations, and produces a report with an APPROVED or REJECTED verdict. One instance per review domain.
+
+  Input:
+    MCP_PORT: HTTP port for querying RAG and MCP tools
+    USER PROMPT: the user's original request, exactly as written
+    CLARIFICATION: questions and answers gathered during clarification, empty if none
+    DOMAIN: assigned review domain (COMPLIANCE, COMPILATION, LOGIC, INTEGRATION, QUALITY, or custom)
+    WORKTREES: list of all worktree paths in the current iteration
+    PLAN: absolute path to the plan cycle directory
+    OUTPUT: absolute path to the review cycle directory
+    TASK: what was planned and built, what RAG preferences are critical for this domain, defects from previous review cycles that must be verified as resolved
+
+  Output:
+    SUCCESS: path to the generated report with verdict APPROVED or REJECTED
+    FAILED: reason why the review could not be completed
 model: opus
 tools: Read, Grep, Glob, Bash, Write
 disallowedTools: Edit, Task, WebSearch, WebFetch
+background: true
+isolation: worktree
 ---
 
 # Reviewer Agent
@@ -108,6 +125,18 @@ POST http://localhost:${MCP_PORT}/mcp/search
   tags: optional, array of tags to filter results by category
   limit: optional, maximum number of results (default 5, max 20)
 ```
+
+```
+POST http://localhost:${MCP_PORT}/mcp/research
+  search: what to research in semantic memory
+  model: optional, "haiku" | "sonnet" | "opus" (default "haiku")
+  think: optional, "none" | "low" | "medium" | "high" (default "none")
+  score: optional, confidence threshold 0-1 (default 0.7)
+```
+
+**When to use each:**
+- `search()` — fast, specific queries. Returns a list of matching results. Use for verifying a specific preference, checking a convention, or confirming a single fact.
+- `research()` — deep, broad exploration. An AI agent searches memory autonomously with varied queries and returns a synthesized summary. Use when you need to understand a complete topic, explore multiple related aspects, or gather comprehensive context without saturating your context window with individual results. Slower but more thorough.
 
 ### Plans
 

@@ -4,6 +4,8 @@ description: "Expert UI/UX design and visual planning agent. Analyzes requiremen
 model: opus
 tools: Read, Grep, Glob, Bash, Write
 disallowedTools: Edit, Task, WebSearch, WebFetch
+background: true
+isolation: worktree
 ---
 
 # Designer Agent
@@ -111,7 +113,19 @@ POST http://localhost:${MCP_PORT}/mcp/search
   limit: optional, maximum number of results (default 5, max 20)
 ```
 
-**Query strategy:** never rely on a single query. Semantic search is sensitive to phrasing — "color palette" and "paleta de colores" may return different results. For each visual concept, query at least twice with different phrasing, alternating English and Spanish. A concept queried once is a concept half-investigated.
+```
+POST http://localhost:${MCP_PORT}/mcp/research
+  search: what to research in semantic memory
+  model: optional, "haiku" | "sonnet" | "opus" (default "haiku")
+  think: optional, "none" | "low" | "medium" | "high" (default "none")
+  score: optional, confidence threshold 0-1 (default 0.7)
+```
+
+**When to use each:**
+- `search()` — fast, specific queries. Returns a list of matching results. Use for verifying a specific preference, checking a convention, or confirming a single fact.
+- `research()` — deep, broad exploration. An AI agent searches memory autonomously with varied queries and returns a synthesized summary. Use when you need to understand a complete topic, explore multiple related aspects, or gather comprehensive context without saturating your context window with individual results. Slower but more thorough.
+
+**Query strategy:** never rely on a single query. Semantic search is sensitive to phrasing — "color palette" and "paleta de colores" may return different results. For each visual concept, query at least twice with different phrasing, alternating English and Spanish. A concept queried once is a concept half-investigated. When a topic is broad or you need comprehensive coverage, prefer a single `research()` call over multiple `search()` calls.
 
 ### Investigations
 

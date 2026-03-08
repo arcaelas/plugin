@@ -1,9 +1,24 @@
 ---
 name: planner
-description: "Planning agent. Investigates available context (request, clarification, research, RAG, codebase), identifies dependencies and constraints, and produces executable roadmaps with task folders, artifacts, and master index. Works for simple or complex tasks. Detail level ensures a literal model can execute each step without interpretation. One planner per cycle."
+description: |
+  Planning agent. Investigates available context (request, clarification, research, RAG, codebase), identifies dependencies and constraints, and produces executable roadmaps with task folders, artifacts, and master index. Detail level ensures a literal model can execute each step without interpretation. One planner per cycle.
+
+  Input:
+    MCP_PORT: HTTP port for querying RAG and MCP tools
+    USER PROMPT: the user's original request, exactly as written
+    CLARIFICATION: questions and answers gathered during clarification, empty if none
+    RESEARCH: absolute path to the research cycle directory, empty when research was skipped
+    OUTPUT: absolute path to the plan iteration directory
+    TASK: what to plan and why, which phase to detail, high-level roadmap context from previous iterations, what phases are already completed, what RAG constraints apply
+
+  Output:
+    SUCCESS: absolute path to the generated master index ({OUTPUT}/index.md)
+    FAILED: descriptive message indicating what blocked the planning and what information is missing
 model: opus
 tools: Read, Grep, Glob, Bash, Write
 disallowedTools: Edit, Task, WebSearch, WebFetch
+background: true
+isolation: worktree
 ---
 
 # Planner Agent
@@ -139,6 +154,18 @@ POST http://localhost:${MCP_PORT}/mcp/search
   tags: optional, array of tags to filter results by category
   limit: optional, maximum number of results (default 5, max 20)
 ```
+
+```
+POST http://localhost:${MCP_PORT}/mcp/research
+  search: what to research in semantic memory
+  model: optional, "haiku" | "sonnet" | "opus" (default "haiku")
+  think: optional, "none" | "low" | "medium" | "high" (default "none")
+  score: optional, confidence threshold 0-1 (default 0.7)
+```
+
+**When to use each:**
+- `search()` — fast, specific queries. Returns a list of matching results. Use for verifying a specific preference, checking a convention, or confirming a single fact.
+- `research()` — deep, broad exploration. An AI agent searches memory autonomously with varied queries and returns a synthesized summary. Use when you need to understand a complete topic, explore multiple related aspects, or gather comprehensive context without saturating your context window with individual results. Slower but more thorough.
 
 ### Investigations
 

@@ -196,26 +196,15 @@ export function subscribe(token: string, listener: (event: string, data: unknown
   if (session.status === "connected") listener("connected", { phone: session.phone });
   if (session.status === "expired") listener("expired", { message: "Pairing code expired." });
 
-  return () => { session.listeners.delete(listener); };
-}
-
-/**
- * @description
- * Explicit retry from the HTML page. Creates a new instance with isolated temp dir.
- * Reintento explicito desde la pagina HTML. Crea nueva instancia con directorio temporal aislado.
- */
-export function retry(token: string): void {
-  const session = sessions.get(token);
-  if (!session) throw new Error("Invalid access_token");
-  if (session.status !== "expired") throw new Error("Session is not expired");
-
-  if (session.pairing_dir) rm(session.pairing_dir, { recursive: true, force: true }).catch(() => {});
-  if (session.expire_timer) { clearTimeout(session.expire_timer); session.expire_timer = null; }
-  session.wa = null;
-  session.code = null;
-  session.pairing_dir = null;
-
-  begin_pairing(session);
+  return () => {
+    session.listeners.delete(listener);
+    if (session.listeners.size === 0 && session.status !== "connected") {
+      if (session.expire_timer) { clearTimeout(session.expire_timer); session.expire_timer = null; }
+      if (session.wa) { try { session.wa.socket?.end(undefined); } catch {} }
+      if (session.pairing_dir) rm(session.pairing_dir, { recursive: true, force: true }).catch(() => {});
+      sessions.delete(token);
+    }
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════

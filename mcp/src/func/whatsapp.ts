@@ -23,7 +23,6 @@ const PinAction = z.object({ chat: z.string(), pin: z.boolean(), owner: O });
 const DeleteChatAction = z.object({ chat: z.string(), delete: z.literal(true), owner: O });
 const MessagesAction = z.object({ chat: z.string(), messages: z.number().min(1).max(100), owner: O, offset: z.number().min(0).optional() });
 const ContactAction = z.object({ contact: z.string(), owner: O });
-const PairAction = z.object({ pair: z.string() });
 const UnreadAction = z.object({ unread: z.literal(true), owner: O });
 const AccountsAction = z.object({ accounts: z.literal(true) });
 const CloseAction = z.object({ close: z.literal(true), owner: O });
@@ -31,7 +30,7 @@ const CloseAction = z.object({ close: z.literal(true), owner: O });
 const Action = z.union([
   ReactAction, DeleteMessageAction,
   SendTextAction, SendImageAction, SendVideoAction, SendAudioAction, SendLocationAction, SendPollAction, SeenAction, ArchiveAction, PinAction, DeleteChatAction, MessagesAction,
-  ContactAction, PairAction, UnreadAction, AccountsAction, CloseAction,
+  ContactAction, UnreadAction, AccountsAction, CloseAction,
 ]);
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -74,12 +73,6 @@ async function resolve_contact(wa: any, jid: string): Promise<{ phone: string; n
 
 async function handle(action: Record<string, unknown>): Promise<ActionResult> {
   try {
-    if ("pair" in action) {
-      const { token } = ws.pair(action.pair as string);
-      const port = process.env.PORT || "3100";
-      return { ok: true, data: { token, url: `http://localhost:${port}/whatsapp?access_token=${token}` } };
-    }
-
     if ("accounts" in action) {
       const result = [];
       for (const a of ws.list_accounts()) {
@@ -218,7 +211,6 @@ export async function func(app: Express, mcp: McpServer) {
   mcp.registerTool("whatsapp", {
     description: [
       "WhatsApp batch actions. Each object shape determines the operation:",
-      "  { pair }                              — Link new phone (returns URL for pairing page)",
       "  { chat, text, owner? }               — Send text message",
       "  { chat, image, owner?, caption? }     — Send image",
       "  { chat, video, owner?, caption? }     — Send video",
@@ -245,37 +237,6 @@ export async function func(app: Express, mcp: McpServer) {
     const results: ActionResult[] = [];
     for (const action of input.actions) results.push(await handle(action as Record<string, unknown>));
     return { content: [{ type: "text" as const, text: JSON.stringify(results) }] };
-  });
-
-  app.get("/whatsapp", (req, res) => {
-    res.redirect(`/whatsapp.html?${new URLSearchParams(req.query as Record<string, string>)}`);
-  });
-
-  app.get("/whatsapp/sse", (req, res) => {
-    const token = req.query.access_token as string;
-    if (!token) { res.status(400).json({ error: "Missing access_token" }); return; }
-    const session = ws.get_session(token);
-    if (!session) { res.status(404).json({ error: "Invalid access_token" }); return; }
-
-    res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" });
-    res.flushHeaders();
-    res.write(":ok\n\n");
-
-    const unsubscribe = ws.subscribe(token, (event: string, data: unknown) => {
-      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-    });
-    req.on("close", unsubscribe);
-  });
-
-  app.post("/whatsapp/retry", (req, res) => {
-    const token = (req.query.access_token || req.body?.access_token) as string;
-    if (!token) { res.status(400).json({ error: "Missing access_token" }); return; }
-    try {
-      ws.retry(token);
-      res.json({ ok: true });
-    } catch (err: unknown) {
-      res.status(400).json({ error: err instanceof Error ? err.message : "Invalid request" });
-    }
   });
 
   await ws.boot();

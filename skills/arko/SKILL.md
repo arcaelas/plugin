@@ -204,7 +204,8 @@ Retry: {0}/3
 - `Read` — read `.claude/.arko/` files, project files when a decision requires it.
 - `Write` — write only to `.claude/.arko/`.
 - `Bash` — git operations, `mkdir -p`, operational commands. Avoid verbose output.
-- RAG `search()` — query RAG directly.
+- RAG `search()` — fast, specific queries to RAG. Returns a list of matching results.
+- RAG `research()` — deep, broad exploration of user memory. An AI agent searches RAG autonomously with varied queries and returns a synthesized summary. Use when you need comprehensive context on a topic without saturating your context window.
 
 ### Deploy Pattern
 

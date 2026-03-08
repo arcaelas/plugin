@@ -30,7 +30,7 @@ const server = new McpServer({
 
 const app = express();
 app.use(express.json());
-app.use(express.static(resolve(dirname(fileURLToPath(import.meta.url)), "public")));
+app.use(express.static(resolve(dirname(fileURLToPath(import.meta.url)), "app")));
 
 // --- Register funcs ---
 const funcs: Array<{ func: (_app: Express, _mcp: McpServer) => void | Promise<void> }> = [

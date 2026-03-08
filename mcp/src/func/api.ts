@@ -1,10 +1,11 @@
 import type { Express } from "express";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import config from "../lib/config.js";
+import * as ws from "../lib/whatsapp.js";
 
 export function func(app: Express, _mcp: McpServer): void {
 
-  app.get("/v1/settings", async (_req, res) => {
+  app.get("/v1/setting", async (_req, res) => {
     const settings = config.config();
     let models: string[] = [];
     try {
@@ -18,7 +19,7 @@ export function func(app: Express, _mcp: McpServer): void {
     res.json({ ...settings, models });
   });
 
-  app.patch("/v1/settings", (req, res) => {
+  app.post("/v1/setting", (req, res) => {
     try {
       const body = req.body as Record<string, unknown>;
 
@@ -40,10 +41,38 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  app.post("/v1/model", async (req, res) => {
-    const id = req.body.id as string;
-    if (!id) {
-      res.status(400).json({ ok: false, error: "Model id is required" });
+  // --- Ollama ---
+
+  app.post("/v1/ollama", async (req, res) => {
+    const url = (req.body.url as string) || config.ollama.base_url;
+    const model = (req.body.model as string) || config.ollama.model.embedding;
+    try {
+      const start = performance.now();
+      const r = await fetch(`${url}/api/embed`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, input: "connection test" }),
+        signal: AbortSignal.timeout(30000),
+      });
+      const elapsed = Math.round(performance.now() - start);
+      if (!r.ok) {
+        const body = (await r.json().catch(() => ({}))) as { error?: string };
+        res.json({ ok: false, error: body.error || `HTTP ${r.status}` });
+        return;
+      }
+      const body = (await r.json()) as { embeddings?: number[][] };
+      const dims = body.embeddings?.[0]?.length ?? 0;
+      res.json({ ok: true, model, dims, elapsed_ms: elapsed });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Connection failed";
+      res.json({ ok: false, error: message });
+    }
+  });
+
+  app.put("/v1/ollama", async (req, res) => {
+    const model = req.body.model as string;
+    if (!model) {
+      res.status(400).json({ ok: false, error: "Model is required" });
       return;
     }
     const url = config.ollama.base_url;
@@ -51,7 +80,7 @@ export function func(app: Express, _mcp: McpServer): void {
       const tags = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
       if (tags.ok) {
         const body = (await tags.json()) as { models?: { name: string }[] };
-        const installed = body.models?.some((m) => m.name === id || m.name === `${id}:latest`) ?? false;
+        const installed = body.models?.some((m) => m.name === model || m.name === `${model}:latest`) ?? false;
         if (installed) {
           res.json({ ok: true, status: "already_installed" });
           return;
@@ -63,7 +92,7 @@ export function func(app: Express, _mcp: McpServer): void {
       const r = await fetch(`${url}/api/pull`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: id, stream: true }),
+        body: JSON.stringify({ name: model, stream: true }),
       });
       if (!r.ok || !r.body) {
         res.status(502).json({ ok: false, error: `Ollama responded HTTP ${r.status}` });
@@ -93,30 +122,43 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  app.post("/v1/ollama", async (req, res) => {
-    const url = (req.body.url as string) || config.ollama.base_url;
-    const model = (req.body.model as string) || config.ollama.model.embedding;
-    try {
-      const start = performance.now();
-      const r = await fetch(`${url}/api/embed`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ model, input: "connection test" }),
-        signal: AbortSignal.timeout(30000),
-      });
-      const elapsed = Math.round(performance.now() - start);
-      if (!r.ok) {
-        const body = (await r.json().catch(() => ({}))) as { error?: string };
-        res.json({ ok: false, error: body.error || `HTTP ${r.status}` });
-        return;
-      }
-      const body = (await r.json()) as { embeddings?: number[][] };
-      const dims = body.embeddings?.[0]?.length ?? 0;
-      res.json({ ok: true, model, dims, elapsed_ms: elapsed });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Connection failed";
-      res.json({ ok: false, error: message });
+  // --- WhatsApp pairing ---
+
+  app.post("/v1/whatsapp", (req, res) => {
+    const phone = req.body.phone as string;
+    if (!phone) {
+      res.status(400).json({ ok: false, error: "Phone is required" });
+      return;
     }
+    try {
+      const { token } = ws.pair(phone);
+      res.json({ ok: true, token });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unknown error";
+      res.status(400).json({ ok: false, error: message });
+    }
+  });
+
+  app.get("/v1/whatsapp", (req, res) => {
+    const token = req.query.access_token as string;
+    if (!token) {
+      res.status(400).json({ error: "Missing access_token" });
+      return;
+    }
+    const session = ws.get_session(token);
+    if (!session) {
+      res.status(404).json({ error: "Invalid access_token" });
+      return;
+    }
+
+    res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" });
+    res.flushHeaders();
+    res.write(":ok\n\n");
+
+    const unsubscribe = ws.subscribe(token, (event: string, data: unknown) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+    });
+    req.on("close", unsubscribe);
   });
 
 }
