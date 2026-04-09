@@ -3,8 +3,13 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import pkg from "@arcaelas/agent";
 const { Agent, Tool, Rule, ClaudeCode } = pkg;
+import { homedir } from "node:os";
 import * as rag from "../lib/rag.js";
 import config from "../lib/config.js";
+
+function resolveHome(p: string): string {
+  return p.startsWith("~") ? p.replace("~", homedir()) : p;
+}
 
 export function func(_app: Express, mcp: McpServer) {
   mcp.registerTool("research", {
@@ -24,7 +29,7 @@ export function func(_app: Express, mcp: McpServer) {
     const agent = new Agent({
       name: "researcher",
       description: "Searches semantic memory and synthesizes findings",
-      providers: [new ClaudeCode({ model: input.model ?? "haiku", think: "none", dirname: p.base_url })],
+      providers: [new ClaudeCode({ model: input.model ?? "haiku", think: "none", dirname: resolveHome(p.dirname ?? p.base_url ?? "") })],
       rules: [new Rule(
         "You are a research agent with access to semantic memory (RAG). " +
         "Search multiple times using varied phrasing to gather comprehensive information. " +
