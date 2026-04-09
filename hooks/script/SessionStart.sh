@@ -1,17 +1,9 @@
 #!/usr/bin/env bash
 # SessionStart: initialize Arko runtime directories, validate environment
 
-# Create runtime artifact directories
-mkdir -p .claude/.arko/{research,plan,review,resume,.worktree} 2>/dev/null || true
-
 # Install MCP dependencies only if node_modules is missing
 if [ ! -d "${CLAUDE_PLUGIN_ROOT}/mcp/node_modules" ]; then
   npx -y yarn --cwd "${CLAUDE_PLUGIN_ROOT}/mcp" install --silent 2>/dev/null || true
-fi
-
-# Ensure .gitignore excludes runtime artifacts
-if [ -f .gitignore ]; then
-  grep -qF '.claude/.arko/' .gitignore 2>/dev/null || echo '.claude/.arko/' >> .gitignore
 fi
 
 WARNINGS=""
@@ -28,14 +20,8 @@ if ! curl -sf --max-time 2 "${OLLAMA_BASE_URL:-http://localhost:11434}/api/versi
 [!] Ollama not reachable — MCP RAG (semantic memory) will fail."
 fi
 
-# Validate git (required for worktree isolation)
-if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  WARNINGS="${WARNINGS}
-[!] Not a git repository — worktree isolation will not work. Run: git init"
-fi
-
 # Output structured JSON for Claude Code
-CONTEXT="Arko Studio active. Runtime artifacts at .claude/.arko/{research,plan,review,resume,.worktree}/"
+CONTEXT="MCP plugin active."
 [ -n "$WARNINGS" ] && CONTEXT="${CONTEXT}
 
 Setup warnings:${WARNINGS}"

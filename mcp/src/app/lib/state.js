@@ -2,10 +2,8 @@ const listeners = new Set();
 
 export const state = {
   providers: [],
-  ollama: { base_url: '', model: { embedding: '' } },
-  research: { provider: '', model: 'haiku', think: 'none', score: 0.7 },
-  image: '',
-  models: [],
+  research: { provider: '' },
+  rag: { provider: '' },
   _loaded: false,
 };
 

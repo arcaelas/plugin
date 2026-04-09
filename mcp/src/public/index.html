@@ -91,6 +91,8 @@
     .provider-entry[data-provider="openai"]{border-left-color:var(--amber)}
     .provider-entry[data-provider="claude"]{border-left-color:var(--accent)}
     .provider-entry[data-provider="claude-code"]{border-left-color:var(--purple)}
+    .provider-entry[data-provider="ollama"]{border-left-color:var(--blue)}
+    .provider-bottom.single{grid-template-columns:1fr}
     .provider-top{display:flex;align-items:center;gap:8px;margin-bottom:12px}
     .provider-name-input{flex:1;min-width:0}
     .provider-type-wrap{width:170px;flex-shrink:0}
@@ -113,11 +115,7 @@
     .combo-action{display:flex;gap:6px;align-items:flex-start}
     .combo-action .btn-ghost{padding:9px 10px;flex-shrink:0}
 
-    input[type="range"]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:rgba(255,255,255,.08);border-radius:3px;outline:none;cursor:pointer;background-image:linear-gradient(var(--accent),var(--accent));background-size:calc(var(--val,.7)*100%) 100%;background-repeat:no-repeat}
-    input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;background:var(--accent);border-radius:50%;border:3px solid var(--bg);box-shadow:0 0 0 1px var(--accent-b),0 2px 6px rgba(52,211,153,.3);cursor:pointer}
-    input[type="range"]::-moz-range-thumb{width:18px;height:18px;background:var(--accent);border-radius:50%;border:3px solid var(--bg);box-shadow:0 0 0 1px var(--accent-b),0 2px 6px rgba(52,211,153,.3);cursor:pointer}
-    input[type="range"]::-moz-range-track{height:5px;background:transparent;border:none}
-    .score-val{font-size:14px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+
 
     .btn-ghost{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;font-size:11px;font-weight:600;font-family:inherit;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text-s);cursor:pointer;transition:all .15s;white-space:nowrap}
     .btn-ghost:hover{background:var(--surface-h);color:var(--text);border-color:var(--border-h)}
@@ -152,42 +150,6 @@
     @keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin .8s linear infinite;display:inline-block}
     .footer{text-align:center;font-size:11px;color:var(--text-d);padding:12px 0 0}
     .footer code{font-family:'SF Mono','Fira Code',monospace;font-size:10px;color:var(--text-s);background:var(--surface);padding:2px 8px;border-radius:6px;border:1px solid var(--border)}
-
-    .wa-list{display:flex;flex-direction:column;gap:8px}
-    .wa-entry{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 16px;animation:slideIn .25s ease-out}
-    .wa-avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-s);border:1px solid var(--accent-b);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .wa-avatar .material-symbols-outlined{font-size:18px;color:var(--accent)}
-    .wa-info{flex:1;min-width:0}
-    .wa-phone{font-size:13px;font-weight:600;color:var(--text)}
-    .wa-meta{display:flex;align-items:center;gap:8px;margin-top:2px}
-    .wa-status{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-d)}
-    .wa-status .dot{width:6px;height:6px;border-radius:50%}
-    .wa-status .dot.ok{background:var(--accent)}
-    .wa-status .dot.warn{background:var(--amber);animation:blink 1.5s infinite}
-    .wa-status .dot.off{background:var(--text-d)}
-    .wa-unread{font-size:10px;font-weight:700;background:var(--accent);color:#0a0a0f;border-radius:10px;padding:1px 7px;line-height:1.5}
-
-    .wa-pairing{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px;animation:slideIn .25s ease-out}
-    .wa-pair-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-    .wa-pair-head .field{flex:1;margin:0}
-    .wa-pair-close{display:flex;align-items:center;justify-content:center;width:30px;height:30px;flex-shrink:0;background:none;border:1px solid transparent;border-radius:7px;color:var(--text-d);cursor:pointer;transition:all .15s}
-    .wa-pair-close:hover{background:var(--red-s);border-color:var(--red-b);color:var(--red)}
-    .wa-pair-close .material-symbols-outlined{font-size:16px}
-    .wa-pair-body{text-align:center;padding:8px 0}
-    .wa-pair-status{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--text-s);padding:8px 16px;border-radius:20px;background:var(--raised)}
-    .wa-pair-code{font-family:'SF Mono',Monaco,'Cascadia Code',monospace;font-size:32px;font-weight:700;letter-spacing:5px;color:var(--accent);padding:16px 0;margin:12px 0;border:1px dashed var(--border);border-radius:var(--r);background:var(--raised);transition:all .3s ease}
-    .wa-pair-code.pulse{animation:pulse .6s ease}
-    @keyframes pulse{0%{transform:scale(1);opacity:1}50%{transform:scale(1.05);opacity:.7}100%{transform:scale(1);opacity:1}}
-    .wa-pair-instructions{font-size:12px;color:var(--text-d);line-height:1.6;margin-bottom:16px}
-    .wa-pair-instructions strong{color:var(--text-s)}
-    .wa-pair-timer{font-size:11px;color:var(--text-d);margin-top:8px}
-    .wa-pair-success{color:var(--accent);font-size:14px;font-weight:500;margin-top:8px}
-    .wa-pair-error{color:var(--red);font-size:12px;margin-top:8px}
-    .wa-pair-actions{margin-top:12px}
-
-    .wa-input-row{display:flex;gap:8px}
-    .wa-input-row input{flex:1;min-width:0}
-    .wa-input-row .btn-ghost{padding:9px 14px;flex-shrink:0}
 
     @media(max-width:560px){
       .wrap{padding:0 16px 32px}.topbar-inner{padding:12px 16px}.section{padding:28px 0 22px}
@@ -263,132 +225,6 @@
         </div>
       </section>
 
-      <!-- Generacion -->
-      <section class="section">
-        <div class="section-head">
-          <div class="section-icon blue"><span class="material-symbols-outlined">palette</span></div>
-          <div class="section-info"><h2>Generacion</h2><p>Proveedor predeterminado para imagen, audio y video</p></div>
-        </div>
-        <div class="field">
-          <label>Proveedor</label>
-          <div class="menu" id="openai-ref-menu" data-value="">
-            <button type="button" class="menu-trigger" onclick="toggleMenu(this)">
-              <span class="menu-icon material-symbols-outlined">dns</span>
-              <span class="menu-label">Seleccionar proveedor</span>
-              <span class="material-symbols-outlined menu-arrow">expand_more</span>
-            </button>
-            <div class="menu-panel"><div class="menu-empty">Sin proveedores configurados</div></div>
-          </div>
-          <p class="hint">Usado por draw, redraw y herramientas multimedia</p>
-        </div>
-      </section>
-
-      <!-- Investigacion -->
-      <section class="section">
-        <div class="section-head">
-          <div class="section-icon amber"><span class="material-symbols-outlined">search_insights</span></div>
-          <div class="section-info"><h2>Investigacion</h2><p>Personaliza el agente que investiga en la memoria semantica</p></div>
-        </div>
-        <div class="field">
-          <label>Proveedor</label>
-          <div class="menu" id="research-provider-menu" data-value="">
-            <button type="button" class="menu-trigger" onclick="toggleMenu(this)">
-              <span class="menu-icon material-symbols-outlined">dns</span>
-              <span class="menu-label">Seleccionar proveedor</span>
-              <span class="material-symbols-outlined menu-arrow">expand_more</span>
-            </button>
-            <div class="menu-panel"><div class="menu-empty">Sin proveedores configurados</div></div>
-          </div>
-        </div>
-        <div class="field"><div class="field-row">
-          <div>
-            <label>Modelo</label>
-            <div class="menu" id="research-model-menu" data-value="haiku">
-              <button type="button" class="menu-trigger" onclick="toggleMenu(this)">
-                <span class="menu-icon material-symbols-outlined">flash_on</span><span class="menu-label">Haiku</span>
-                <span class="material-symbols-outlined menu-arrow">expand_more</span>
-              </button>
-              <div class="menu-panel">
-                <button type="button" class="menu-item selected" data-value="haiku" onclick="pickMenu(this,'research-model-menu')"><span class="material-symbols-outlined">flash_on</span><div><div class="menu-item-name">Haiku</div><div class="menu-item-hint">Rapido y ligero</div></div></button>
-                <button type="button" class="menu-item" data-value="sonnet" onclick="pickMenu(this,'research-model-menu')"><span class="material-symbols-outlined">tune</span><div><div class="menu-item-name">Sonnet</div><div class="menu-item-hint">Equilibrado</div></div></button>
-                <button type="button" class="menu-item" data-value="opus" onclick="pickMenu(this,'research-model-menu')"><span class="material-symbols-outlined">diamond</span><div><div class="menu-item-name">Opus</div><div class="menu-item-hint">Mas potente</div></div></button>
-              </div>
-            </div>
-          </div>
-          <div>
-            <label>Pensamiento</label>
-            <div class="menu" id="research-think-menu" data-value="none">
-              <button type="button" class="menu-trigger" onclick="toggleMenu(this)">
-                <span class="menu-icon material-symbols-outlined">visibility_off</span><span class="menu-label">None</span>
-                <span class="material-symbols-outlined menu-arrow">expand_more</span>
-              </button>
-              <div class="menu-panel">
-                <button type="button" class="menu-item selected" data-value="none" onclick="pickMenu(this,'research-think-menu')"><span class="material-symbols-outlined">visibility_off</span><div><div class="menu-item-name">None</div><div class="menu-item-hint">Sin reflexion</div></div></button>
-                <button type="button" class="menu-item" data-value="low" onclick="pickMenu(this,'research-think-menu')"><span class="material-symbols-outlined">lightbulb</span><div><div class="menu-item-name">Low</div><div class="menu-item-hint">Reflexion minima</div></div></button>
-                <button type="button" class="menu-item" data-value="medium" onclick="pickMenu(this,'research-think-menu')"><span class="material-symbols-outlined">psychology</span><div><div class="menu-item-name">Medium</div><div class="menu-item-hint">Reflexion moderada</div></div></button>
-                <button type="button" class="menu-item" data-value="high" onclick="pickMenu(this,'research-think-menu')"><span class="material-symbols-outlined">neurology</span><div><div class="menu-item-name">High</div><div class="menu-item-hint">Reflexion profunda</div></div></button>
-              </div>
-            </div>
-          </div>
-        </div></div>
-        <div class="field">
-          <div class="field-label-row"><label>Score minimo</label><span id="score-value" class="score-val">0.70</span></div>
-          <input type="range" id="research-score" min="0" max="1" step="0.05" value="0.7" style="--val:0.7"
-            oninput="state.research.score=parseFloat(this.value);this.style.setProperty('--val',this.value);document.getElementById('score-value').textContent=parseFloat(this.value).toFixed(2)">
-          <p class="hint">Umbral de confianza para detener la investigacion</p>
-        </div>
-      </section>
-
-      <!-- WhatsApp -->
-      <section class="section">
-        <div class="section-head">
-          <div class="section-icon green"><span class="material-symbols-outlined">chat</span></div>
-          <div class="section-info"><h2>WhatsApp</h2><p>Cuentas vinculadas y sesiones activas</p></div>
-          <div class="section-actions"><button class="btn-ghost" id="btn-wa-add" onclick="waStartPairing()"><span class="material-symbols-outlined">add</span>Vincular</button></div>
-        </div>
-        <div id="wa-list" class="wa-list"></div>
-        <div id="wa-empty" class="empty-state"><span class="material-symbols-outlined">phone_disabled</span><p>Sin cuentas vinculadas</p></div>
-        <div id="wa-pairing" class="wa-pairing" style="display:none">
-          <div class="wa-pair-head">
-            <div class="field">
-              <label>Numero de telefono</label>
-              <div class="wa-input-row">
-                <input type="text" id="wa-phone-input" placeholder="+52 1 234 567 8900" onkeydown="if(event.key==='Enter')waConnect()">
-                <button class="btn-ghost" id="btn-wa-connect" onclick="waConnect()"><span class="material-symbols-outlined">link</span>Conectar</button>
-              </div>
-            </div>
-            <button class="wa-pair-close" onclick="waCancelPairing()"><span class="material-symbols-outlined">close</span></button>
-          </div>
-          <div id="wa-pair-body" class="wa-pair-body" style="display:none">
-            <div id="wa-pair-waiting" style="display:none">
-              <div class="wa-pair-status"><span class="dot warn"></span>Conectando...</div>
-            </div>
-            <div id="wa-pair-code-section" style="display:none">
-              <div class="wa-pair-code" id="wa-pair-code"></div>
-              <div class="wa-pair-instructions">
-                Abre <strong>WhatsApp</strong> en tu telefono<br>
-                Ve a <strong>Dispositivos vinculados</strong> &rarr; <strong>Vincular dispositivo</strong><br>
-                Toca <strong>Vincular con numero de telefono</strong><br>
-                Ingresa el codigo de arriba
-              </div>
-              <div class="wa-pair-status"><span class="dot warn"></span>Esperando confirmacion...</div>
-              <div class="wa-pair-timer" id="wa-pair-timer"></div>
-            </div>
-            <div id="wa-pair-connected" style="display:none">
-              <div class="wa-pair-code" style="color:var(--accent);font-size:22px;letter-spacing:2px">&#10003; Conectado</div>
-              <p class="wa-pair-success">Cuenta vinculada correctamente</p>
-            </div>
-            <div id="wa-pair-expired" style="display:none">
-              <div class="wa-pair-status"><span class="dot off"></span>Codigo expirado</div>
-              <p class="wa-pair-error">El codigo expiro antes de ser ingresado.</p>
-              <div class="wa-pair-actions">
-                <button class="btn-ghost" onclick="waRetry()"><span class="material-symbols-outlined">refresh</span>Nuevo codigo</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <p class="footer">Configuracion en <code>~/.arcaelas/mcp/config.json</code></p>
     </div>
   </div>
@@ -400,8 +236,6 @@
     var state = {
       providers: [],
       ollama: { base_url: '', model: { embedding: '' } },
-      research: { provider: '', model: 'haiku', think: 'none', score: 0.7 },
-      image: '',
     };
     var installedModels = [];
 
@@ -424,8 +258,6 @@
       menu.querySelector('.menu-icon').textContent=item.querySelector('.material-symbols-outlined').textContent;
       menu.querySelectorAll('.menu-item').forEach(function(i){i.classList.toggle('selected',i.dataset.value===val)});
       menu.classList.remove('open');
-      if(menuId==='research-model-menu')state.research.model=val;
-      else if(menuId==='research-think-menu')state.research.think=val;
     }
     function setMenuValue(menuId,val){var item=document.getElementById(menuId).querySelector('.menu-item[data-value="'+val+'"]');if(item)pickMenu(item,menuId)}
 
@@ -435,7 +267,7 @@
       if(!p.models)p.models={};
       state.providers.push(p);
       renderProviderEntry(state.providers.length-1);
-      checkProvidersEmpty();refreshRefs();
+      checkProvidersEmpty();
     }
 
     function renderProviderEntry(idx){
@@ -483,7 +315,7 @@
     function syncProv(el,field){
       var i=parseInt(el.closest('.provider-entry').dataset.index);
       if(i>=0&&state.providers[i])state.providers[i][field]=el.value;
-      if(field==='name'){validateNames();refreshRefs()}
+      if(field==='name'){validateNames()}
     }
     function syncProvModel(el,field){
       var i=parseInt(el.closest('.provider-entry').dataset.index);
@@ -510,14 +342,13 @@
       var mi=entry.querySelector('.prov-m-image');if(mi)mi.placeholder=ph.image||'';
       var ma=entry.querySelector('.prov-m-audio');if(ma)ma.placeholder=ph.audio||'';
       var mv=entry.querySelector('.prov-m-video');if(mv)mv.placeholder=ph.video||'';
-      refreshRefs();
     }
 
     function removeProvider(btn){
       var entry=btn.closest('.provider-entry'),i=parseInt(entry.dataset.index);
       state.providers.splice(i,1);
       entry.style.opacity='0';entry.style.transform='translateY(-8px)';
-      setTimeout(function(){entry.remove();document.querySelectorAll('.provider-entry').forEach(function(e,idx){e.dataset.index=idx});checkProvidersEmpty();refreshRefs()},200);
+      setTimeout(function(){entry.remove();document.querySelectorAll('.provider-entry').forEach(function(e,idx){e.dataset.index=idx});checkProvidersEmpty()},200);
     }
     function checkProvidersEmpty(){document.getElementById('providers-empty').style.display=document.getElementById('providers-list').children.length?'none':'block'}
 
@@ -529,58 +360,6 @@
       return dupes.size===0;
     }
 
-    /* ── Reference selectors (openai + research) ── */
-    function refreshRefs(){refreshOpenaiRef();refreshResearchProv()}
-
-    function buildRefItems(current,onclickFn){
-      var provs=state.providers.filter(function(p){return p.name.trim()});
-      if(!provs.length)return{html:'<div class="menu-empty">Sin proveedores configurados</div>',exists:false};
-      var exists=false;
-      var html=provs.map(function(p){
-        var m=provMeta(p.provider),sel=p.name===current?' selected':'';
-        if(sel)exists=true;
-        return '<button type="button" class="menu-item'+sel+'" data-value="'+esc(p.name)+'" onclick="'+onclickFn+'(this)">'+
-          '<span class="material-symbols-outlined">'+m.icon+'</span>'+
-          '<div><div class="menu-item-name">'+escH(p.name)+'</div><div class="menu-item-hint">'+m.name+'</div></div></button>';
-      }).join('');
-      return{html:html,exists:exists};
-    }
-
-    function setRefMenu(menuId,stateKey,items){
-      var menu=document.getElementById(menuId),panel=menu.querySelector('.menu-panel');
-      panel.innerHTML=items.html;
-      if(!items.exists){menu.dataset.value='';state[stateKey]='';menu.querySelector('.menu-label').textContent='Seleccionar proveedor';menu.querySelector('.menu-icon').textContent='dns'}
-      else{var sel=panel.querySelector('.menu-item.selected');if(sel){menu.dataset.value=sel.dataset.value;menu.querySelector('.menu-label').textContent=sel.querySelector('.menu-item-name').textContent;menu.querySelector('.menu-icon').textContent=sel.querySelector('.material-symbols-outlined').textContent}}
-    }
-
-    function refreshOpenaiRef(){
-      var items=buildRefItems(state.image,'pickOpenaiRef');
-      setRefMenu('openai-ref-menu','image',items);
-    }
-    function pickOpenaiRef(item){pickRef(item,'openai-ref-menu','image')}
-
-    function refreshResearchProv(){
-      var items=buildRefItems(state.research.provider,'pickResearchProv');
-      var menu=document.getElementById('research-provider-menu'),panel=menu.querySelector('.menu-panel');
-      panel.innerHTML=items.html;
-      if(!items.exists){
-        var first=panel.querySelector('.menu-item');
-        if(first)pickResearchProv(first);
-        else{menu.dataset.value='';state.research.provider='';menu.querySelector('.menu-label').textContent='Seleccionar proveedor';menu.querySelector('.menu-icon').textContent='dns'}
-      }else{var sel=panel.querySelector('.menu-item.selected');if(sel){menu.dataset.value=sel.dataset.value;menu.querySelector('.menu-label').textContent=sel.querySelector('.menu-item-name').textContent;menu.querySelector('.menu-icon').textContent=sel.querySelector('.material-symbols-outlined').textContent}}
-    }
-    function pickResearchProv(item){pickRef(item,'research-provider-menu','research.provider')}
-
-    function pickRef(item,menuId,stateKey){
-      if(!item)return;
-      var menu=document.getElementById(menuId),val=item.dataset.value;
-      menu.dataset.value=val;
-      menu.querySelector('.menu-label').textContent=item.querySelector('.menu-item-name').textContent;
-      menu.querySelector('.menu-icon').textContent=item.querySelector('.material-symbols-outlined').textContent;
-      menu.querySelectorAll('.menu-item').forEach(function(i){i.classList.toggle('selected',i.dataset.value===val)});
-      menu.classList.remove('open');
-      if(stateKey==='research.provider')state.research.provider=val;else state[stateKey]=val;
-    }
 
     /* ── Ollama combobox ── */
     function showModelList(){document.getElementById('ollama-model-combo').classList.add('open')}
@@ -617,19 +396,13 @@
         var r=await fetch('/v1/setting'),data=await r.json();
         state.providers=(data.providers||[]).map(function(p){return{name:p.name||'',provider:p.provider||'openai',base_url:p.base_url||'',api_key:p.api_key||'',models:p.models||{}}});
         state.ollama={base_url:(data.ollama&&data.ollama.base_url)||'',model:{embedding:(data.ollama&&data.ollama.model&&data.ollama.model.embedding)||''}};
-        state.research={provider:(data.research&&data.research.provider)||'',model:(data.research&&data.research.model)||'haiku',think:(data.research&&data.research.think)||'none',score:data.research&&data.research.score!=null?data.research.score:0.7};
-        state.image=data.image||'';
         installedModels=data.models||[];
 
         state.providers.forEach(function(_,i){renderProviderEntry(i)});
         checkProvidersEmpty();
         document.getElementById('ollama-base_url').value=state.ollama.base_url;
         document.getElementById('ollama-model-embedding').value=state.ollama.model.embedding;
-        if(state.research.model)setMenuValue('research-model-menu',state.research.model);
-        if(state.research.think)setMenuValue('research-think-menu',state.research.think);
-        var s=document.getElementById('research-score');s.value=state.research.score;s.style.setProperty('--val',state.research.score);
-        document.getElementById('score-value').textContent=parseFloat(state.research.score).toFixed(2);
-        refreshRefs();renderModelList();checkModelStatus();waLoadAccounts();
+        renderModelList();checkModelStatus();
 
         document.getElementById('skeleton').style.display='none';
         document.getElementById('content').style.display='block';
@@ -672,164 +445,6 @@
         while(true){var chunk=await reader.read();if(chunk.done)break;buffer+=decoder.decode(chunk.value,{stream:true});var lines=buffer.split('\n');buffer=lines.pop()||'';for(var j=0;j<lines.length;j++){if(!lines[j].trim())continue;try{var msg=JSON.parse(lines[j]);if(msg.total&&msg.completed){var pct=Math.round(msg.completed/msg.total*100);bar.className='progress-fill';bar.style.width=pct+'%';txt.textContent=(msg.status||'Descargando')+' — '+pct+'%'}else if(msg.status){txt.textContent=msg.status}}catch(e){}}}
         bar.className='progress-fill';bar.style.width='100%';txt.textContent='Completo';if(!installedModels.includes(model))installedModels.push(model);checkModelStatus();renderModelList();showToast('Modelo descargado','success');setTimeout(function(){prog.classList.remove('visible')},2500);
       }catch(err){showToast(err.message||'Error','error');prog.classList.remove('visible');pb.style.display=''}
-    }
-
-    /* ── WhatsApp ── */
-    var waAccounts = [];
-    var waPairing = { timer: null, sse: null, phone: null };
-
-    async function waLoadAccounts() {
-      try {
-        var r = await fetch('/mcp/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actions: [{ accounts: true }] }) });
-        var d = await r.json();
-        if (Array.isArray(d)) d = d[0];
-        waAccounts = (d && d.ok && Array.isArray(d.data)) ? d.data : [];
-      } catch { waAccounts = []; }
-      waRender();
-    }
-
-    function waRender() {
-      var list = document.getElementById('wa-list');
-      list.innerHTML = '';
-      waAccounts.forEach(function(a, i) {
-        var dot = a.status === 'connected' ? 'ok' : a.status === 'connecting' ? 'warn' : 'off';
-        var label = a.status === 'connected' ? 'Conectado' : a.status === 'connecting' ? 'Conectando...' : 'Desconectado';
-        var el = document.createElement('div');
-        el.className = 'wa-entry';
-        el.innerHTML =
-          '<div class="wa-avatar"><span class="material-symbols-outlined">person</span></div>' +
-          '<div class="wa-info">' +
-            '<div class="wa-phone">+' + escH(a.phone) + '</div>' +
-            '<div class="wa-meta">' +
-              '<span class="wa-status"><span class="dot ' + dot + '"></span>' + label + '</span>' +
-              (a.unread > 0 ? '<span class="wa-unread">' + a.unread + '</span>' : '') +
-            '</div>' +
-          '</div>' +
-          '<button class="btn-delete" onclick="waDisconnect(\'' + esc(a.phone) + '\')"><span class="material-symbols-outlined">close</span></button>';
-        list.appendChild(el);
-      });
-      document.getElementById('wa-empty').style.display = waAccounts.length ? 'none' : 'block';
-    }
-
-    function waStartPairing() {
-      document.getElementById('wa-pairing').style.display = 'block';
-      document.getElementById('wa-pair-body').style.display = 'none';
-      document.getElementById('btn-wa-add').disabled = true;
-      var inp = document.getElementById('wa-phone-input');
-      inp.value = '';
-      setTimeout(function() { inp.focus(); }, 100);
-    }
-
-    function waCancelPairing() {
-      waCleanup();
-      document.getElementById('wa-pairing').style.display = 'none';
-      document.getElementById('btn-wa-add').disabled = false;
-      document.getElementById('btn-wa-connect').disabled = false;
-      document.getElementById('wa-phone-input').disabled = false;
-    }
-
-    function waCleanup() {
-      if (waPairing.timer) { clearInterval(waPairing.timer); waPairing.timer = null; }
-      if (waPairing.sse) { waPairing.sse.close(); waPairing.sse = null; }
-      waPairing.phone = null;
-    }
-
-    function waShowStep(step) {
-      ['wa-pair-waiting', 'wa-pair-code-section', 'wa-pair-connected', 'wa-pair-expired'].forEach(function(id) {
-        document.getElementById(id).style.display = 'none';
-      });
-      document.getElementById('wa-pair-body').style.display = 'block';
-      if (step) document.getElementById(step).style.display = 'block';
-    }
-
-    async function waConnect() {
-      var raw = document.getElementById('wa-phone-input').value.replace(/\D/g, '');
-      if (!raw || raw.length < 8) { showToast('Ingresa un numero de telefono valido', 'error'); document.getElementById('wa-phone-input').focus(); return; }
-
-      var btn = document.getElementById('btn-wa-connect');
-      btn.disabled = true;
-      document.getElementById('wa-phone-input').disabled = true;
-      waShowStep('wa-pair-waiting');
-
-      try {
-        var r = await fetch('/v1/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: raw }) });
-        var d = await r.json();
-        if (!d.ok) { showToast(d.error || 'Error al vincular', 'error'); waCancelPairing(); return; }
-        waPairing.phone = raw;
-        waListenSSE(d.token);
-      } catch (e) { showToast(e.message || 'Error de conexion', 'error'); waCancelPairing(); }
-    }
-
-    function waListenSSE(token) {
-      var source = new EventSource('/v1/whatsapp?access_token=' + encodeURIComponent(token));
-      waPairing.sse = source;
-
-      source.addEventListener('code', function(e) {
-        var data = JSON.parse(e.data);
-        var el = document.getElementById('wa-pair-code');
-        el.textContent = data.code.replace(/(.{4})/g, '$1 ').trim();
-        el.classList.add('pulse');
-        setTimeout(function() { el.classList.remove('pulse'); }, 600);
-        waShowStep('wa-pair-code-section');
-        waStartCountdown(60);
-      });
-
-      source.addEventListener('connected', function() {
-        waStopCountdown();
-        source.close();
-        waPairing.sse = null;
-        waShowStep('wa-pair-connected');
-        waLoadAccounts();
-        setTimeout(function() {
-          waCancelPairing();
-          showToast('Cuenta +' + waPairing.phone + ' vinculada', 'success');
-        }, 2000);
-      });
-
-      source.addEventListener('expired', function() {
-        waStopCountdown();
-        waShowStep('wa-pair-expired');
-      });
-
-      source.onerror = function() {
-        if (source.readyState === EventSource.CLOSED) {
-          waStopCountdown();
-          showToast('Conexion perdida', 'error');
-          waCancelPairing();
-        }
-      };
-    }
-
-    function waStartCountdown(seconds) {
-      waStopCountdown();
-      var remaining = seconds;
-      var el = document.getElementById('wa-pair-timer');
-      el.textContent = remaining + 's restantes';
-      waPairing.timer = setInterval(function() {
-        remaining--;
-        if (remaining <= 0) { waStopCountdown(); el.textContent = ''; return; }
-        el.textContent = remaining + 's restantes';
-      }, 1000);
-    }
-
-    function waStopCountdown() {
-      if (waPairing.timer) { clearInterval(waPairing.timer); waPairing.timer = null; }
-    }
-
-    function waRetry() {
-      waCleanup();
-      waConnect();
-    }
-
-    async function waDisconnect(phone) {
-      try {
-        var r = await fetch('/mcp/whatsapp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ actions: [{ close: true, owner: phone }] }) });
-        var d = await r.json();
-        if (Array.isArray(d)) d = d[0];
-        if (d && d.ok) { showToast('Cuenta +' + phone + ' desvinculada', 'success'); }
-        else { showToast((d && d.error) || 'Error al desvincular', 'error'); }
-      } catch (e) { showToast(e.message || 'Error', 'error'); }
-      waLoadAccounts();
     }
 
     /* ── Helpers ── */

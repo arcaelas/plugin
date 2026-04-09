@@ -14,38 +14,36 @@ export function func(_app: Express, mcp: McpServer) {
     inputSchema: z.object({
       search: z.string().describe("What to research in semantic memory"),
       model: z.enum(["haiku", "sonnet", "opus"]).default("haiku").optional(),
-      think: z.enum(["none", "low", "medium", "high"]).default("none").optional(),
-      score: z.number().min(0).max(1).default(0.7).optional(),
+      limit: z.number().min(5).max(100).default(5).optional().describe("Max memories to retrieve per search"),
     }),
   }, async (input) => {
     const p = config.provider(config.research.provider);
     if (!p) throw new Error("No research provider configured");
-    const score = input.score ?? config.research.score;
+    const limit = input.limit ?? 5;
 
     const agent = new Agent({
       name: "researcher",
       description: "Searches semantic memory and synthesizes findings",
-      providers: [new ClaudeCode({ model: input.model ?? config.research.model, think: input.think ?? config.research.think, dirname: p.base_url })],
+      providers: [new ClaudeCode({ model: input.model ?? "haiku", think: "none", dirname: p.base_url })],
       rules: [new Rule(
         "You are a research agent with access to semantic memory (RAG). " +
         "Search multiple times using varied phrasing to gather comprehensive information. " +
         "Synthesize findings into a clear, structured summary. " +
+        "Output only the summary — no greetings, no filler, no meta-commentary. " +
         "Respond in the same language as the query."
       )],
       tools: [new Tool("rag_search", {
         description: "Search semantic memory. Vary query phrasing for better coverage.",
         parameters: { query: "Semantic search query" },
         func: async (_: any, args: any) => {
-          const results = await rag.search({ content: args.query, limit: 5 });
+          const results = await rag.search({ content: args.query, limit });
           if (!results.length) return "No results found.";
           return results.map((r: any) => r.content).join("\n\n---\n\n");
         },
       })],
     });
 
-    const prompt = `${input.search}\n\n[Confidence threshold: ${score} — keep searching with different queries until at least ${Math.round(score * 100)}% confident your findings answer comprehensively. If below threshold, search again with different phrasing.]`;
-
-    const [messages, ok] = await agent.call(prompt);
+    const [messages, ok] = await agent.call(input.search);
     if (!ok) return { content: [{ type: "text" as const, text: "Research could not be completed." }] };
 
     const last = (messages[messages.length - 1] as any).toJSON();

@@ -1,41 +1,49 @@
-import { html, render, useState, useEffect, useCallback } from './lib/html.js';
+import { html, render, useState, useEffect } from './lib/html.js';
 import { getSettings, saveSettings } from './lib/api.js';
 import { showToast, ToastContainer } from './components/Toast.js';
 import { Providers } from './sections/Providers.js';
-import { Ollama } from './sections/Ollama.js';
-import { Generation } from './sections/Generation.js';
-import { Research } from './sections/Research.js';
-import { WhatsApp } from './sections/WhatsApp.js';
+import { Menu } from './components/Menu.js';
+
+function ProviderRefMenu({ label, icon, color, description, providers, value, onChange }) {
+  const options = providers
+    .filter(p => p.name.trim())
+    .map(p => ({ value: p.name, icon: 'dns', name: p.name, hint: p.provider }));
+
+  return html`
+    <section class="section">
+      <div class="section-head">
+        <div class="section-icon ${color}"><span class="material-symbols-outlined">${icon}</span></div>
+        <div class="section-info"><h2>${label}</h2><p>${description}</p></div>
+      </div>
+      <div class="field">
+        <label>Proveedor</label>
+        ${options.length > 0
+          ? html`<${Menu} value=${value} options=${options} onChange=${onChange} />`
+          : html`<p class="hint">Sin proveedores configurados</p>`
+        }
+      </div>
+    </section>
+  `;
+}
 
 function App() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
   const [saving, setSaving] = useState(false);
   const [providers, setProviders] = useState([]);
-  const [ollama, setOllama] = useState({ base_url: '', model: { embedding: '' } });
-  const [research, setResearch] = useState({ provider: '', model: 'haiku', think: 'none', score: 0.7 });
-  const [image, setImage] = useState('');
-  const [models, setModels] = useState([]);
+  const [research, setResearch] = useState('');
+  const [rag, setRag] = useState('');
 
   useEffect(() => {
     getSettings().then(data => {
       setProviders((data.providers || []).map(p => ({
         name: p.name || '', provider: p.provider || 'openai',
         base_url: p.base_url || '', api_key: p.api_key || '',
-        models: p.models || {},
+        dirname: p.dirname || '', model: p.model || '',
+        model_embedding: p.model_embedding || '', think: p.think || 'none',
       })));
-      setOllama({
-        base_url: data.ollama?.base_url || '',
-        model: { embedding: data.ollama?.model?.embedding || '' },
-      });
-      setResearch({
-        provider: data.research?.provider || '',
-        model: data.research?.model || 'haiku',
-        think: data.research?.think || 'none',
-        score: data.research?.score ?? 0.7,
-      });
-      setImage(data.image || '');
-      setModels(data.models || []);
+      setResearch(data.research?.provider || '');
+      setRag(data.rag?.provider || '');
       setLoaded(true);
     }).catch(() => setError(true));
   }, []);
@@ -49,7 +57,7 @@ function App() {
 
     setSaving(true);
     try {
-      const d = await saveSettings({ providers, ollama, research, image });
+      const d = await saveSettings({ providers, research: { provider: research }, rag: { provider: rag } });
       showToast(d.ok ? 'Configuracion guardada' : 'Error al guardar', d.ok ? 'success' : 'error');
     } catch (e) { showToast(e.message, 'error'); }
     setSaving(false);
@@ -72,7 +80,6 @@ function App() {
       <div class="wrap">
         <div class="sk-section"><div class="skeleton-block sk-h"></div><div class="skeleton-block sk-input"></div><div class="skeleton-block sk-input"></div></div>
         <div class="sk-section"><div class="skeleton-block sk-h"></div><div class="sk-row"><div class="skeleton-block sk-half"></div><div class="skeleton-block sk-half"></div></div></div>
-        <div class="sk-section"><div class="skeleton-block sk-h"></div><div class="skeleton-block sk-input"></div></div>
       </div>
     `;
   }
@@ -89,16 +96,24 @@ function App() {
     </div></nav>
     <div class="wrap">
       <${Providers} providers=${providers} onChange=${setProviders} />
-      <${Ollama}
-        ollama=${ollama}
-        models=${models}
-        onChangeUrl=${(v) => setOllama({ ...ollama, base_url: v })}
-        onChangeModel=${(v) => setOllama({ ...ollama, model: { embedding: v } })}
-        onModelsUpdate=${setModels}
+      <${ProviderRefMenu}
+        label="Investigacion"
+        icon="search_insights"
+        color="amber"
+        description="Proveedor para el agente de investigacion en memoria semantica"
+        providers=${providers}
+        value=${research}
+        onChange=${setResearch}
       />
-      <${Generation} providers=${providers} value=${image} onChange=${setImage} />
-      <${Research} providers=${providers} research=${research} onChange=${setResearch} />
-      <${WhatsApp} />
+      <${ProviderRefMenu}
+        label="RAG"
+        icon="memory"
+        color="purple"
+        description="Proveedor con modelo de embedding para busqueda semantica"
+        providers=${providers.filter(p => p.provider === 'ollama')}
+        value=${rag}
+        onChange=${setRag}
+      />
       <p class="footer">Configuracion en <code>~/.arcaelas/mcp/config.json</code></p>
     </div>
     <${ToastContainer} />

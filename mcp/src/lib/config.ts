@@ -11,30 +11,23 @@ const CONFIG_PATH = resolve(homedir(), ".arcaelas", "mcp", "config.json");
 
 export interface ProviderEntry {
   name: string;
-  provider: "openai" | "claude" | "claude-code";
-  base_url: string;
-  api_key: string;
-  models: {
-    text?: string;
-    image?: string;
-    audio?: string;
-    video?: string;
-  };
+  provider: "openai" | "claude" | "claude-code" | "ollama";
+  base_url?: string;
+  api_key?: string;
+  dirname?: string;
+  model?: string;
+  model_embedding?: string;
+  think?: string;
 }
 
 interface ConfigData {
   providers?: ProviderEntry[];
-  ollama?: {
-    base_url?: string;
-    model?: { embedding?: string };
-  };
   research?: {
     provider?: string;
-    model?: string;
-    think?: string;
-    score?: number;
   };
-  image?: string;
+  rag?: {
+    provider?: string;
+  };
 }
 
 // ── Cache ──
@@ -101,21 +94,15 @@ export default {
     return (config().providers || []).find((p) => p.name === name);
   },
 
-  // --- Image (ref to provider name for draw/redraw) ---
+  // --- Ollama (resolved from RAG provider) ---
 
-  get image(): string { return config().image || ""; },
-  set image(v: string) { set(["image"], v); },
-
-  // --- Ollama ---
-
-  ollama: {
-    get base_url(): string { return config().ollama?.base_url || "http://localhost:11434"; },
-    set base_url(v: string) { set(["ollama", "base_url"], v); },
-
-    model: {
-      get embedding(): string { return config().ollama?.model?.embedding || "mxbai-embed-large"; },
-      set embedding(v: string) { set(["ollama", "model", "embedding"], v); },
-    },
+  get ollama(): { base_url: string; model: { embedding: string } } {
+    const ragName = config().rag?.provider || "";
+    const p = (config().providers || []).find((p) => p.name === ragName && p.provider === "ollama");
+    return {
+      base_url: p?.base_url || "http://localhost:11434",
+      model: { embedding: p?.model_embedding || "mxbai-embed-large" },
+    };
   },
 
   // --- Research ---
@@ -123,14 +110,12 @@ export default {
   research: {
     get provider(): string { return config().research?.provider || ""; },
     set provider(v: string) { set(["research", "provider"], v); },
+  },
 
-    get model(): string { return config().research?.model || "haiku"; },
-    set model(v: string) { set(["research", "model"], v); },
+  // --- RAG ---
 
-    get think(): string { return config().research?.think || "none"; },
-    set think(v: string) { set(["research", "think"], v); },
-
-    get score(): number { return config().research?.score ?? 0.7; },
-    set score(v: number) { set(["research", "score"], v); },
+  rag: {
+    get provider(): string { return config().rag?.provider || ""; },
+    set provider(v: string) { set(["rag", "provider"], v); },
   },
 };

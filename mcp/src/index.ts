@@ -13,15 +13,12 @@ import config, { openBrowser } from "./lib/config.js";
 import * as api from "./func/api.js";
 import * as destroy from "./func/destroy.js";
 import * as download from "./func/download.js";
-import * as draw from "./func/draw.js";
 import * as health from "./func/health.js";
-import * as redraw from "./func/redraw.js";
 import * as remember from "./func/remember.js";
 import * as search from "./func/search.js";
 import * as transport from "./func/transport.js";
-import * as upload from "./func/upload.js";
-import * as whatsapp from "./func/whatsapp.js";
 import * as research from "./func/research.js";
+import * as upload from "./func/upload.js";
 
 const server = new McpServer({
   name: config.server.name,
@@ -34,7 +31,7 @@ app.use(express.static(resolve(dirname(fileURLToPath(import.meta.url)), "app")))
 
 // --- Register funcs ---
 const funcs: Array<{ func: (_app: Express, _mcp: McpServer) => void | Promise<void> }> = [
-  api, remember, search, destroy, upload, download, draw, redraw, health, transport, whatsapp, research,
+  api, remember, search, research, destroy, upload, download, health, transport,
 ];
 for (const f of funcs) {
   await f.func(app, server);

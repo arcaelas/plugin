@@ -1,22 +1,27 @@
 import type { Express } from "express";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import config from "../lib/config.js";
-import * as ws from "../lib/whatsapp.js";
 
 export function func(app: Express, _mcp: McpServer): void {
 
   app.get("/v1/setting", async (_req, res) => {
     const settings = config.config();
-    let models: string[] = [];
+
+    // Fetch ollama models if a RAG provider is configured
+    let ollama_models: string[] = [];
+    const rag_provider = (settings.providers || []).find(
+      (p) => p.provider === "ollama" && p.name === settings.rag?.provider
+    );
+    const ollama_url = rag_provider?.base_url || "http://localhost:11434";
     try {
-      const url = config.ollama.base_url;
-      const r = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
+      const r = await fetch(`${ollama_url}/api/tags`, { signal: AbortSignal.timeout(5000) });
       if (r.ok) {
         const body = (await r.json()) as { models?: { name: string }[] };
-        models = body.models?.map((m) => m.name) ?? [];
+        ollama_models = body.models?.map((m) => m.name) ?? [];
       }
     } catch {}
-    res.json({ ...settings, models });
+
+    res.json({ ...settings, ollama_models });
   });
 
   app.post("/v1/setting", (req, res) => {
@@ -41,11 +46,11 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
-  // --- Ollama ---
+  // --- Ollama test ---
 
   app.post("/v1/ollama", async (req, res) => {
-    const url = (req.body.url as string) || config.ollama.base_url;
-    const model = (req.body.model as string) || config.ollama.model.embedding;
+    const url = (req.body.url as string) || "http://localhost:11434";
+    const model = (req.body.model as string) || "mxbai-embed-large";
     try {
       const start = performance.now();
       const r = await fetch(`${url}/api/embed`, {
@@ -69,13 +74,15 @@ export function func(app: Express, _mcp: McpServer): void {
     }
   });
 
+  // --- Ollama pull ---
+
   app.put("/v1/ollama", async (req, res) => {
     const model = req.body.model as string;
+    const url = (req.body.url as string) || "http://localhost:11434";
     if (!model) {
       res.status(400).json({ ok: false, error: "Model is required" });
       return;
     }
-    const url = config.ollama.base_url;
     try {
       const tags = await fetch(`${url}/api/tags`, { signal: AbortSignal.timeout(5000) });
       if (tags.ok) {
@@ -120,45 +127,6 @@ export function func(app: Express, _mcp: McpServer): void {
         res.end();
       }
     }
-  });
-
-  // --- WhatsApp pairing ---
-
-  app.post("/v1/whatsapp", (req, res) => {
-    const phone = req.body.phone as string;
-    if (!phone) {
-      res.status(400).json({ ok: false, error: "Phone is required" });
-      return;
-    }
-    try {
-      const { token } = ws.pair(phone);
-      res.json({ ok: true, token });
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      res.status(400).json({ ok: false, error: message });
-    }
-  });
-
-  app.get("/v1/whatsapp", (req, res) => {
-    const token = req.query.access_token as string;
-    if (!token) {
-      res.status(400).json({ error: "Missing access_token" });
-      return;
-    }
-    const session = ws.get_session(token);
-    if (!session) {
-      res.status(404).json({ error: "Invalid access_token" });
-      return;
-    }
-
-    res.set({ "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" });
-    res.flushHeaders();
-    res.write(":ok\n\n");
-
-    const unsubscribe = ws.subscribe(token, (event: string, data: unknown) => {
-      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-    });
-    req.on("close", unsubscribe);
   });
 
 }

@@ -10,7 +10,9 @@ block() {
   exit 0
 }
 
-[[ "$COMMAND" =~ git[[:space:]]+push ]]                          && block "Blocked: git push is not allowed. The Arko workflow never pushes to remote."
+[[ "$COMMAND" =~ git[[:space:]]+push ]]                          && block "Blocked: git push is not allowed. All changes reach remote only through PRs."
+[[ "$COMMAND" =~ gh[[:space:]]+pr[[:space:]]+merge ]]              && block "Blocked: gh pr merge is not allowed. PRs are merged manually after review."
+[[ "$COMMAND" =~ gh[[:space:]].*--push ]]                          && block "Blocked: gh with --push is not allowed."
 [[ "$COMMAND" =~ git[[:space:]]+reset[[:space:]]+--hard ]]       && block "Blocked: git reset --hard destroys uncommitted changes."
 [[ "$COMMAND" =~ git[[:space:]]+clean[[:space:]]+-[a-zA-Z]*f ]]  && block "Blocked: git clean -f permanently deletes untracked files."
 [[ "$COMMAND" =~ rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*[[:space:]]+(\/|~\/|\.\.|\/home|\/etc|\/usr|\/var) ]] && block "Blocked: rm -rf targeting system/root paths is not allowed."
