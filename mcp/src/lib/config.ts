@@ -100,7 +100,7 @@ export default {
     const ragName = config().rag?.provider || "";
     const p = (config().providers || []).find((p) => p.name === ragName && p.provider === "ollama");
     return {
-      base_url: p?.base_url || "http://localhost:11434",
+      base_url: (p?.base_url || "http://localhost:11434").replace(/\/+$/, ""),
       model: { embedding: p?.model_embedding || "mxbai-embed-large" },
     };
   },

@@ -51,12 +51,12 @@ Output: [{ document: string, content: string, length: number }]
 Searches the RAG internally, then sends the findings to an AI model that generates a clean summary. The summary is what you receive — not the raw chunks.
 
 ```
-Input:  { query: string, model?: "haiku" | "sonnet" | "opus" }
+Input:  { query: string, model?: "haiku" | "sonnet" | "opus" }  // default: sonnet
 Output: string (summary text)
 ```
 
 - `query` — What to research in semantic memory.
-- `model` — Which model generates the summary. Default: `"haiku"` (fast, cheap). Use `"sonnet"` or `"opus"` for complex queries that need deeper reasoning.
+- `model` — Which model generates the summary. Default: `"sonnet"` (balanced reasoning, honest about gaps in retrieved data). Use `"opus"` for complex queries that need deeper synthesis. `"haiku"` is faster but tends to hallucinate when results are sparse — avoid it for anything important.
 
 **When to use:** Broad queries where raw results would be too verbose and pollute your context window (e.g., "how does the user structure Next.js projects" — this may span many memories). The summary saves context space but consumes tokens from the configured provider.
 
@@ -64,7 +64,7 @@ Output: string (summary text)
 - `search()` — free (no external tokens), occupies context, gives exact text.
 - `research()` — costs external tokens, saves context, gives synthesized answer.
 
-Use `search()` for targeted lookups. Use `research()` for broad explorations. When in doubt, prefer `research()` with haiku to keep context clean.
+Use `search()` for targeted lookups. Use `research()` for broad explorations. When in doubt, prefer `research()` with sonnet to keep context clean while keeping reasoning quality high.
 
 ## Search strategy
 

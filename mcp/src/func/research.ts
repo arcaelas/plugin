@@ -18,7 +18,7 @@ export function func(_app: Express, mcp: McpServer) {
       "with varied queries and returns a synthesized summary.",
     inputSchema: z.object({
       search: z.string().describe("What to research in semantic memory"),
-      model: z.enum(["haiku", "sonnet", "opus"]).default("haiku").optional(),
+      model: z.enum(["haiku", "sonnet", "opus"]).default("sonnet").optional(),
       limit: z.number().min(5).max(100).default(5).optional().describe("Max memories to retrieve per search"),
     }),
   }, async (input) => {
@@ -29,7 +29,7 @@ export function func(_app: Express, mcp: McpServer) {
     const agent = new Agent({
       name: "researcher",
       description: "Searches semantic memory and synthesizes findings",
-      providers: [new ClaudeCode({ model: input.model ?? "haiku", think: "none", dirname: resolveHome(p.dirname ?? p.base_url ?? "") })],
+      providers: [new ClaudeCode({ model: input.model ?? "sonnet", think: "none", dirname: resolveHome(p.dirname ?? p.base_url ?? "") })],
       rules: [new Rule(
         "You are a research agent with access to semantic memory (RAG). " +
         "Search multiple times using varied phrasing to gather comprehensive information. " +
