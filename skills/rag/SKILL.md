@@ -61,6 +61,7 @@ Output: string (summary text)
 **When to use:** Broad queries where raw results would be too verbose and pollute your context window (e.g., "how does the user structure Next.js projects" — this may span many memories). The summary saves context space but consumes tokens from the configured provider.
 
 **Tradeoffs:**
+
 - `search()` — free (no external tokens), occupies context, gives exact text.
 - `research()` — costs external tokens, saves context, gives synthesized answer.
 

@@ -74,10 +74,10 @@ Sub-skills are organized by category. Each stack loads a specific set of categor
 
 ### Loading rules per stack
 
-| Stack | Categories to load | Resulting sub-skills |
-|-------|--------------------|----------------------|
-| **Flutter** | Tailwind + Frontend + Flutter | `shadcn` + `frontend-design` + `web-design-guidelines` + `animate` + `vercel-react-best-practices` + `ui-ux-pro-max` + `flutter-animations` |
-| **Next** | Tailwind + Frontend + Next | `shadcn` + `frontend-design` + `web-design-guidelines` + `animate` + `vercel-react-best-practices` + `ui-ux-pro-max` + `next-best-practices` |
+| Stack       | Categories to load            | Resulting sub-skills                                                                                                                         |
+| ----------- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Flutter** | Tailwind + Frontend + Flutter | `shadcn` + `frontend-design` + `web-design-guidelines` + `animate` + `vercel-react-best-practices` + `ui-ux-pro-max` + `flutter-animations`  |
+| **Next**    | Tailwind + Frontend + Next    | `shadcn` + `frontend-design` + `web-design-guidelines` + `animate` + `vercel-react-best-practices` + `ui-ux-pro-max` + `next-best-practices` |
 
 ### Loading method
 

@@ -1,5 +1,3 @@
-# Curves Reference
-
 Curves define the easing function for animations, controlling how values interpolate from start to end.
 
 ## Core Concept
@@ -184,6 +182,7 @@ class CustomCurve extends Curve {
 ```
 
 **Usage:**
+
 ```dart
 AnimatedContainer(
   curve: CustomCurve(),
@@ -293,6 +292,7 @@ class CombinedCurve extends Curve {
 ```
 
 **Usage:**
+
 ```dart
 AnimatedContainer(
   curve: CombinedCurve(
@@ -310,31 +310,34 @@ AnimatedContainer(
 
 ### Motion Design Guidelines
 
-| Animation Type | Recommended Curve | Why |
-|---------------|-------------------|-----|
-| Fade in/out | easeInOut | Natural opacity change |
-| Size change | easeOut | Decelerate feels natural for growth |
-| Position slide | easeInOut | Smooth start and stop |
-| Rotation | easeInOut | Natural angular acceleration |
-| Color change | linear | Uniform color transition |
-| Scale | elasticOut | Playful, bouncy feel |
-| Reveal | backOut | Dramatic reveal effect |
-| Loading | linear or ease | Consistent speed |
-| Success | elasticOut | Celebratory feel |
+| Animation Type | Recommended Curve | Why                                 |
+| -------------- | ----------------- | ----------------------------------- |
+| Fade in/out    | easeInOut         | Natural opacity change              |
+| Size change    | easeOut           | Decelerate feels natural for growth |
+| Position slide | easeInOut         | Smooth start and stop               |
+| Rotation       | easeInOut         | Natural angular acceleration        |
+| Color change   | linear            | Uniform color transition            |
+| Scale          | elasticOut        | Playful, bouncy feel                |
+| Reveal         | backOut           | Dramatic reveal effect              |
+| Loading        | linear or ease    | Consistent speed                    |
+| Success        | elasticOut        | Celebratory feel                    |
 
 ### Platform Conventions
 
 **iOS:**
+
 - Prefers subtle curves (ease, easeInOut)
 - Limited use of elastic/bounce
 - Consistent with system animations
 
 **Android:**
+
 - Wider variety of curves
 - More use of elastic/bounce for feedback
 - Material design curves (easeIn, fastOutSlowIn)
 
 **Web:**
+
 - CSS-like curves (ease, ease-in, ease-out, ease-in-out)
 - Limited use of complex curves
 
@@ -384,11 +387,13 @@ item3Animation = CurvedAnimation(
 ### Curve Complexity
 
 Simple curves (linear, ease) are faster:
+
 - Fewer calculations
 - Less GPU work
 - Consistent timing
 
 Complex curves (elastic, bounce) are slower:
+
 - More calculations
 - Potential for frame drops
 - Variable timing
@@ -533,19 +538,19 @@ _animation = CurvedAnimation(
 
 ## Curve Comparison
 
-| Curve | Start | Middle | End | Feel |
-|-------|-------|--------|-----|------|
-| linear | Fast | Fast | Fast | Mechanical |
-| ease | Slow | Fast | Slow | Natural |
-| easeIn | Slow | Fast | Fast | Accelerating |
-| easeOut | Fast | Slow | Slow | Decelerating |
-| easeInOut | Slow | Fast | Slow | Smooth |
-| elasticIn | Back | Fast | Normal | Bouncy start |
-| elasticOut | Normal | Fast | Back | Bouncy end |
-| bounceIn | Bounce | Fast | Normal | Bouncy start |
-| bounceOut | Normal | Fast | Bounce | Bouncy end |
-| backIn | Back | Fast | Normal | Overshoot start |
-| backOut | Normal | Fast | Back | Overshoot end |
+| Curve      | Start  | Middle | End    | Feel            |
+| ---------- | ------ | ------ | ------ | --------------- |
+| linear     | Fast   | Fast   | Fast   | Mechanical      |
+| ease       | Slow   | Fast   | Slow   | Natural         |
+| easeIn     | Slow   | Fast   | Fast   | Accelerating    |
+| easeOut    | Fast   | Slow   | Slow   | Decelerating    |
+| easeInOut  | Slow   | Fast   | Slow   | Smooth          |
+| elasticIn  | Back   | Fast   | Normal | Bouncy start    |
+| elasticOut | Normal | Fast   | Back   | Bouncy end      |
+| bounceIn   | Bounce | Fast   | Normal | Bouncy start    |
+| bounceOut  | Normal | Fast   | Bounce | Bouncy end      |
+| backIn     | Back   | Fast   | Normal | Overshoot start |
+| backOut    | Normal | Fast   | Back   | Overshoot end   |
 
 ## Best Practices
 
