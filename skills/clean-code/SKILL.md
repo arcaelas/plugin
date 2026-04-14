@@ -4,7 +4,7 @@ description: >
   Code optimization and clean code conventions. Use this skill whenever writing, reviewing,
   or refactoring code — it covers naming (snake_case, PascalCase), control flow (no early returns,
   explicit blocks), abstractions (only when they encapsulate complete behavior), data structures
-  (Map/Set over array hacks), inline vs desglose, component architecture, API patterns, and more.
+  (Map/Set over array hacks), inline vs breakdown, component architecture, API patterns, and more.
   Trigger on any code change, review, refactor, optimization request, or when the user asks
   about code style, naming, structure, or best practices.
 ---
@@ -419,7 +419,7 @@ class PaymentService {
 }
 ```
 
-## Inline vs desglose
+## Inline vs breakdown
 
 ### Inline atomic operations
 
