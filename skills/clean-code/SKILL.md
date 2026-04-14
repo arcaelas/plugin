@@ -21,14 +21,14 @@ The state variable is written in `snake_case` and the setter in `camelCase` with
 
 ```ts
 // GOOD
-const [is_loading, setIsLoading] = useState(false)
-const [error_message, setErrorMessage] = useState<string | null>(null)
-const [current_step, setCurrentStep] = useState(1)
-const [form_data, setFormData] = useState({ email: "", password: "" })
+const [is_loading, setIsLoading] = useState(false);
+const [error_message, setErrorMessage] = useState<string | null>(null);
+const [current_step, setCurrentStep] = useState(1);
+const [form_data, setFormData] = useState({ email: "", password: "" });
 
 // BAD
-const [isLoading, setIsLoading] = useState(false)    // camelCase state
-const [IS_LOADING, setIsLoading] = useState(false)   // UPPER state
+const [isLoading, setIsLoading] = useState(false); // camelCase state
+const [IS_LOADING, setIsLoading] = useState(false); // UPPER state
 ```
 
 ### Variables, functions, parameters: `snake_case`
@@ -52,11 +52,11 @@ function processOrder(orderId: string) { ... }  // camelCase
 
 ```ts
 // GOOD — hooks: function camelCase, folder snake_case
-import useButtonState from "./lib/use_button_state"
-import useTheme from "@/lib/use_theme"
+import useButtonState from "./lib/use_button_state";
+import useTheme from "@/lib/use_theme";
 
 // BAD — hooks: function snake_case or folder camelCase
-import use_button_state from "./lib/useButtonState"
+import use_button_state from "./lib/useButtonState";
 ```
 
 ### Constants: local is `snake_case`, global exported is `UPPER_SNAKE_CASE`
@@ -66,29 +66,29 @@ Only module-level constants that are exported and shared between files use `UPPE
 ```ts
 // GOOD — global exported → UPPER_SNAKE_CASE
 // ./src/lib/config.ts
-export const MAX_RETRIES = 3
-export const API_BASE_URL = "https://api.example.com"
-export const DEFAULT_TIMEOUT = 30_000
+export const MAX_RETRIES = 3;
+export const API_BASE_URL = "https://api.example.com";
+export const DEFAULT_TIMEOUT = 30_000;
 
 // ./src/services/http_client.ts
-import { API_BASE_URL, DEFAULT_TIMEOUT } from "@/lib/config"
+import { API_BASE_URL, DEFAULT_TIMEOUT } from "@/lib/config";
 
 // BAD — global exported in wrong case
-export const maxRetries = 3              // camelCase for global exported
-export const api_base_url = "..."        // snake_case for global exported
+export const maxRetries = 3; // camelCase for global exported
+export const api_base_url = "..."; // snake_case for global exported
 ```
 
 ```ts
 // GOOD — local constants → snake_case
 function calculate_shipping(weight: number) {
-  const base_rate = 5.99
-  const weight_factor = 0.5
+  const base_rate = 5.99;
+  const weight_factor = 0.5;
 }
 
 // BAD — UPPER_SNAKE_CASE in local scope
 function calculate_shipping(weight: number) {
-  const BASE_RATE = 5.99
-  const WEIGHT_FACTOR = 0.5
+  const BASE_RATE = 5.99;
+  const WEIGHT_FACTOR = 0.5;
 }
 ```
 
@@ -118,24 +118,25 @@ Interfaces and type aliases are always written in `PascalCase`. Component prop i
 ```ts
 // GOOD
 interface UserFormProps {
-  initial_name: string
-  is_disabled?: boolean
-  on_submit: () => void
+  initial_name: string;
+  is_disabled?: boolean;
+  on_submit: () => void;
 }
 
-type ButtonVariant = "primary" | "secondary" | "ghost"
+type ButtonVariant = "primary" | "secondary" | "ghost";
 
 interface ApiResponse<T> {
-  success: boolean
-  data: T
-  error_message?: string
+  success: boolean;
+  data: T;
+  error_message?: string;
 }
 
 // BAD
-interface userFormProps {       // camelCase name
-  initialName: string           // camelCase field
-  isDisabled?: boolean          // camelCase field
-  onSubmit: () => void          // camelCase callback
+interface userFormProps {
+  // camelCase name
+  initialName: string; // camelCase field
+  isDisabled?: boolean; // camelCase field
+  onSubmit: () => void; // camelCase callback
 }
 ```
 
@@ -146,20 +147,20 @@ Component prop fields are written in `snake_case`. Callback props follow the `on
 ```ts
 // GOOD
 interface SearchBarProps {
-  placeholder_text: string
-  is_expanded: boolean
-  max_results: number
-  on_search: (query: string) => void
-  on_clear: () => void
-  on_focus: () => void
+  placeholder_text: string;
+  is_expanded: boolean;
+  max_results: number;
+  on_search: (query: string) => void;
+  on_clear: () => void;
+  on_focus: () => void;
 }
 
 // BAD
 interface SearchBarProps {
-  placeholderText: string        // camelCase
-  isExpanded: boolean            // camelCase
-  onSearch: (q: string) => void  // camelCase callback
-  handleClear: () => void        // handle pattern
+  placeholderText: string; // camelCase
+  isExpanded: boolean; // camelCase
+  onSearch: (q: string) => void; // camelCase callback
+  handleClear: () => void; // handle pattern
 }
 ```
 
@@ -208,12 +209,13 @@ enum Priority {
   P3 = 3,
 }
 
-const current_status = TicketStatus.IN_PROGRESS
+const current_status = TicketStatus.IN_PROGRESS;
 
 // BAD
-enum ticketStatus {             // camelCase name
-  open = "open",                // lowercase key
-  inProgress = "in_progress",   // camelCase key
+enum ticketStatus {
+  // camelCase name
+  open = "open", // lowercase key
+  inProgress = "in_progress", // camelCase key
 }
 ```
 
@@ -285,22 +287,22 @@ Explicit blocks with braces are required for all conditions. Early returns are c
 ```ts
 // GOOD — explicit block
 if (store.has(key)) {
-  return store.get(key)
+  return store.get(key);
 }
 
 // GOOD — negation for idempotency
 if (!store.has(key)) {
-  store.set(key, value)
+  store.set(key, value);
 }
-const stored = store.get(key)! // ensures idempotency
+const stored = store.get(key)!; // ensures idempotency
 
 // BAD — early return (critical violation)
-if (!store.has(key)) return
-return store.get(key)
+if (!store.has(key)) return;
+return store.get(key);
 
 // BAD — early return with negation
-if (user.type !== "premium") return 0
-return amount * 0.15
+if (user.type !== "premium") return 0;
+return amount * 0.15;
 ```
 
 ### Ternaries: only for atomic assignments
@@ -347,14 +349,14 @@ An abstraction is only justified if it encapsulates complete behavior, not just 
   workspace={workspace_id}
   onOpen={() => {}}
   onClose={() => {}}
-/>
+/>;
 // internally: SSE connection, registration form, sync pin,
 // connection/disconnection events. Isolated functional unit.
 
 // BAD — abstraction without behavior — presentation only
 function StatusChip({ status }: { status: string }) {
-  const color = status === 'active' ? 'success' : 'default'
-  return <Chip label={status} color={color} />
+  const color = status === "active" ? "success" : "default";
+  return <Chip label={status} color={color} />;
 }
 // 4 lines, single use, no logic. This goes inline where needed.
 ```
@@ -365,27 +367,32 @@ If a feature can be built on top of another that already exists, compose. Don't 
 
 ```ts
 // GOOD — once composed over listen
-const once = useCallback((cb: Listener): (() => void) => {
-  const unsub = listen((event, data) => {
-    unsub()
-    cb(event, data)
-  })
-  return unsub
-}, [listen])
+const once = useCallback(
+  (cb: Listener): (() => void) => {
+    const unsub = listen((event, data) => {
+      unsub();
+      cb(event, data);
+    });
+    return unsub;
+  },
+  [listen],
+);
 
 // BAD — once with its own infrastructure
-const once_listeners = useRef<Set<Listener>>(new Set())
+const once_listeners = useRef<Set<Listener>>(new Set());
 
 const once = useCallback((cb: Listener): (() => void) => {
-  once_listeners.current.add(cb)
-  return () => { once_listeners.current.delete(cb) }
-}, [])
+  once_listeners.current.add(cb);
+  return () => {
+    once_listeners.current.delete(cb);
+  };
+}, []);
 
 function dispatch(event: string, data: unknown) {
-  for (const fn of listeners.current) fn(event, data)
-  const pending = [...once_listeners.current]
-  once_listeners.current.clear()
-  for (const fn of pending) fn(event, data)
+  for (const fn of listeners.current) fn(event, data);
+  const pending = [...once_listeners.current];
+  once_listeners.current.clear();
+  for (const fn of pending) fn(event, data);
 }
 ```
 
@@ -397,17 +404,17 @@ Private methods with `_snake_case` prefix are allowed only when they encapsulate
 class PaymentService {
   // GOOD — accesses internal state shared by multiple methods
   private _build_headers(): Record<string, string> {
-    return { Authorization: `Bearer ${this._token}` }
+    return { Authorization: `Bearer ${this._token}` };
   }
 
   // BAD — only called by charge(), should be inline
   private _validate_amount(amount: number) {
-    if (amount <= 0) throw new Error("Invalid")
+    if (amount <= 0) throw new Error("Invalid");
   }
 
   charge(amount: number) {
-    if (amount <= 0) throw new Error("Invalid") // inline, self-contained
-    const headers = this._build_headers()        // reusable encapsulation
+    if (amount <= 0) throw new Error("Invalid"); // inline, self-contained
+    const headers = this._build_headers(); // reusable encapsulation
   }
 }
 ```
@@ -420,12 +427,12 @@ If an operation is atomic and the reader understands what happens without a dedi
 
 ```ts
 // GOOD — inline — reads at once
-timer = setTimeout(connect, Math.min(retries++ * 3_000, MAX_DELAY))
+timer = setTimeout(connect, Math.min(retries++ * 3_000, MAX_DELAY));
 
 // BAD — break down what reads fine together
-const delay = Math.min(retries * 3_000, MAX_DELAY)
-retries++
-timer = setTimeout(connect, delay)
+const delay = Math.min(retries * 3_000, MAX_DELAY);
+retries++;
+timer = setTimeout(connect, delay);
 ```
 
 ### Async + immediate call: IIFE
@@ -435,24 +442,28 @@ If you define an async function and call it immediately in the same scope, an II
 ```ts
 // GOOD — IIFE — one intention, one block
 useEffect(() => {
-  if (!token) return
+  if (!token) return;
   (async function connect() {
     // connection logic
-    timer = setTimeout(connect, delay)
-  })()
-  return () => { destroyed = true }
-}, [])
+    timer = setTimeout(connect, delay);
+  })();
+  return () => {
+    destroyed = true;
+  };
+}, []);
 
 // BAD — declare and call separately
 useEffect(() => {
-  if (!token) return
+  if (!token) return;
   async function connect() {
     // same logic
-    timer = setTimeout(connect, delay)
+    timer = setTimeout(connect, delay);
   }
-  connect()
-  return () => { destroyed = true }
-}, [])
+  connect();
+  return () => {
+    destroyed = true;
+  };
+}, []);
 ```
 
 ## Data structures
@@ -481,15 +492,15 @@ Native language and platform APIs are preferred over adding external dependencie
 
 ```ts
 // GOOD — native APIs
-const id = crypto.randomUUID()
-const data = await fetch(url).then(r => r.json())
-const hash = crypto.createHash("sha256").update(text)
-const formatted = new Intl.DateTimeFormat("es").format(date)
+const id = crypto.randomUUID();
+const data = await fetch(url).then((r) => r.json());
+const hash = crypto.createHash("sha256").update(text);
+const formatted = new Intl.DateTimeFormat("es").format(date);
 
 // BAD — unnecessary library
-import { v4 } from "uuid"          // crypto.randomUUID() exists
-import moment from "moment"        // Intl.DateTimeFormat exists
-import _ from "lodash"             // Array/Object methods exist
+import { v4 } from "uuid"; // crypto.randomUUID() exists
+import moment from "moment"; // Intl.DateTimeFormat exists
+import _ from "lodash"; // Array/Object methods exist
 ```
 
 ### Don't reimplement runtime primitives
@@ -498,24 +509,25 @@ Don't reimplement functionality the runtime already offers. If you need pub/sub 
 
 ```ts
 // GOOD — native EventTarget
-const target = useRef(new EventTarget())
-target.current.dispatchEvent(Object.assign(new Event(event), { data: parsed }))
+const target = useRef(new EventTarget());
+target.current.dispatchEvent(Object.assign(new Event(event), { data: parsed }));
 
 const listen = useCallback((cb: Listener): (() => void) => {
-  const handler = (e: Event) => cb(e.type, (e as Event & { data: unknown }).data)
-  target.current.addEventListener("message", handler)
-  return () => target.current.removeEventListener("message", handler)
-}, [])
+  const handler = (e: Event) =>
+    cb(e.type, (e as Event & { data: unknown }).data);
+  target.current.addEventListener("message", handler);
+  return () => target.current.removeEventListener("message", handler);
+}, []);
 
 // BAD — reimplementing pub/sub with Sets
-const listeners = useRef<Set<Listener>>(new Set())
-const once_listeners = useRef<Set<Listener>>(new Set())
+const listeners = useRef<Set<Listener>>(new Set());
+const once_listeners = useRef<Set<Listener>>(new Set());
 
 function dispatch(event: string, data: unknown) {
-  for (const fn of listeners.current) fn(event, data)
-  const pending = [...once_listeners.current]
-  once_listeners.current.clear()
-  for (const fn of pending) fn(event, data)
+  for (const fn of listeners.current) fn(event, data);
+  const pending = [...once_listeners.current];
+  once_listeners.current.clear();
+  for (const fn of pending) fn(event, data);
 }
 ```
 
@@ -631,14 +643,14 @@ A component can only import upward: its own `lib/`, its parent's `lib/`, its gra
 
 ```ts
 // GOOD — ./src/components/Button/components/ButtonIcon/index.tsx
-import useIconSize from "./lib/use_icon_size"            // own
-import useButtonState from "../../lib/use_button_state"  // parent
-import useTheme from "@/lib/use_theme"                   // root
-import Input from "@/components/Input"                   // root component
+import useIconSize from "./lib/use_icon_size"; // own
+import useButtonState from "../../lib/use_button_state"; // parent
+import useTheme from "@/lib/use_theme"; // root
+import Input from "@/components/Input"; // root component
 
 // BAD
-import { x } from "../ButtonSpinner/lib/x"              // sibling
-import { y } from "@/components/Form/lib/y"              // unrelated
+import { x } from "../ButtonSpinner/lib/x"; // sibling
+import { y } from "@/components/Form/lib/y"; // unrelated
 ```
 
 ### Import scope — forbidden
@@ -649,12 +661,12 @@ Importing from descendants, siblings, or unrelated branches is forbidden. If two
 // ./src/components/Button/components/ButtonIcon/index.tsx
 
 // GOOD
-import { x } from "../../lib/shared_logic"           // common parent
+import { x } from "../../lib/shared_logic"; // common parent
 
 // BAD
-import { x } from "../ButtonSpinner/lib/use_spinner"  // sibling
-import { x } from "./components/SpinnerDot/lib/x"     // descendant
-import { x } from "@/components/Form/lib/x"           // unrelated
+import { x } from "../ButtonSpinner/lib/use_spinner"; // sibling
+import { x } from "./components/SpinnerDot/lib/x"; // descendant
+import { x } from "@/components/Form/lib/x"; // unrelated
 ```
 
 ### Hook location and naming inside `lib/`
@@ -685,6 +697,7 @@ Hooks have a **dual convention**: the folder is named in `snake_case` with `use_
 The main component file follows a strict export order. The component (`export default`) is always last. Hooks never appear here — they live in `lib/use_name/`.
 
 Order:
+
 1. Enums
 2. Types
 3. Interfaces (Props, Config)
@@ -715,9 +728,9 @@ Files at the root level (`src/components/` and `src/lib/`) are accessible from a
 ```ts
 // GOOD — import from root at any level
 // ./src/components/Button/components/ButtonIcon/index.tsx
-import useTheme from "@/lib/use_theme"
-import useAuth from "@/lib/use_auth"
-import Input from "@/components/Input"
+import useTheme from "@/lib/use_theme";
+import useAuth from "@/lib/use_auth";
+import Input from "@/components/Input";
 ```
 
 ```
@@ -823,28 +836,28 @@ Centralized HTTP client that injects token from `localStorage`, automatic redire
 
 ```ts
 // ./src/lib/api/index.ts
-import axios from 'axios'
+import axios from "axios";
 
 const client = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
   timeout: 30_000,
-})
+});
 
 client.interceptors.request.use((config) => {
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token')
-    if (token) config.headers.Authorization = `Bearer ${token}`
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth_token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
   }
-  return config
-})
+  return config;
+});
 
 client.interceptors.response.use(
   (res) => res.data?.data,
   (error) => {
-    if (error.response?.status === 401) window.location.href = '/login'
-    throw new APIError(error)
-  }
-)
+    if (error.response?.status === 401) window.location.href = "/login";
+    throw new APIError(error);
+  },
+);
 
 export const api = {
   get: <T>(url: string, config?) => client.get<T>(url, config),
@@ -852,9 +865,9 @@ export const api = {
   put: <T>(url: string, body?, config?) => client.put<T>(url, body, config),
   patch: <T>(url: string, body?, config?) => client.patch<T>(url, body, config),
   del: (url: string, config?) => client.delete(url, config),
-}
+};
 
-export default api
+export default api;
 ```
 
 ### File-based routing for serverless
@@ -898,28 +911,28 @@ The handler pattern changes depending on the project type:
 ```ts
 // ./src/users/index.ts
 export const GET = http(async (req, res) => {
-  const users = await User.all()
-  res.success(users)
-})
+  const users = await User.all();
+  res.success(users);
+});
 
 export const POST = http(async (req, res) => {
-  const user = await User.create(req.body)
-  res.success(user)
-})
+  const user = await User.create(req.body);
+  res.success(user);
+});
 ```
 
 **Express** — uses `http(pathname, handler)` with the function name as the method:
 
 ```ts
-http('/users', async function GET(req, res, next) {
-  const users = await User.all()
-  res.success(users)
-})
+http("/users", async function GET(req, res, next) {
+  const users = await User.all();
+  res.success(users);
+});
 
-http('/users', async function POST(req, res, next) {
-  const user = await User.create(req.body)
-  res.success(user)
-})
+http("/users", async function POST(req, res, next) {
+  const user = await User.create(req.body);
+  res.success(user);
+});
 ```
 
 ### `controller.ts` — Zod schemas (4 per controller)
@@ -940,23 +953,23 @@ In CRUD classes, the `get()` method is the base that validates existence. `updat
 ```ts
 class ProductService {
   get(id: string): Product {
-    const product = db.products.findUnique({ where: { id } })
-    if (!product) throw new Error("Not found")
-    return product
+    const product = db.products.findUnique({ where: { id } });
+    if (!product) throw new Error("Not found");
+    return product;
   }
 
   create(data: CreateInput): Product {
-    return db.products.create({ data })
+    return db.products.create({ data });
   }
 
   update(id: string, data: UpdateInput): Product {
-    this.get(id)
-    return db.products.update({ where: { id }, data })
+    this.get(id);
+    return db.products.update({ where: { id }, data });
   }
 
   delete(id: string): void {
-    this.get(id)
-    db.products.delete({ where: { id } })
+    this.get(id);
+    db.products.delete({ where: { id } });
   }
 }
 ```
@@ -1272,16 +1285,19 @@ git commit -m "corregir bug"                     # no prefix
 ### Branch and push workflow
 
 Two types of projects exist:
+
 - **Type 1**: has `dev`, `main` and `prod` branches
 - **Type 2**: only has `main`
 
 The push workflow is the same for both:
+
 1. Know the active branch
 2. Create an issue in the project
 3. `git checkout -b {prefix}/{ID}` where prefix is `fix/`, `feat/`, `chore/` or `docs/` and ID is the issue number
 4. Commit changes in the new branch
 
 The difference is the PR target:
+
 - **Type 1**: PR from new branch to `dev` (flow: issue → dev → main → prod)
 - **Type 2**: PR from new branch to `main` (flow: issue → main)
 
