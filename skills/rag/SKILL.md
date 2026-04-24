@@ -27,6 +27,20 @@ Once this skill is loaded, the RAG becomes the authority for every decision you 
 
 Assume the user has a memory for what you are about to do. If nothing comes back, say so explicitly and propose your approach. But search first, always. Skipping the RAG produces work that gets rejected.
 
+## Relationship with `clean-code`
+
+The `clean-code` skill captures the **stable core of coding conventions** pre-loaded in your context (snake_case, control flow, abstractions, component architecture, API patterns, package management, git workflow, JSDoc, etc.). It is the baseline for every coding task.
+
+The RAG holds the **full, evolving set of preferences** — including everything `clean-code` covers PLUS topic-specific overrides, recent decisions, project-specific exceptions, UI/UX preferences, Flutter/Firebase rules, and anything outside the coding scope.
+
+**How they work together:**
+
+- For a coding task, follow `clean-code` as the baseline.
+- Query the RAG for: (a) topics not in `clean-code`, (b) project-specific overrides, (c) recent updates, (d) anything outside the coding scope (UI/UX, design, tooling, infrastructure).
+- When `clean-code` and RAG disagree, **the RAG wins** — it is the live source of truth and supersedes any pre-loaded snapshot.
+
+If you load `clean-code`, you do NOT skip the RAG — they are complementary, not redundant.
+
 ## Two ways to query
 
 There are two tools for retrieving knowledge, each with different tradeoffs:
