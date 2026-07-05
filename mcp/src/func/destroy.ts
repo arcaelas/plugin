@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import * as rag from "../lib/rag.js";
 
-export const schema = z.object({
+const schema = z.object({
   document: z.union([z.string(), z.array(z.string())]).describe("Document ID or array of IDs to delete"),
 });
 

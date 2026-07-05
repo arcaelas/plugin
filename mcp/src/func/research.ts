@@ -40,10 +40,10 @@ export function func(_app: Express, mcp: McpServer) {
       tools: [new Tool("rag_search", {
         description: "Search semantic memory. Vary query phrasing for better coverage.",
         parameters: { query: "Semantic search query" },
-        func: async (_: any, args: any) => {
+        func: async (_, args) => {
           const results = await rag.search({ content: args.query, limit });
           if (!results.length) return "No results found.";
-          return results.map((r: any) => r.content).join("\n\n---\n\n");
+          return results.map((r) => r.content).join("\n\n---\n\n");
         },
       })],
     });
@@ -51,7 +51,7 @@ export function func(_app: Express, mcp: McpServer) {
     const [messages, ok] = await agent.call(input.search);
     if (!ok) return { content: [{ type: "text" as const, text: "Research could not be completed." }] };
 
-    const last = (messages[messages.length - 1] as any).toJSON();
+    const last = messages[messages.length - 1].toJSON();
     return { content: [{ type: "text" as const, text: last.content || "No findings." }] };
   });
 }

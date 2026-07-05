@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import * as rag from "../lib/rag.js";
 
-export const schema = z.object({
+const schema = z.object({
   content: z.string().describe("Text to store in semantic memory"),
   tags: z.array(z.string()).optional().describe("Tags for categorization"),
 });

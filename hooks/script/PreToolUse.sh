@@ -10,12 +10,14 @@ block() {
   exit 0
 }
 
-[[ "$COMMAND" =~ git[[:space:]]+push ]]                          && block "Blocked: git push is not allowed. All changes reach remote only through PRs."
-[[ "$COMMAND" =~ gh[[:space:]]+pr[[:space:]]+merge ]]              && block "Blocked: gh pr merge is not allowed. PRs are merged manually after review."
-[[ "$COMMAND" =~ gh[[:space:]].*--push ]]                          && block "Blocked: gh with --push is not allowed."
-[[ "$COMMAND" =~ git[[:space:]]+reset[[:space:]]+--hard ]]       && block "Blocked: git reset --hard destroys uncommitted changes."
-[[ "$COMMAND" =~ git[[:space:]]+clean[[:space:]]+-[a-zA-Z]*f ]]  && block "Blocked: git clean -f permanently deletes untracked files."
+# R1 — allow push to feature branches; block only push targeting main/dev/prod
+[[ "$COMMAND" =~ git[[:space:]]+push ]] && [[ "$COMMAND" =~ (^|[[:space:]/:])(main|dev|prod)([[:space:]]|$) ]] \
+  && block "Blocked: no push directo a main/dev/prod. Push a una rama feature (fix/feat/chore/docs) y abre PR."
+
+# R4 — reset --hard destroys uncommitted changes
+[[ "$COMMAND" =~ git[[:space:]]+reset[[:space:]]+--hard ]] && block "Blocked: git reset --hard destroys uncommitted changes."
+
+# R6 — rm -rf targeting system/root paths
 [[ "$COMMAND" =~ rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*[[:space:]]+(\/|~\/|\.\.|\/home|\/etc|\/usr|\/var) ]] && block "Blocked: rm -rf targeting system/root paths is not allowed."
-[[ "$COMMAND" =~ git[[:space:]]+(commit|push|merge)[[:space:]].*--no-verify ]] && block "Blocked: --no-verify is not allowed. Git hooks must not be skipped."
 
 exit 0

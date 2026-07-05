@@ -11,7 +11,7 @@
     {
       "name": "arko",
       "version": "6.7.0",
-      "description": "Unified MCP server for Claude Code — semantic memory (RAG via Ollama + Vectra) and knowledge base management.",
+      "description": "Productivity plugin for Claude Code: the arko agent, a semantic-memory MCP (RAG via Ollama + Vectra), and skills for coding conventions, UI/UX design, iterative requirements capture, and app publishing.",
       "source": {
         "source": "github",
         "repo": "arcaelas/plugin",
@@ -23,7 +23,7 @@
       },
       "repository": "https://github.com/arcaelas/plugin",
       "license": "MIT",
-      "keywords": ["mcp", "rag", "semantic-search", "ollama", "vectra"]
+      "keywords": ["mcp", "rag", "semantic-search", "ollama", "vectra", "agent", "skills", "clean-code", "ui-ux", "publishing"]
     }
   ]
 }

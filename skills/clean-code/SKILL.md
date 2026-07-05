@@ -1,3 +1,19 @@
+---
+name: clean-code
+description: >
+  The stable core of the user's coding conventions — the baseline for every coding task.
+  Covers naming (snake_case for variables/functions, PascalCase for classes/types,
+  UPPER_SNAKE_CASE for exported constants), recursive component/folder structure, hooks in
+  lib/use_*, control flow (affirmative blocks, no early returns), reuse vs fragmentation,
+  bilingual JSDoc, native runtime APIs over external libraries, standardized API response
+  envelopes, SSR guards, file-based routing, package management (yarn local, npm -g global,
+  tsx over ts-node), and git workflow (issue → branch → PR, Spanish commit messages with
+  fix/feat/chore/docs prefixes). Load it for any task that writes, refactors, or reviews code.
+  When it conflicts with the RAG, the RAG wins.
+---
+
+# Clean Code — convenciones base de código
+
 ## Jerarquía de componentes (recursiva)
 
 Estructura cada componente con su propio `components/` y `lib/`. El patrón se repite **idénticamente** en cualquier nivel de profundidad. Un componente solo importa **hacia arriba** (propio `lib/`, padre, abuelo, root). **Nunca** importa de hermanos, descendientes ni ramas no relacionadas.
