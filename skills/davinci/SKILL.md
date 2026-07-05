@@ -1,825 +1,314 @@
 ---
 name: davinci
 description: >
-  Da Vinci is the UI/UX design skill. Use it whenever the task involves building, modifying,
-  styling, or redesigning interfaces — pages, components, dashboards, landing pages, layouts,
-  responsive behavior, interaction states, motion, or any visual structure. Triggers on
-  "diseño", "design", "UI", "UX", "layout", "responsive", "componente", "rediseño",
-  "estilos", "Tailwind", "shadcn". Da Vinci does not write color palettes or accessibility
-  labels — it enforces structural and architectural decisions: which primitives to use,
-  how to compose layouts, how to handle space, overflow, state, motion, and density.
+  Da Vinci is the UI/UX craft skill — it makes interfaces look expensive and feel alive.
+  Load it whenever the task involves building, modifying, styling, reviewing, or redesigning
+  any visual surface: pages, components, dashboards, landing pages, layouts, responsive
+  behavior, interaction states, motion, forms, color, typography, spacing, elevation, or
+  loading experiences. It unifies taste (what reads as refined), motion craft (timing,
+  easing, overlays, micro-interactions), and verifiable interface guidelines (accessibility,
+  states, overflow, forms) on top of the user's non-negotiable laws (Tailwind-only, shadcn
+  over native, mobile-first). Triggers on "diseño", "design", "UI", "UX", "layout",
+  "responsive", "componente", "rediseño", "estilos", "Tailwind", "shadcn", "frontend",
+  "animation", "motion", "color", "theme", "landing", "dashboard", "page", "modal", "card".
+  Da Vinci owns visual and interaction decisions; file/folder naming and code structure come
+  from `clean-code`. When Da Vinci and the RAG disagree, the RAG wins.
 ---
 
-# Da Vinci — UI/UX Conventions
+# Da Vinci — UI/UX Design & Craft
 
-These rules govern every visual decision in the project. They are not preferences — they are the contract for any interface you build, modify, or review. Violations are defects. The RAG holds the live, evolving set of preferences; this skill captures the stable core. When in doubt, search the RAG.
+Da Vinci is the authority for every visual and interaction decision. Its job is not decoration — it is to make software read as **refined, deliberate, and premium**, and feel **fluid and responsive**, while staying correct and accessible. The rules below are contracts. Violating one is a defect even when the screen "looks fine".
 
----
+This skill unifies four bodies of knowledge into one:
+- **Taste** — what separates a refined interface from a generic one.
+- **Motion craft** — timing, easing, and the invisible details that make software feel alive.
+- **Interface guidelines** — the verifiable rules (accessibility, states, overflow, forms) that keep it correct.
+- **The user's laws** — the non-negotiables already established in this project.
 
-## 1. No custom CSS files
-
-Custom `.css` files are forbidden. The only `.css` allowed in the project are the ones shipped by Tailwind and shadcn (their base/reset/layer files). Those framework files **must not be modified** — they are vendor standard. If a style is needed, it must be expressed through Tailwind utility classes, never through a new stylesheet.
-
-This rule has no exceptions for "small overrides", "global resets", or "just one variable". If Tailwind cannot express it, revisit the design — do not reach for CSS.
-
----
-
-## 2. No `<style>` blocks, no `style=` attributes
-
-Inline `style="..."` props and `<style>...</style>` blocks are absolutely forbidden anywhere in the project. Every visual property — color, spacing, sizing, position, typography, shadow, border, transform — is expressed exclusively through Tailwind classes.
-
-Any occurrence of `style={{ ... }}` or a `<style>` element is a violation, regardless of how trivial the value looks. The only exception is when a value is genuinely dynamic and impossible to derive at build-time (e.g., a CSS variable assigned from runtime user input) — and even then, the dynamic value must flow into a Tailwind-aware pattern (CSS variables consumed by `[--var]:`/arbitrary value syntax), not into an ad-hoc `style` prop.
+**Authority order:** the RAG (live user preferences) > this skill > general defaults. Code-level concerns — file/folder naming, import scope, control flow, helper extraction — belong to `clean-code`; Da Vinci governs the *visual and interaction* layer. Where they overlap on component anatomy, casing comes from `clean-code`, composition comes from here.
 
 ---
 
-## 3. Animations — Tailwind first, custom only as last resort
+## 0. The three dials — calibrate before you build
 
-Animations and transitions are encouraged, but they must be expressed with Tailwind utilities first: `transition-*`, `duration-*`, `ease-*`, `animate-*`, `hover:`, `focus:`, `data-[state=open]:`, etc. Tailwind already provides the vocabulary for opacity, transform, color, and state-driven animations.
+Every screen is a point in a 3-axis space. Decide these **before** writing markup; they govern every downstream choice. An LLM left on autopilot collapses to the statistical average (the "AI-generic" look) — these dials are how you escape it.
 
-Custom keyframes or external animation libraries are allowed **only** when the desired motion cannot be achieved with Tailwind classes directly. Before reaching for Framer Motion, GSAP, or a `@keyframes` declaration, prove that no combination of Tailwind utilities solves it.
+| Dial | Low | High |
+|------|-----|------|
+| **Variance** (order ↔ expression) | symmetric, grid-locked, enterprise | asymmetric, editorial, expressive |
+| **Motion** (still ↔ animated) | near-static, utilitarian | rich, playful, physical |
+| **Density** (gallery ↔ cockpit) | huge whitespace, few elements | compact, data-rich, 1px dividers |
 
----
+- A **banking dashboard** is low-variance, low-motion, high-density. A **creative studio landing** is high-variance, high-motion, low-density. Never build a landing page with dashboard density, or a data table with landing-page whitespace.
+- **Density is a decision, not an accident.** Low density (1–3): generous gaps, content "breathes", reads as expensive. High density (8–10): minimal padding, `1px` dividers instead of cards, `font-mono`/`tabular-nums` on figures, everything compact.
+- Motion intensity scales the whole motion section below. Low ≠ zero; it means only functional motion survives.
 
-## 4. Native form elements are forbidden — use modern components
-
-Native `<select>`, `<input type="checkbox">`, `<input type="radio">`, and `<input type="range">` are prohibited in user-facing UI. Every project has a richer counterpart available:
-
-- **Select / dropdown** → shadcn `Select`, `Combobox`, or `DropdownMenu`.
-- **Checkbox** → shadcn `Checkbox`.
-- **Radio** → shadcn `RadioGroup`.
-- **On/off toggle** → shadcn `Switch`.
-- **Range** → shadcn `Slider`.
-- **Date / time** → shadcn `Calendar` + `Popover`.
-
-Native versions render with platform-default visuals that break the design system, ignore Tailwind theming, and look dated. Replace them on sight.
+When unsure of the target, infer it from the domain and ask via `AskUserQuestion` only if two very different points are plausible.
 
 ---
 
-## 5. Motion is mandatory on overlays — no dry, hard transitions
+## 1. Non-negotiable laws
 
-Any component that appears, expands, or collapses must animate. Hard-cut openings (a popover snapping into existence, a modal flashing on the screen) are visually cheap and break the perceived quality of the product. Animate every entrance and exit for:
+These never bend (they are also the user's standing law):
 
-- Dropdowns, popovers, tooltips, context menus.
-- Drawers, sheets, sidebars.
-- Modals, dialogs, alert dialogs.
-- Toast notifications.
-- Accordions, collapsibles, tabs (when content height changes).
-
-shadcn primitives ship with `data-[state=open]:animate-in`, `data-[state=closed]:animate-out`, and the `tailwindcss-animate` plugin — use those utilities. The standard duration range is 150–250ms with `ease-out` for enters and `ease-in` for exits. Do not ship overlays without motion.
-
----
-
-## 6. Components stay generic — share, don't duplicate
-
-Reusable components (dropdowns, dialogs, modals, sheets, tooltips, buttons, inputs, cards, badges, tables) live as **single, generic implementations** at the project's shared component layer. Sections and views consume them — they do not fork them.
-
-A view-specific component is justified only when the requirement is genuinely view-specific: a one-off layout, a domain widget that wraps the generic primitives, a composition that has no reuse value. Even then, the view-specific component is built **on top of** the shared primitives, never as a rewrite of them.
-
-If you find yourself building a second `Dialog`, a custom `Dropdown`, or a parallel `Tooltip` — stop. The duplication is the bug. Extend the shared component or compose around it.
-
-**`<Card/>` is the canonical case of this principle.** A single generic `Card` lives at the shared layer because it has a consistent structure across the entire app — the same border, radius, elevation, and inner anatomy (header, body, actions, footer). What changes is how each section consumes it: every view can hide the header, drop the footer, omit the actions slot, swap padding, change the background, or re-style the surface through Tailwind classes. The card stays generic for the global structural decisions (radius, elevation, anatomy) while every section customizes it through composition and classes — never by forking it into a parallel implementation.
-
----
-
-## 7. Optimize re-renders — `React.memo()` on components with primitive props
-
-Wrap components in `React.memo()` when their props are primitives (string, number, boolean, null, undefined). Shallow comparison on primitives is essentially free and prevents the entire subtree from re-rendering when a parent re-renders for unrelated reasons. This is the cheapest performance win available in React.
-
-Do **not** wrap components whose props are objects, arrays, or functions recreated on every render — the shallow comparison will always fail and `memo()` becomes pure overhead. For those, fix the prop instability first (lift state, `useMemo` the object, `useCallback` the function), then decide if `memo()` adds value.
-
-`useMemo` and `useCallback` are reserved for expensive computations or for stabilizing reference identity of non-primitive props passed to a memoized child. Do not sprinkle them on cheap operations.
-
----
-
-## 8. Scroll is part of the design — never leave it native
-
-Native scrollbars look like the operating system, not like the project. Treat the scroll surface as a designed element:
-
-- **Static styling** → use `tailwind-scrollbar` to apply utilities (`scrollbar-thin`, `scrollbar-track-*`, `scrollbar-thumb-*`) so the scrollbar matches the project palette and density.
-- **Smooth scroll behavior** → use a JS library (Lenis, Locomotive, or equivalent) to replace the native scroll easing on long-form pages and main content surfaces. Inertia, easing, and direction must feel intentional.
-- **Section transitions** → animate scroll-into-view interactions, anchor jumps, and scroll-driven reveals. A page that scrolls "by default" feels unfinished.
-
-Apply the lighter approach (scrollbar utilities) to local containers — sidebars, tables, modal bodies. Apply the heavier approach (smooth-scroll library) to the main page scroll where the user spends most of their time.
-
----
-
-## 9. Class lists must be unambiguous and non-redundant
-
-Every Tailwind class on an element earns its place. Two rules govern the class list:
-
-**No redundant `dark:` variants.** If the value is the same in light and dark, write the base class only. `text-white dark:text-white` is wrong — write `text-white`. The `dark:` prefix is reserved exclusively for cases where the dark value differs from the light value (`text-neutral-900 dark:text-neutral-100`). Same logic for `hover:`, `focus:`, `md:`, `lg:` and any other variant: only declare the variant when its value diverges from the base.
-
-**No classes overwriting each other.** Tailwind resolves conflicts by source order, not by class order in the string — relying on that is a footgun. A class list must never contain two utilities that target the same property: no `p-4 p-2`, no `text-sm text-base`, no `flex grid`, no `bg-white bg-neutral-100`, no `mt-4 mt-0`. If a conditional override is needed, build the class list with a single source of truth (`cn()` / `clsx` / `tailwind-merge`) so only one value reaches the DOM.
-
-The class list is read top-to-bottom by humans. Ambiguity costs review time and produces silent bugs when a refactor reorders utilities or when a variant unexpectedly takes precedence.
-
----
-
-## 10. Component folder anatomy
-
-Every visual component lives in its own folder. Each subcomponent and each hook also lives in **its own folder** with an `index.ts`, never as a flat file inside `components/` or `lib/`. The pattern is recursive — folders all the way down:
-
-```
-src/components/Button/
-├── index.ts                          # main entry of the Button component
-├── components/                       # optional, subcomponents that return JSX
-│   └── Icon/
-│       └── index.ts                  # subcomponent used by Button
-└── lib/                              # optional, hooks and pure logic without JSX
-    └── use_loading/
-        └── index.ts                  # hook that belongs to Button
-```
-
-The main entry is always `index.ts`, never `Button.ts`. No extra files (CSS, README, tests) unless strictly necessary.
-
-**`components/` vs `lib/` — single decision:** does it return JSX? Yes → `components/`. No → `lib/`.
-
-**Export order inside `index.ts`:** Enums → Types → Interfaces → Constants → Utility functions (only if complex) → `export default Component` (always last).
-
-**Recursive hierarchy.** Each subcomponent and each hook is its own folder, and each can in turn have its own `components/` and `lib/` at any depth — the pattern repeats identically downward, no depth limit.
-
-**Import scope — upward only.** A component imports from: its own `lib/`, its parent's `lib/`, the root `lib/`, and the root `components/`. Never from siblings or unrelated branches.
-
-```ts
-// OK
-import useIconSize from "./lib/use_icon_size"; // own
-import useButtonState from "../../lib/use_button_state"; // parent
-import useTheme from "@/lib/use_theme"; // root
-
-// WRONG
-import { x } from "../ButtonSpinner/lib/x"; // sibling
-import { y } from "@/components/Form/lib/y"; // unrelated branch
-```
-
----
-
-## 11. Cards are self-contained by default
-
-A card owns its data fetching, state, and lifecycle whenever its content maps to a dedicated API resource. Receiving primary data via props is **forbidden** in that case — the card builds itself with lazy loading and stays decoupled from any parent. If the fetch fails or the endpoint changes, the blast radius is exactly one card.
-
-Props are accepted **only** when a higher-level API returns the collection as a unit (galleries, lists rendered from a single endpoint). Refetching per item in those surfaces multiplies network calls and re-fragments data the API already delivered together.
+1. **Tailwind utilities only.** No custom `.css` files, no `<style>` blocks, no `style={{}}` attributes. The only CSS allowed is what Tailwind/shadcn ship, and those vendor files are never edited. The single exception is a genuinely runtime-dynamic value, which must flow through a CSS variable consumed by an arbitrary-value utility (`[--x:...] w-[var(--x)]`), never an ad-hoc `style` prop.
+2. **Modern components over native.** Native `<select>`, `<input type=checkbox|radio|range>` are forbidden in user-facing UI. Use shadcn `Select`/`Combobox`, `Checkbox`, `RadioGroup`, `Switch`, `Slider`, `Calendar+Popover`.
+3. **Color/state through tokens and variants, never ad-hoc.** Semantic state uses shadcn `variant` (`Button variant="destructive"`), never `bg-red-500` to *mean* destructive. See §2.
+4. **Class hygiene.** No redundant variants — write the base class when light/dark (or any variant) share a value; `dark:`/`hover:`/`md:` are reserved for when the value *diverges*. No two utilities targeting the same property in one list (`p-4 p-2`, `flex grid`). Conditional overrides go through a single source of truth (`cn()`/`tailwind-merge`) so exactly one value reaches the DOM.
+5. **Mobile-first, three viewports, always.** Base classes describe mobile; `md:` (tablet) and `lg:` (desktop) layer up. Never assume a higher breakpoint covers a lower one. This is not optional.
+6. **Motion is mandatory on overlays** (§6) and **`motion-reduce` is explicit on every new entrance** (§6.7).
 
 ```tsx
-// OK — one card ↔ one resource → self-contained
-function Balance() {
-  const [n, setN] = useState(0);
-  useEffect(() => { fetch("/api/balance").then(setN); }, []);
-  return <div>{n}</div>;
-}
-
-// OK — many cards ↔ one collection → props from parent
-function Photo({ src, alt }) { return <img src={src} alt={alt} />; }
-
-function Gallery() {
-  const [items, setItems] = useState([]);
-  useEffect(() => { fetch("/api/photos").then(setItems); }, []);
-  return items.map((p) => <Photo key={p.id} {...p} />);
-}
-```
-
-One card ↔ one resource → self-contained. Many cards ↔ one collection → props from parent. There is no third option.
-
----
-
-## 12. View stabilization and shared logic
-
-**Equivalent views follow the same composition.** Views that solve the same problem (fetch + list + actions, form + submit, detail + edit) use the same composition pattern across the app: same loading, empty, and error structures, same data flow, same interaction shape. Mixing infinite scroll on one screen and manual pagination on another for the same domain is a defect. Consistency across equivalent views is what makes the product feel like one product.
-
-**Abstractions earn their place.** An abstraction is justified only when it encapsulates complete behavior reused across multiple views. A 4-line component that only maps a status to a color is microfragmentation — it goes inline. The smallest implementation that satisfies the requirement is the correct one.
-
-**Do not reimplement the framework.** If a framework primitive already covers the case (MUI's `IconButton` with `startIcon`, Next.js parallel routes and route groups, shadcn variants), consume it directly. Inventing a custom solution alongside a working framework primitive is forbidden.
-
----
-
-## 13. Cross-cutting principles
-
-- **Enrich flat data.** When two APIs together produce a richer record (user + workspace metadata, ticket + assignee details), cross them in the loader and pass the enriched object to the view.
-- **Right data structure for the job.** `Map` to group by key, `Set` to deduplicate, `for...of` to iterate. Avoid forcing arrays through `find()`, `includes()`, or `reduce()` when these structures exist natively.
-
----
-
-## 14. Tailwind dark mode setup
-
-Dark mode is driven by the `dark` class on `document.documentElement`, controlled through a `useTheme` hook at `@/lib/use_theme/`.
-
-The toggle persists the chosen theme in `localStorage` and toggles the `dark` class on `<html>`:
-
-```ts
-const toggle_theme = () => {
-  const next = theme === "dark" ? "light" : "dark";
-  setTheme(next);
-  localStorage.setItem("theme", next);
-  document.documentElement.classList.toggle("dark");
-};
-```
-
-To prevent FOUC (flash of unstyled content), inject a `beforeInteractive` script in the document head that reads `localStorage('theme')` and `matchMedia('(prefers-color-scheme: dark)')`, then applies the `dark` class to `<html>` before React mounts.
-
-For SSR, gate any browser-only render with the `mounted` pattern (defined in `clean-code` skill).
-
----
-
-## 15. Tailwind composition principles
-
-**Variant-to-class maps are named exports in the component's `index.ts`.** Mappings from variant name to Tailwind classes are predefined data — they have no `function()` and they don't return JSX. They live as `export const` in the component's own `index.ts`, never in `lib/` (reserved for hooks and pure logic), and never as default export (reserved for the component itself):
-
-```tsx
-// components/Button/index.ts
-export const button_variants = {
-  primary: "bg-blue-500 text-white hover:bg-blue-600",
-  ghost: "bg-transparent text-blue-500 hover:bg-blue-50",
-};
-
-export default function Button({ variant }) {
-  /* ... */
-}
-```
-
-**Conditional classes inline as ternaries.** Use a single inline ternary inside `className` for binary state changes — do not split into `if/else` blocks or pre-computed variables for trivial cases.
-
-```tsx
-<button className={is_active ? "bg-blue-500" : "bg-neutral-200"}>
-```
-
-For three or more states, use a `Record` lookup defined as a named export in the component's `index.ts`, not nested ternaries.
-
-**No micro-wrappers around classes.** A component that exists only to map one prop to one Tailwind class adds a layer with no behavior. Inline the class at the call site.
-
----
-
-## 16. Layout is planned first
-
-Nothing is built before the Layout is defined — its skeleton is decided upfront and every component composes inside it. Canonical hierarchy:
-
-```
-LAYOUT — section root or full view (Next.js: layout.tsx)
-  ├── NAVBAR — top of the view; direct child of LAYOUT
-  └── BODY  — flex
-        ├── DRAWER — first horizontal slot of BODY
-        └── MAIN   — second horizontal slot of BODY; renders the view's content
-```
-
-**Drawer vs Sidebar.** Two distinct, non-interchangeable surfaces:
-
-- **Drawer** — the **global** app navigation. Layout-level, lives in the slot above. Hosts modules, sections, primary destinations. Collapsible on both viewports: **desktop persists** state across reloads (e.g., `localStorage`), **mobile defaults to closed** on every load.
-- **Sidebar** — a **sub-section** navigation living **inside `MAIN`**. View-level. Canonical case: the Settings page renders a Sidebar with Profile / Security / Notifications / Billing on the left, the active subsection on the right, the URL reflecting the active section.
-
----
-
-## 17. Avoid deep element nesting
-
-Element hierarchy is kept as shallow as the design allows. Recursive children should be reduced, not accumulated — every additional nested level adds tree weight and reading complexity.
-
-Most layout cases are resolved with Tailwind flex utilities (`flex`, `flex-col`, `gap-*`, `justify-*`, `items-*`) on a single container. Recursive compositions that saturate the tree to achieve a layout that flex already solves are a defect.
-
----
-
-## 18. Mobile-first responsive is non-negotiable
-
-Every design is mobile-first. Every component, layout, and view is built with mobile, tablet, and desktop in mind from the start — this is not optional, not negotiable. Each piece that ships must account for the three viewports.
-
-Tailwind provides the breakpoint vocabulary (`md:`, `lg:`, `xl:`, …): base classes describe the mobile state, breakpoint variants layer the larger viewports on top.
-
-The next sections (19–23) cover patterns that explicitly diverge by viewport. They all descend from this foundational rule.
-
----
-
-## 19. Hover on desktop, `active:` / `focus:` on mobile
-
-Hover affordances are free to use on desktop, where the input model supports them. On mobile, where hover does not exist, interactive feedback relies on `active:` (touch press) and `focus:` (after tap) instead.
-
----
-
-## 20. Navigation context: Back on mobile, breadcrumbs on tablet/desktop
-
-Navigation hierarchy is exposed differently depending on the viewport:
-
-- **Mobile** — prefer a "Back" button. Breadcrumbs consume horizontal space mobile cannot afford.
-- **Tablet / Desktop** — breadcrumbs are welcome and can be included in designs to expose the full hierarchy.
-
----
-
-## 21. Drag-to-reorder: drag on desktop, buttons on mobile
-
-Reordering is split by viewport. **Desktop** uses drag & drop. **Mobile** uses explicit up / down buttons — drag interactions on touch conflict with scroll and are imprecise.
-
-The same list renders the appropriate control per viewport: drag handles on desktop, arrow buttons on mobile.
-
----
-
-## 22. Route transitions: horizontal slide on mobile/tablet, none on desktop
-
-Page transitions follow the viewport:
-
-- **Mobile / Tablet** — horizontal slide animation between routes, mirroring the navigation direction (forward enters from the right, back enters from the left).
-- **Desktop** — no transition. Routes change instantly.
-
----
-
-## 23. Diff view: toggle between side-by-side and inline
-
-Diff views (comparing versions, before/after) expose **both layouts** behind a toggle:
-
-- **Side-by-side** — two columns (left = before, right = after) with changed lines highlighted in place. Default on desktop.
-- **Inline (unified)** — a single column with `-` lines (removed, red) and `+` lines (added, green). Default on mobile, where two-column layouts get too narrow.
-
----
-
-## 24. Form validation: API on blur, local on input
-
-Form validation timing depends on the source of the rule:
-
-- **API-backed validation** (uniqueness checks, server-side rules) — triggered on `blur`, never on every keystroke. Hammering the endpoint while the user types is forbidden.
-- **Local validation** (format, length, required, regex) — triggered on `input` for immediate feedback, since there is no network cost.
-
-This split keeps real-time feedback for what the client can answer instantly, while protecting the API from request floods.
-
----
-
-## 25. Z-index follows the component source
-
-Z-index management is dictated by where the overlay primitive comes from:
-
-- **Custom components** built in-house use Tailwind's z-index utilities directly (`z-10`, `z-20`, …).
-- **Third-party components** (shadcn, or any other provider) already ship z-index management — they are consumed as-is. Do not override their layering.
-
----
-
-## 26. Single icon library with canonical sizes
-
-The project uses a single icon library across the entire UI. Mixing icon libraries is forbidden — visual consistency depends on a unified stroke weight, metaphor system, and optical balance.
-
-Icon sizing is restricted to a fixed scale: `size-4`, `size-5`, `size-6`. Free-form sizes break the rhythm of buttons, headers, and form fields.
-
----
-
-## 27. Destructive actions: confirmation dialog + navigation protection
-
-Destructive actions (deleting, discarding changes) must be confirmed through a dialog before executing. The user has to explicitly approve the operation.
-
-Beyond the dialog, the app must protect against navigation events that could silently lose work. When a form holds unsaved changes, intercept refresh and tab-close attempts with the browser's native prompt (`beforeunload`) — this is the mechanism that survives a page navigation and prevents accidental loss.
-
----
-
-## 28. Empty states: illustration + text + action
-
-Every empty state — empty list, table with no results, dashboard without data — composes three elements: a custom illustration (not a generic icon), explanatory text describing the state, and a CTA that lets the user act on it. A blank surface or a single sentence is not an acceptable empty state.
-
----
-
-## 29. Lazy data uses `<Suspense/>` with `Skeleton`
-
-Any interface that loads data lazily wraps the lazy boundary in `<Suspense/>`, and the Suspense `fallback` renders a `Skeleton`.
-
-```tsx
-<Suspense fallback={<BalanceSkeleton />}>
-  <Balance />
-</Suspense>
+// BAD — ad-hoc color for state, redundant dark, style attr, native select
+<div style={{ marginTop: 8 }} className="text-black dark:text-black">
+  <span className="text-green-600">Active</span>
+  <select>...</select>
+</div>
+
+// GOOD
+<div className="mt-2 text-neutral-900 dark:text-neutral-100">
+  <Badge variant="success">Active</Badge>
+  <Select>...</Select>
+</div>
 ```
 
 ---
 
-## 30. Skeleton whenever the layout is known
+## 2. Color with judgment
 
-Loading uses `Skeleton` whenever the shape of the final content is predictable. The skeleton matches the eventual layout so the structure is visible from the first paint, with no shift when data lands.
+Da Vinci does not hand you a palette — it teaches you to choose one that doesn't look generic.
 
-Spinners are reserved for punctual actions — form submit, manual refresh — where there is no layout to preview. Replacing a Skeleton with a spinner is a downgrade.
-
----
-
-## 31. All lists use infinite scroll
-
-Lists render with infinite scroll, driven by the API's pagination contract. If the API exposes cursor-based pagination, use cursors. Otherwise use the offset/limit pagination the API provides. Manual "next page" buttons and classical pagination bars do not belong in standard list views.
-
----
-
-## 32. Sort on column headers, filters in a toolbar above the table
-
-Tables expose two separate controls:
-
-- **Sort** — when the API permits sorting data or columns, clicking a column header toggles the sort order for that column. If the API does not support sort, headers are not interactive — client-side sorting over the visible page is forbidden.
-- **Filters** — a dedicated toolbar above the table holds the advanced filter options the API permits.
+- **One accent, maximum.** A single accent hue carries interaction and brand. Everything else is neutral. Two competing accents read as unresolved.
+- **Neutral base, honest neutrals.** Build on a true neutral ramp (Zinc/Slate/Neutral). Keep **temperature consistent** — never mix warm and cool grays in one product.
+- **Never pure black or pure white for large surfaces.** `#000`/`#fff` are harsh; use off-black (`neutral-950`, charcoal) and off-white. Reserve maximum contrast for text that needs it.
+- **Desaturate to integrate.** An accent above ~80% saturation screams. Pull saturation down so it sits *inside* the neutral world, not on top of it.
+- **The Lila ban.** The default neon purple/electric-blue gradient is the tell of AI-generated UI. Avoid it unless the brand genuinely owns it.
+- **Tokens, not literals.** Color lives in shadcn/Tailwind theme tokens (`bg-background`, `text-muted-foreground`, `border`, `primary`). Ad-hoc `bg-[#3b82f6]` in a component is a defect — it can't be re-themed and it drifts.
+- **`dark:` only when the value differs.** Same value in both themes → base class only (`text-neutral-500`). Different → `text-neutral-600 dark:text-neutral-400`. (User law.)
+- **Contrast is a requirement, not a preference.** Body/UI text ≥ **4.5:1** against its background; large text (≥24px or ≥19px bold) and UI boundaries ≥ **3:1**. Verify computed foreground against computed background, including inside tinted/translucent surfaces.
 
 ---
 
-## 33. Autocompletes show a loader inside the dropdown
+## 3. Typography & hierarchy
 
-Every autocomplete renders a dropdown panel with a loader inside it to indicate the search is in progress.
-
----
-
-## 34. Prefer `Toast` over `Alert`
-
-Notifications use `Toast` by default rather than `Alert` — Toasts are less invasive and do not block the user's flow.
-
----
-
-## 35. Images must be optimized
-
-Every image ships through an optimization strategy. `next/image` is the preferred path in Next.js projects (automatic lazy loading, modern formats, responsive sizes). Alternative optimization solutions are acceptable when they cover the same ground.
-
-What is not acceptable is shipping unoptimized images.
+- **Hierarchy comes from weight and color, not size.** Resist the giant heading that "shouts". Separate levels with `font-weight` and a muted/loud color contrast first; scale up only when the layout genuinely calls for a display moment.
+- **Body:** ~15–16px, `leading-relaxed` (1.5–1.6, never below 1.4), measure capped at `max-w-[65ch]`, in a *muted* foreground (`text-muted-foreground`), not full-contrast black.
+- **Display:** `text-4xl md:text-6xl tracking-tighter leading-none` when you do go big; tighten tracking as size grows.
+- **Numbers:** `tabular-nums` in any column or changing value so digits don't jitter; `font-mono` for dense figure-heavy contexts.
+- **Font choice signals the tier.** For "premium/creative", avoid defaulting to Inter (it's the safe average); Geist, Outfit, Satoshi, Cabinet Grotesk read more intentional. Serif only for editorial, never a dashboard.
+- **Typographic correctness** (verifiable): real ellipsis `…` not `...`; curly quotes; non-breaking space in `10 MB`, `⌘ K`, brand names; `text-wrap: balance`/`text-pretty` on headings to kill orphans/widows.
 
 ---
 
-## 36. Natural wrap by default, line-clamp only on overflow
+## 4. Space, layout & density
 
-Text wraps naturally by default. `line-clamp` is applied only when the content would visibly overflow its container — not preemptively. Truncation hides information; preserve it whenever the layout allows.
-
----
-
-## 37. Search debounce: variable by context
-
-Debounce timing on search inputs depends on the surface:
-
-- **Autocompletes** — 300ms. Fast feedback expected, results inform the next keystroke.
-- **List filters** — 500ms. Larger payloads, less keystroke-by-keystroke interaction.
-- **Heavy searches** — on submit (Enter or button). The user opts in explicitly when the cost is high.
-
-There is no universal debounce value — each search input declares its timing based on the cost of the call and the expectation of the surface.
+- **Plan the layout first.** Decide the skeleton before any component: `LAYOUT → NAVBAR + (BODY: DRAWER | MAIN)`. Drawer = global app nav (desktop persists open/closed, mobile defaults closed). Sidebar = sub-section nav *inside* MAIN (e.g. Settings).
+- **Grid over flex-math.** Use `grid-cols-*` for structured layouts; never fake columns with `w-[calc(33%-1rem)]`. Flex for one-dimensional flows.
+- **Contain the measure.** Wrap content in `max-w-7xl mx-auto` (or a chosen max) — full-bleed body text is a tell of an unplanned page.
+- **Consistent spacing scale.** Stick to the Tailwind spacing ramp; don't scatter arbitrary `gap-[13px]`. Padding should feel mathematically even, not "roughly aligned".
+- **Break the 3-equal-cards reflex.** A row of three identical horizontal cards is the generic default. Prefer a 2-column zig-zag, an asymmetric/bento grid, or horizontal scroll when variance is high.
+- **Anti-center for expressive layouts.** A centered hero is fine at low variance; at high variance, split 50/50 or left-align with an asset on the right.
+- **Shallow trees.** Most layouts resolve with flex/gap utilities on one container. Recursive nesting that reproduces what `flex`/`grid` already does is a defect (§ clean-code covers structure).
 
 ---
 
-## 38. Native APIs and formatting: `Intl.*` first, libraries only when needed
+## 5. Depth, elevation & shape
 
-Native APIs are preferred over external libraries for capabilities the platform already exposes:
-
-- `crypto.randomUUID()` over `uuid`.
-- `Intl.DateTimeFormat`, `Intl.NumberFormat`, `Intl.RelativeTimeFormat` over `moment.js`.
-- Native `fetch` over HTTP clients when sufficient.
-
-For date, number and currency formatting specifically — always in the user's active locale.
-
-`Intl.*` is the default. `ago`-style relative outputs are preferred for time deltas, expressed through `Intl.RelativeTimeFormat`.
-
-`moment.js` is the fallback — reach for it only when `Intl.*` cannot cover a specific format, never as the default.
+- **Cards are not the default container.** Use a card only when elevation *communicates* separation or grouping. At higher density, group with `border-t`/`divide-y`/whitespace instead — metrics that "float" on the page read more refined than boxes-in-boxes.
+- **Shadows are tinted and diffuse, never generic.** A real shadow is wide, soft, low-opacity, and tinted toward the background/surface tone — not a hard default `box-shadow`. Never use outer glows or neon halos. Exaggerated drop shadows are a defect.
+- **Glass done right.** `backdrop-blur` alone looks cheap. Real glass adds a 1px inner border (`border-white/10`) and a subtle inner shadow to fake the refraction at the edge. Keep blur radius modest (`<20px`, expensive in Safari).
+- **Radius is coherent.** Border-radius is consistent across primitives; nested containers share the radius scale (a large container carries a large unified radius, inner elements a proportionally smaller one). Mismatched radii read as accidental.
+- **Z-index follows the source.** In-house overlays use Tailwind z utilities (`z-10`, `z-20`); third-party primitives (shadcn) already manage layering — consume as-is, never override.
 
 ---
 
-## 39. Bulk actions: row checkboxes + persistent toolbar
+## 6. Motion — the craft that makes it feel alive
 
-Lists and tables that support bulk operations expose two pieces:
+Motion is where "correct" becomes "premium". It is also where most UIs go wrong, in both directions: dead hard-cuts and gratuitous animation.
 
-- A **checkbox per row** for selection.
-- A **toolbar above the table**, always visible, holding the bulk action buttons. The buttons stay disabled until there is a selection and enable as soon as one row is checked.
+### 6.1 When to animate (by frequency)
+The single best predictor of "should this animate" is **how often the user sees it**:
+- **100+/day** (keyboard shortcuts, command palette, actions the user *drives* with the keyboard): **no animation, ever.** Animating a keyboard-triggered action makes it feel slow and disconnected.
+- **Dozens/day** (hover, nav): reduce drastically or remove.
+- **Occasional** (modals, drawers, toasts): standard animation.
+- **Rare / first-run** (onboarding): delight is allowed.
 
-The toolbar does not appear and disappear with selection — it lives at the top of the table and signals availability through its buttons' enabled state.
+Every animation needs a purpose: spatial consistency, state indication, explanation, feedback, or softening an abrupt change. "It looks cool" + seen often → don't animate.
 
----
+### 6.2 Timing & easing (concrete)
+- **Durations:** press feedback 100–160ms; tooltips/small popovers 125–200ms; dropdowns/selects 150–250ms; modals/drawers 200–500ms. **Hard rule: interface motion stays under 300ms** (large surfaces excepted).
+- **The stock CSS curves are weak.** Define custom eases:
+  - Enter/exit → `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)`
+  - On-screen move/morph → `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)`
+  - Drawers → `--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1)` (iOS feel)
+  - Hover/color → plain `ease`; constant motion (marquee, progress) → `linear`.
+- **Never `ease-in` for UI.** It starts slow and feels sluggish. `ease-out` at 200ms *feels faster* than `ease-in` at 200ms because the eye tracks the initial movement.
+- **Exit faster than enter.** Slow where the user decides, fast where the system responds.
 
-## 40. File upload: drag & drop, thumbnail preview, per-file loader
+### 6.3 Overlays (open/close)
+- **Origin-aware for anchored overlays.** Popovers, tooltips, dropdowns scale from their trigger: `transform-origin: var(--radix-popover-content-transform-origin)` (Radix) — not center. **Modals are the exception**: they stay centered (not anchored to a trigger).
+- **Never `scale(0)`** — nothing should appear from a single point. Enter from `scale(0.95)` + `opacity:0`.
+- Prefer shadcn's `data-[state=open]:animate-in` / `data-[state=closed]:animate-out` (via `tailwindcss-animate`); modern zero-JS entrance is `@starting-style` with a `data-mounted` fallback.
+- **Tooltips:** delay the *first* one; subsequent tooltips open instantly with no animation (`[data-instant]{transition-duration:0}`).
 
-File upload surfaces compose three elements:
+### 6.4 Feedback & ripple
+- Buttons press in: `active:scale-[0.97]` with `transition-transform duration-150 ease-out` (subtle, 0.95–0.98). `scale()` also scales children — that's the point.
+- Provide touch feedback; do not strip `-webkit-tap-highlight` without an intentional replacement.
+- Hold-to-confirm (destructive): animate a `clip-path: inset(0 100% 0 0)` → `inset(0)` fill over the hold, snap back on release (asymmetric timing).
 
-- **Drag & drop zone** that also opens the native file picker on click.
-- **Thumbnail preview** of each selected file.
-- **Per-file loader** showing individual progress for each upload.
+### 6.5 Avoiding hard cuts
+- **Transitions, not keyframes**, for rapidly re-triggered UI (toasts, quickly reopened menus): transitions retarget mid-flight; keyframes restart from zero and stutter.
+- **Blur masks imperfect crossfades:** a brief `filter: blur(2px)` during a state swap blends the two states. Keep `<20px`.
+- Springs preserve velocity when interrupted (a drawer reverses smoothly on Escape); CSS transitions restart.
 
-Global progress bars covering the whole batch are not used — each file owns its own loader.
+### 6.6 Spring vs tween & performance
+- **Spring** for drag with momentum, interruptible gestures, "alive" elements. Sane default: `{ type: "spring", duration: 0.5, bounce: 0.2 }`; keep bounce 0.1–0.3, avoid bounce in serious UI. **Tween** for everything deterministic.
+- **Animate only `transform` and `opacity`** — they skip layout/paint and run on the GPU. Never animate `width`/`height`/`margin`/`padding`/`top`/`left`.
+- Don't mutate CSS variables on a parent to drive motion (it recalculates every child); set `transform` on the moving element directly.
+- Percentages adapt: `translateY(100%)` slides a sheet fully regardless of its height.
 
----
+### 6.7 Reduced motion (mandatory)
+- **`prefers-reduced-motion` reduces, it doesn't delete.** Keep opacity/color transitions that aid comprehension; drop *movement* and *position* animation.
+- Every new entrance ships an explicit escape: pair the animation with `motion-reduce:animate-none` (user law — `motion-reduce` is declared per new entrance, not assumed global).
+- Gate hover behind capability: `@media (hover: hover) and (pointer: fine)` so touch devices don't fire a phantom hover on tap.
 
-## 41. Command palette + documented shortcuts
-
-The product ships with a **command palette** opened by `⌘K` (`Ctrl+K` on non-Mac). It is the global entry point for actions and navigation.
-
-Every keyboard shortcut in the product is documented and surfaced inside the command palette so the user can discover what is available without leaving the app.
-
----
-
-## 42. Status semantics use shadcn variants, never ad-hoc colors
-
-Semantic states (destructive, success, warning, info, neutral) are expressed through shadcn's `variant` prop on the corresponding primitives — `Button variant="destructive"`, `Alert variant="destructive"`, etc. The variant carries the intent.
-
-Ad-hoc colors for state (`bg-red-500` to mean "destructive", `text-green-600` to mean "success") are forbidden. State expression lives inside the official variants — introducing colors outside that system is not permitted.
-
----
-
-## 43. Tooltips for trivial info, Popover for explanation
-
-Tooltips are reserved for trivial information — 1 to 3 words at most: the label of an icon-only button, a short status name, an abbreviation expansion.
-
-When the content needs to be explained, use a `Popover` instead. The popover offers structured space for paragraphs, lists, or interactive content; the tooltip is a quick label, not a documentation surface.
-
----
-
-## 44. Avatar groups: stacked with `+N` overflow
-
-Avatars in a group context render as a stack — overlapping circles showing the first 3-4 members. Beyond that limit, the last circle displays `+N` to communicate the remaining count.
-
----
-
-## 45. Mutations are optimistic by default
-
-Mutations (toggles, likes, marking as read, archiving) update the UI immediately, without waiting for the API response. If the request fails, the local state is rolled back and a `Toast` informs the user of the error.
+### 6.8 Invisible details (the difference)
+Perceived speed *is* speed — a faster spinner reads as a faster load. Stagger list entrances 30–80ms per item. Match a component's easing/duration to its personality (a calm toast uses a slow elegant `ease`, not a snappy `ease-out`). Review animations the next day and frame-by-frame. Handle edge cases silently (pause timers when the tab is hidden).
 
 ---
 
-## 46. Fetch errors render inline with a Retry action
+## 7. Interaction states & accessibility
 
-When a list or table fails to load (network error, server error, timeout), the container renders an inline error state — a clear message plus a **Retry** button that re-issues the fetch without reloading the page.
+Every interactive element ships its **full state set**, and correctness is verifiable by reading the code.
 
-The error stays scoped to the failed container; the rest of the view continues working.
-
----
-
-## 47. Sticky by default: page header and table header
-
-Two surfaces are sticky by default:
-
-- **Page header** — stays visible as the user scrolls down the view.
-- **Table header** — the column header row stays visible as the table body scrolls.
-
-The first column of a table becomes sticky only when the table is very wide; this is a context decision, not a default.
+- **Semantics first.** `<button>` for actions, `<a>`/`<Link>` for navigation. `<div onClick>` is a defect (no focus, no keyboard, no role). ARIA only after semantic HTML can't express it.
+- **Complete states:** `hover`, `focus-visible`, `active`, `disabled`, `loading`, `error`, and `empty`. Missing any is incomplete.
+- **States must increase contrast.** Hover/active/focus make an element *more* prominent than rest, not merely different.
+- **Focus is always visible.** `focus-visible:ring-2` (or equivalent); never `outline-none` without a replacement. Prefer `:focus-visible` over `:focus` (no ring on mouse click); use `:focus-within` for composite controls.
+- **Icon-only buttons need `aria-label`;** decorative icons get `aria-hidden="true"`; every `<img>` has `alt` (or `alt=""` if decorative).
+- **Async updates announce:** toasts and live validation live in an `aria-live="polite"` region.
+- **Keyboard & touch:** logical heading order (h1–h6) + a skip link to main; `scroll-margin-top` on heading anchors; `touch-action: manipulation` to kill the 300ms double-tap delay; `overscroll-behavior: contain` on modals/drawers/sheets; disable text selection and mark the dragged node `inert` during drag.
 
 ---
 
-## 48. Offline indicator: full-width red bar, green confirmation on recovery
+## 8. Forms
 
-When the client loses connection, render a full-width bar at the top of the viewport (`w-screen`) in red with centered white text: "Sin conexión" / "Connection lost".
-
-When connection is restored, the same bar switches to green to confirm recovery and is hidden after **700ms** — long enough to register the change, short enough not to linger.
-
----
-
-## 49. i18n: JSON per locale + `useTranslation()`
-
-Internationalization is structured as JSON files per language (`/locales/es.json`, `/locales/en.json`, …) consumed through a `useTranslation()` hook that returns `t('key.path')`. The JSON structure can be flat or nested by feature.
-
-User-facing strings flow through `t()`; they are not hardcoded inside components.
+- **Native affordances on:** meaningful `name` + `autocomplete`; correct `type`/`inputmode` (`email`/`tel`/`url`/`number`); labels are clickable (`htmlFor` or wrapping the control); `spellCheck={false}` on emails/codes/usernames.
+- **Never block paste** (`onPaste`+`preventDefault` is user-hostile). Checkbox/radio and their labels share one hit target — no dead zones.
+- **Validation timing (user law):** API-backed rules (uniqueness, server checks) fire on **blur**, never per keystroke. Local rules (format, length, required, regex) fire on **input** for instant feedback.
+- **Submit stays enabled until the request starts**, then shows a spinner (don't gate submit on a "valid" flag the user can't see); on submit, render errors inline next to each field and **move focus to the first error**.
+- **Placeholders end in `…`** and show an example pattern. Warn before navigating away with unsaved changes (`beforeunload`).
 
 ---
 
-## 50. Button loading: spinner replaces the icon, text stays, button disables
+## 9. Overflow, text & empty states
 
-When a button is executing an async action:
-
-- The **icon** (if any) is replaced by a spinner. If there is no icon, the spinner appears to the left of the text.
-- The **text label stays visible** — never replaced or hidden.
-- The button becomes **disabled** for the duration of the action.
-
----
-
-## 51. Date pickers: input + calendar in Popover, range = double calendar
-
-Date selection follows a single pattern:
-
-- **Single date** — a text input that opens a `Popover` containing one calendar on click.
-- **Date range** — same input pattern, but the popover shows two calendars side by side (two months visible at once).
+- **Anticipate short, medium, and very long content** for every text slot. Handle overflow with `truncate` / `line-clamp-*` / `break-words`. **Flex children need `min-w-0`** or `truncate` silently fails — a classic, invisible bug.
+- **Wrap naturally by default; `line-clamp` only on real overflow**, never preemptively (truncation hides information — preserve it when the layout allows).
+- **Empty states are designed:** a custom illustration (not a bare icon) + explanatory text + a CTA to act. A blank surface or a lone sentence is not an acceptable empty state. Never render broken UI from an empty string/array.
+- **Lists over ~50 items virtualize** (`virtua`, `content-visibility:auto`).
 
 ---
 
-## 52. Border-radius is coherent across primitives
+## 10. Loading, skeletons & perceived performance
 
-Border-radius decisions follow the project's overall visual language and remain consistent across primitives. Square inputs paired with rounded buttons (or any inconsistent mix) is a defect.
-
-Inputs, buttons, cards, tags, modals — all share the same radius language. Either the project commits to a sharp/rectilinear vocabulary and every primitive is square, or it commits to rounded and every primitive reflects that.
-
----
-
-## 53. Long text: fade-out gradient + centered Expand button
-
-Long-form text that requires collapse uses a **fade-out gradient** at the bottom of the truncated block, followed by a centered **Expand** button below.
-
-The gradient signals that more content exists; the button toggles the expansion with an animated height transition.
+- **Skeleton whenever the final layout is known;** it matches the eventual shape so there's zero shift when data lands. Spinners are only for punctual actions (submit, manual refresh) where there's no layout to preview. Replacing a skeleton with a spinner is a downgrade.
+- **Skeletons shimmer, they don't pulse.** Use a light-sweep (`animate-sheen`), not opacity pulse, and respect `motion-reduce`. (User pattern.)
+- Wrap lazy data in `<Suspense fallback={<XSkeleton/>}>`. A skeleton must match the **exact final width/height** to prevent layout shift.
+- **Mount overlays on first open and keep them mounted** (`useOverlay`/`useState(mounted)`) so the *close* animation isn't lost — unmounting on close kills the exit. (User pattern.)
+- **Lazy-load heavy/off-screen work:** `next/dynamic` (`ssr:false` + skeleton fallback) for charts/dialogs; `IntersectionObserver` (`useInView`, `rootMargin:"200px"`) to defer expensive fan-out until near the viewport; `prefetch` links for instant drill-down.
+- **Prevent layout shift (CLS):** `<img>` with explicit `width`+`height`; `font-display: swap` + preload critical fonts; prefer flex/grid over JS measurement; no layout reads (`getBoundingClientRect`, `offsetHeight`) during render.
+- **Loading copy ends in `…`** ("Saving…", "Loading…").
 
 ---
 
-## 54. Right-click is intercepted contextually, not globally
+## 11. Components, composition & reuse
 
-Right-click behavior depends on the element under the cursor:
+*(Casing, folder anatomy, and import scope come from `clean-code`; here we govern composition.)*
 
-- **Interactive elements with a defined action set** (list rows, table rows, kanban cards) — right-click is intercepted and shows the same actions exposed by the element's `⋮` (or actions) icon.
-- **Plain text and non-interactive content** — right-click defers to the browser's native menu (copy, search, inspect).
-
-The decision is per-element. Intercept where a richer menu adds value; defer to the browser everywhere else.
-
----
-
-## 55. Account dropdown order: identity → workspace → settings → theme → logout
-
-The account dropdown (avatar in the top-right) follows a fixed top-to-bottom order:
-
-1. **Identity block** — avatar, name, and email of the current user.
-2. **Workspace switcher** — when the product has multiple workspaces.
-3. **Settings / Profile** — links to user-level configuration.
-4. **Theme toggle** — light / dark switch (see section 14).
-5. **Logout** — at the bottom, visually separated from the rest.
-
-The order does not change per page.
+- **Shared primitives are single and generic.** Dropdowns, dialogs, sheets, tooltips, buttons, inputs, cards, badges, tables live once at the shared layer. Views *consume* them; they never fork them. Building a second `Dialog` is the bug — extend or compose.
+- **`Card` is the canonical case:** one generic Card owns the global structural decisions (border, radius, elevation, anatomy); each view customizes through composition and classes (hide header, drop footer, swap padding) — never by forking.
+- **Cards are self-contained by default.** One card ↔ one API resource → it fetches its own data, owns its loading/error, blast radius = one card; receiving primary data via props is forbidden there. Props are accepted **only** when a higher-level endpoint returns the collection as a unit (galleries, lists). No third option.
+- **Abstractions earn their place.** A 4-line component that maps a status to a color is microfragmentation — inline it. Extract only when it encapsulates complete, reused behavior.
+- **Equivalent views share composition.** Same-problem views (fetch+list+actions, form+submit, detail+edit) use the same loading/empty/error structure and data flow across the app. Infinite scroll here + manual pagination there for the same domain is a defect.
+- **`memo()` only with primitive props** (string/number/boolean) — cheap shallow compare that blocks unrelated re-renders. With objects/arrays/functions, fix prop instability first (`useMemo`/`useCallback`/lift state), then decide. Don't sprinkle `useMemo`/`useCallback` on cheap ops.
+- **Don't reimplement the framework** (MUI `IconButton`+`startIcon`, Next.js route groups, shadcn variants) — consume it.
 
 ---
 
-## 56. Tag input separators depend on the data type
+## 12. Responsive patterns by viewport
 
-Tag-input fields commit chips with separators that depend on what is being collected:
+All descend from §1.5 (mobile-first, three viewports):
 
-- **Tags / labels** — `,` (comma) **or** space confirms the chip.
-- **Email addresses** — `,` (comma) **or** space confirms.
-- **Free-form text** (categories, phrases that may contain spaces) — **only** `,` (comma) confirms. Space is preserved as part of the value.
+| Concern | Mobile | Tablet / Desktop |
+|---------|--------|------------------|
+| Feedback | `active:` / `focus:` (no hover) | `hover:` free |
+| Navigation context | Back button | Breadcrumbs |
+| Reorder | up/down buttons | drag & drop |
+| Route transition | horizontal slide (fwd→right, back→left) | none (instant) — desktop |
+| Diff view | inline unified (default) | side-by-side (default) |
+| Drawer state | defaults closed each load | persists across reloads |
 
----
-
-## 57. Charts use Tremor
-
-Data visualization is built with **Tremor**. Tremor's charts ship pre-designed in a shadcn-aligned visual language and fit the project's typography and palette out of the box.
-
-Custom chart compositions are built on top of Tremor primitives, not by switching libraries.
-
----
-
-## 58. Global search: navbar input + command palette
-
-The product exposes a **global search input in the navbar** — depending on the app, it can be centered or right-aligned as an expandable icon. The same search experience is also reachable through the **command palette** (`⌘K`, see section 41).
-
-Both surfaces lead to the same search: the navbar input is the always-visible entry, the palette is the keyboard entry.
+Scroll is designed, never native: `tailwind-scrollbar` utilities on local containers (sidebars, tables, modal bodies); a smooth-scroll library (Lenis) on the main long-form surface.
 
 ---
 
-## 59. Onboarding: interactive tour with sequential coachmarks
+## 13. UX pattern catalog
 
-New users are onboarded through an **interactive tour built with coachmarks** — sequential tooltips that highlight key elements of the UI in order. The tour has a **Next** button to advance through the steps and a visible **Skip** option for users who want to opt out.
+Standing decisions — apply them by default:
 
----
-
-## 60. Avatar upload: two patterns by context
-
-Avatar / profile-image upload picks between two patterns depending on the surface:
-
-**Pattern A — Inline crop (compact contexts):**
-
-1. Hovering the avatar reveals a camera icon.
-2. Click opens the native file picker.
-3. After selection, the user can drag the image inside the avatar slot to crop it in place.
-4. Confirm commits. The crop happens in the browser before the file is sent to the server.
-
-**Pattern B — Modal editor (full edit):**
-
-1. An upload icon opens the native file picker.
-2. After selection, a modal opens with the full image and crop / rotate controls.
-3. The user adjusts and confirms. The transformations happen in the browser before the file is sent to the server.
-
-In both patterns, the image is processed client-side; the server receives the final cropped (and rotated) version, not the original.
+- **Destructive actions:** confirmation dialog **and** `beforeunload` protection against navigating away with unsaved work.
+- **Notifications:** `Toast` over `Alert` (non-blocking).
+- **Tables:** sort by clicking column headers *only when the API supports it* (no client-side sort over a page); advanced filters in a toolbar above the table; bulk = per-row checkbox + a persistent toolbar whose buttons enable on selection.
+- **Lists:** infinite scroll driven by the API's pagination (cursor if available, else offset/limit) — no classic pagination bars.
+- **Autocomplete:** dropdown always renders a loader inside while searching. **Debounce by cost:** autocomplete 300ms, list filters 500ms, heavy search on submit.
+- **File upload:** drag-&-drop zone that also opens the picker + per-file thumbnail + per-file loader (no single global bar).
+- **Command palette (`⌘K`/`Ctrl+K`)** is the global action/nav entry; every shortcut is documented inside it.
+- **Button loading:** a `loading` prop disables the button, swaps the leading icon for a spinner, keeps the label, sets `aria-busy` — replaces the manual `{isSubmitting ? <Spinner/> : null}` pattern.
+- **Account dropdown order:** identity → workspace → settings → theme → logout.
+- **Images optimized** (`next/image` or equivalent) — shipping unoptimized images is a defect.
+- **Formatting via `Intl.*`** in the user's locale (`DateTimeFormat`/`NumberFormat`/`RelativeTimeFormat`, `ago`-style deltas); `moment` only as a last-resort fallback.
+- **Dark mode:** `dark` class on `<html>` via a `useTheme` hook + a `beforeInteractive` FOUC-guard script reading `localStorage` and `matchMedia`.
 
 ---
 
-## 61. Auth screens: Google-style centered form, no backdrop
+## 14. Content realism & voice
 
-Login and sign-up follow the Google pattern:
+Placeholder content is where mockups betray themselves as fake:
 
-- A **centered form** rendered like a modal without backdrop, with inputs and options inside.
-- When social-login providers are included, separate them from the email/password block with a **horizontal divider**.
-- **Sign-up and Sign-in are not separate routes** — a text link ("¿Aún no tienes cuenta?" / "Already have an account?") toggles the form between the two modes inline.
-
----
-
-## 62. Error pages: keep the layout, render the error inline in MAIN
-
-Error pages (404, 500, 403, no permissions) do **not** take over the full screen. The app's layout — navbar, drawer — stays visible. The error renders inline inside the `MAIN` slot of the layout (see section 16), so navigation surfaces remain available for recovery.
+- **Data is organic, not round.** `47.2%`, not `50%`/`99.99%`. Real-looking names, real-shaped phone numbers — never `John Doe`, `123-4567`, egg avatars, or `Acme`/`Nexus` brands.
+- **No emoji in product UI, copy, or `alt`.** Use icons from one library with a standardized `strokeWidth` (1.5 or 2.0).
+- **Copy is specific and active.** Title Case for labels, numerals ("8 deployments"), concrete button verbs ("Save API Key", not "Continue"). Error messages state the fix, not just the problem. Avoid "Elevate / Seamless / Next-Gen" filler.
+- **Mockups reflect the real product** — demo chats, previews, and sample data mirror what the code actually does; never invent capabilities to fill space. (User law.)
 
 ---
 
-## 63. Numeric inputs: sliders, currency, integers — distinct patterns
+## 15. Advanced — decouple render from input when layers collide
 
-Numeric inputs split by purpose:
+When two layout requirements seem mutually exclusive (a carousel *fixed behind* content that must still be *swipeable*; a sticky header the body scrolls *over*; a bottom-sheet above interactive content), the impossibility is almost always in your composition, not the problem.
 
-- **Sliders** — use a non-native slider component (consistent with section 4).
-- **Currency** — use an input-formatting library that handles locale-aware grouping, decimals, and symbol placement.
-- **Integers** — guard the field with `onInput` (or equivalent) to reject non-numeric characters at the source, so the value never holds an invalid string.
+The usual culprit: **paint order (z-index) is deciding both what's on top *and* who receives the gesture** — but render and input-routing are separable axes.
 
----
+**Technique (input proxy + shared control):**
+1. Leave the element where it must be *visually* (carousel behind, fixed).
+2. Put a transparent layer in front that intercepts *only* the gesture you need (e.g. horizontal drag) and delegates it to the element behind; other gestures (vertical scroll) fall through to the ancestor — different axes don't compete.
+3. Lift control to a common owner: the shared controller/state lives on an ancestor, so tree position no longer dictates who's in charge.
 
-## 64. Password input: visibility toggle + real-time strength meter
-
-Password fields ship with two affordances:
-
-- **Visibility toggle** — an eye icon at the right of the input toggles between hidden and shown text.
-- **Strength meter** — a real-time indicator that updates as the user types (weak / medium / strong).
-
-The **requirements list** (length, uppercase, number, symbol, …) is not a fixed component — its content is decided per product, based on the password policy that applies to the user.
+Mnemonic: **when two things won't coexist, suspect the lever that binds them before the requirement you were about to sacrifice.** (User pattern.)
 
 ---
 
-## 65. Phone input: country dropdown + flag/code handle + paste detection
+## 16. Ship gate — verify before done
 
-Phone inputs use a country dropdown for the prefix:
+A visual change is not done until it passes this. Most of it is auditable by reading the diff:
 
-- The **dropdown list** shows three columns per option: flag, country name, dial code.
-- The **handle** (collapsed state of the dropdown) shows only the flag and the dial code — no country name, to keep the field compact.
-- When the user **pastes** a phone number, attempt to detect the country from the prefix automatically and update the dropdown selection.
+- **Laws:** Tailwind-only, no `style=`/`<style>`/`.css`; no ad-hoc state colors; no redundant `dark:`/variant; no conflicting utilities; tokens not literals.
+- **Responsive:** works at mobile, tablet, desktop; base = mobile, `md:`/`lg:` layer up; no breakpoint assumed to cover a lower one.
+- **States:** hover/focus-visible/active/disabled/loading/error/empty all present; focus visible; contrast ≥ 4.5:1 (text) / 3:1 (large + UI).
+- **Motion:** overlays animate; durations `<300ms`; `ease-out` enter (never `ease-in`); origin-aware anchored overlays; only `transform`/`opacity` animated; `motion-reduce:animate-none` on every new entrance.
+- **Overflow:** long/medium/short content handled; `min-w-0` on truncating flex children; empty states designed.
+- **Semantics:** `<button>`/`<a>` not `<div onClick>`; `aria-label` on icon buttons; `alt` on images.
+- **Loading:** skeleton (sheen, not pulse) matching final layout; no CLS; overlays mounted-on-first-open so exits animate.
+- **Taste:** dials calibrated for the domain; one accent; hierarchy by weight/color; realistic content; no emoji; no 3-equal-card autopilot; shadows tinted and subtle.
 
----
-
-## 66. List item motion: slide and/or fade, direction by context
-
-Items entering or leaving a list animate with **slide and/or fade**. The direction of the slide is determined by the context, not by a global rule:
-
-- **Messages on mobile** — removed items slide out to the left (swipe-to-delete affordance).
-- **Task lists** — fade only, no slide.
-- **Notifications** — slide up on entry / removal.
-
-Each surface picks the motion that matches the user's mental model for that interaction.
-
----
-
-## 67. Cookie consent: simple bottom banner with Accept + privacy link
-
-Cookie / privacy consent uses a **simple bottom banner**: an **Accept** button and a link to the privacy policy. Nothing more.
-
-Granular settings, blocking modals, and multi-button choices (configure, reject all, partial accept) are not part of the default — the banner stays minimal.
-
----
-
-## 68. Image lightbox: full-screen overlay + prev/next + Esc closes
-
-Image galleries open into a full-screen overlay:
-
-- **Click** on a thumbnail opens the overlay with the image centered at maximum size on a dark backdrop.
-- **Prev / Next** controls (and the arrow keys `←` / `→`) navigate between images in the gallery.
-- **Esc** (and the X button) closes the overlay.
-
----
-
-## 69. Rich text editor: Tiptap with a basic formatting toolbar
-
-Rich-text editing (comments, descriptions, longer-form fields) uses **Tiptap** as the editor base.
-
-The toolbar exposes the essentials only: **bold**, **italic**, **link**, **lists** (ordered / unordered), **code**. Heavier formatting (tables, embeds, mentions) is added per surface only when the use case justifies it — the default editor stays lean.
-
----
-
-## 70. Long forms: grouped into Cards with their own titles
-
-Long forms are split into **Cards**, each with its own title in the header, grouping related fields together inside the card body.
-
-Cards are separated visually (padding, gap), so the user reads the form as a sequence of self-contained sections rather than one continuous wall of inputs.
-
----
-
-## 71. File preview: inline preview in Modal/Drawer + Download button
-
-File previews (PDF, image, video) open inside a **Modal or Drawer** with the content rendered inline (PDF.js, native image, video player, etc.).
-
-A **Download** button stays visible inside the overlay so the user can grab the original file at any moment.
-
----
-
-## 72. Browser permissions: custom pre-prompt before the native prompt
-
-Before triggering a browser permission request (notifications, geolocation, microphone, camera), show a **custom pre-prompt** explaining why the permission is needed and what the user gains by granting it.
-
-Only when the user accepts the pre-prompt does the app fire the **native browser prompt**. This avoids the "blocked forever" trap that happens when users dismiss the native prompt without context.
-
----
-
-## 73. OTP / 2FA input: separated boxes + auto-paste + auto-submit + SMS listener
-
-OTP and 2FA verification fields use one input slot per expected character (the slot count matches the code length — 6 boxes for 6 digits, 4 for 4 digits, etc.).
-
-Behavior:
-
-- **Auto-paste** — pasting the full code in any slot distributes the digits across all slots automatically.
-- **Auto-submit** — once the code is fully entered, submit fires without requiring a separate button click.
-- **Mobile SMS autofill** — listen for incoming SMS messages (Web OTP API or platform-specific listener) and autofill the field as soon as the code arrives.
-
----
-
-## 74. Share: native Web Share API on mobile, modal on desktop
-
-Content sharing adapts to the platform:
-
-- **Mobile** — use the **Web Share API** (`navigator.share`). The OS-native sheet appears with the user's actual share targets (messaging apps, social, email, etc.).
-- **Desktop** — fall back to a **modal/popover** with a read-only input holding the URL plus a copy button, social icons (Twitter, LinkedIn, …), and a "Send via email" option.
-
----
-
-## 75. Comment threads: collapsible sub-threads with visible reply count
-
-Comment replies open a **collapsible sub-thread** under the parent comment. By default the sub-thread is collapsed and shows "N replies"; clicking expands it to reveal the conversation.
-
-Top-level comments stay scannable; depth lives behind one click.
-
----
-
-## 76. `@` mentions: dropdown search → Enter → chip in the text
-
-Typing `@` inside a text input opens a **dropdown** with a live search across users (and other mentionable entities). Filtering happens as the user keeps typing.
-
-**Enter** on a result inserts a **chip** into the text — clickable, referencing the selected user, distinct from the surrounding plain text.
-
----
-
-## 77. Reactions: trigger button + emoji picker + grouped chips with count
-
-Reactions on content (messages, comments, posts) follow the Slack/Discord pattern:
-
-- A **reaction trigger button** opens an emoji picker.
-- Existing reactions render as **chips below the content**, grouped by emoji with the **count** (e.g., `👍 3`, `❤️ 5`).
-- **Clicking an existing chip** toggles the user's own reaction for that emoji — adds it if absent, removes it if already present.
-
----
-
-## Cross-references
-
-- Code-level rules (naming, control flow, file structure, hooks placement, package management, JSDoc conventions) live in the `clean-code` skill. Da Vinci defers to `clean-code` for anything that is not a visual decision.
-- The RAG supersedes both skills when there is a conflict — it is the live source of truth.
+When the RAG holds a preference that touches any of the above, it overrides this skill — query it before finalizing a visual decision.
