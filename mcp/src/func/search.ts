@@ -3,7 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import * as rag from "../lib/rag.js";
 
-export const schema = z.object({
+const schema = z.object({
   content: z.string().describe("Search query for semantic memory"),
   tags: z.array(z.string()).optional().describe("Filter results by tags"),
   limit: z.number().min(1).max(20).default(5).optional().describe("Max results to return"),

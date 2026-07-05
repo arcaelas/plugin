@@ -43,19 +43,6 @@ function config(): ConfigData {
   } catch { return {}; }
 }
 
-function set(path: string[], value: unknown): void {
-  const data = config() as Record<string, any>;
-  let obj = data;
-  for (let i = 0; i < path.length - 1; i++) {
-    if (!obj[path[i]] || typeof obj[path[i]] !== "object") obj[path[i]] = {};
-    obj = obj[path[i]];
-  }
-  obj[path[path.length - 1]] = value;
-  _cache = data;
-  mkdirSync(dirname(CONFIG_PATH), { recursive: true });
-  writeFileSync(CONFIG_PATH, JSON.stringify(data, null, 2));
-}
-
 // ── Helpers ──
 
 export function openBrowser(url: string): void {
@@ -86,9 +73,6 @@ export default {
   get providers(): ProviderEntry[] {
     return config().providers || [];
   },
-  set providers(v: ProviderEntry[]) {
-    set(["providers"], v);
-  },
 
   provider(name: string): ProviderEntry | undefined {
     return (config().providers || []).find((p) => p.name === name);
@@ -109,13 +93,11 @@ export default {
 
   research: {
     get provider(): string { return config().research?.provider || ""; },
-    set provider(v: string) { set(["research", "provider"], v); },
   },
 
   // --- RAG ---
 
   rag: {
     get provider(): string { return config().rag?.provider || ""; },
-    set provider(v: string) { set(["rag", "provider"], v); },
   },
 };

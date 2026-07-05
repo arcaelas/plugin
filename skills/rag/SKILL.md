@@ -65,12 +65,13 @@ Output: [{ document: string, content: string, length: number }]
 Searches the RAG internally, then sends the findings to an AI model that generates a clean summary. The summary is what you receive — not the raw chunks.
 
 ```
-Input:  { query: string, model?: "haiku" | "sonnet" | "opus" }  // default: sonnet
+Input:  { search: string, model?: "haiku" | "sonnet" | "opus", limit?: number }  // defaults: model "sonnet", limit 5
 Output: string (summary text)
 ```
 
-- `query` — What to research in semantic memory.
+- `search` — What to research in semantic memory.
 - `model` — Which model generates the summary. Default: `"sonnet"` (balanced reasoning, honest about gaps in retrieved data). Use `"opus"` for complex queries that need deeper synthesis. `"haiku"` is faster but tends to hallucinate when results are sparse — avoid it for anything important.
+- `limit` — Max memories retrieved per internal search. 5–100, default 5.
 
 **When to use:** Broad queries where raw results would be too verbose and pollute your context window (e.g., "how does the user structure Next.js projects" — this may span many memories). The summary saves context space but consumes tokens from the configured provider.
 
