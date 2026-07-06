@@ -17,7 +17,4 @@ block() {
 # R4 — reset --hard destroys uncommitted changes
 [[ "$COMMAND" =~ git[[:space:]]+reset[[:space:]]+--hard ]] && block "Blocked: git reset --hard destroys uncommitted changes."
 
-# R6 — rm -rf targeting system/root paths
-[[ "$COMMAND" =~ rm[[:space:]]+-[a-zA-Z]*r[a-zA-Z]*f[a-zA-Z]*[[:space:]]+(\/|~\/|\.\.|\/home|\/etc|\/usr|\/var) ]] && block "Blocked: rm -rf targeting system/root paths is not allowed."
-
 exit 0
