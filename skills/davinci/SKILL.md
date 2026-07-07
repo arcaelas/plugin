@@ -51,7 +51,7 @@ Build the roadmap. Data layer first (typed client + services matching the contra
 
 ### 0.5 Refine — polish, then compress
 Once built, run a dedicated refinement pass before delivery:
-1. **Re-read this skill's craft parts over the build** and sharpen each surface against them — the laws (§1), color & type (§3–§4), motion (§7), interaction (§8), forms (§9), delight (§18). This craft lives in this skill already; the pass is a second deliberate read, **not** other skills to load.
+1. **Re-read this skill's craft parts over the build** and sharpen each surface against them — the laws (§1), color & type (§3–§4), motion (§7), interaction (§8), forms (§9), delight (§18). This document is self-contained: every standard the refinement pass needs is already here — make a second, deliberate read of it.
 2. **Compress & simplify** — collapse class lists, tighten markup, remove nesting, walk the tree for dead props / over-fragmentation / redundant wrappers. Shallow trees over deep.
 3. **Audit** — render correctness (no `Slot`/`asChild` single-child violations), class hygiene, no stray CSS, no `as any`. Catches the runtime bugs a "looks fine" glance misses.
 
