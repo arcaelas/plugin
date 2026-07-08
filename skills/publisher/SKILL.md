@@ -1,408 +1,390 @@
 ---
 name: publisher
 description: >
-  Publisher convierte una app terminada en su paquete de lanzamiento completo:
-  ficha de Play Store / App Store (banners 16:9 y 9:16, splitted de 5 piezas,
-  textos de tienda), guiones de video/audio publicitario para IAs generativas y
-  campañas pagas (Meta/Facebook, Instagram, WhatsApp, TikTok, Snapchat,
-  YouTube). Usar cuando el usuario pida "publicar la app", "ficha de la
-  tienda", "banners", "screenshots de la Play Store", "splitted", "marketing",
-  "video publicitario", "guión para IA", "campaña", "anuncios" o "ads".
+  Publisher produce publicidad terminada de punta a punta: videos 9:16/16:9
+  para reels y ads, imágenes, banners, flyers, fichas de tienda (Play/App
+  Store) y campañas pagas. Organiza el trabajo en un pipeline fijo con
+  breakpoints de consulta: entender QUÉ se promociona (app, producto, sitio),
+  CÓMO (video, imagen, flyer), inventariar recursos, redactar el guión
+  exacto, cubrir brechas preguntando qué puede generar el usuario y construir
+  el resto con HTML+SVG local, renderizando a archivo final. Usar cuando el
+  usuario pida "publicidad", "anuncio", "video para reels", "marketing",
+  "banner", "flyer", "ficha de la tienda", "splitted", "campaña", "ads" o
+  invoque /publisher con cualquier encargo publicitario.
 ---
 
-# Publisher — de app terminada a lanzamiento
+# Publisher — publicidad de punta a punta
 
-## El método (orden invariable)
+Convierte una orden corta en una publicidad terminada. Órdenes que este skill
+debe resolver completas, sin importar el modelo del agente:
 
-Toda entrega de este skill —ficha, video o campaña— recorre el mismo ciclo, y
-este documento está redactado en ese orden:
+- `/publisher Crearemos un vídeo 9:16 para reels usando las capturas de /tmp/images/`
+- `/publisher Genera un vídeo horizontal y otro vertical para mi app`
+- `/publisher Genera un anuncio vertical para Meta Ads que promocione el labial de Ushas a través de mi app`
+- `/publisher Necesito un banner y un flyer para el evento del sábado`
 
-1. **Información** — recabar: la aplicación, el objetivo, los canales y el
-   público. Del proyecto se lee lo que el código ya sabe; al usuario se le
-   pregunta solo lo que el código no puede saber.
-2. **Inventario** — conservación de recursos: qué imágenes, videos, audios y
-   piezas de marca YA existen. Lo que existe se reutiliza; nada se regenera.
-3. **Planificación** — organizar lo que tenemos contra lo que queremos. Aquí
-   se redacta el guión o la propuesta, se presenta al usuario y se pule con él.
-4. **Producción** — solo con el plan aprobado se compara guión vs inventario y
-   se genera únicamente lo faltante (imágenes, clips, voz, música, SFX). La
-   generación siempre nace del guión completo, nunca antes.
-5. **Ensamblaje y publicación** — unir las piezas (ffmpeg lo ejecuta el agente
-   si el proveedor no trae editor; o lo hace el usuario) y publicar.
+## Reglas de oro (aplican a todo)
 
-Cada fase termina con una entrega revisable y una decisión explícita del
-usuario antes de avanzar. Nunca se salta una fase.
-
----
-
-## Fase 1 · Información e inventario
-
-Objetivo: el **brief de publicación** + el **inventario de recursos**. Sin
-ambos validados no se diseña nada.
-
-### 1.1 Recabar del proyecto (sin preguntar lo que el código ya sabe)
-
-| Dato | Dónde buscarlo primero |
-|---|---|
-| Nombre de la app | `pubspec.yaml`, `package.json`, manifest, título del launcher |
-| Package name / bundle id | `AndroidManifest.xml` / `build.gradle` (`applicationId`), `Info.plist` |
-| Versión y artefactos release | `pubspec.yaml`/gradle; AAB/APK/IPA existentes |
-| Logo / marca | `assets/brand/`, `mipmap-*/ic_launcher*`, `*foreground*`. Pedir la variante **sin fondo**; si existe SVG del lettermark, preferirlo: escala sin pérdida y se inlinea en HTML |
-| Colores de marca | SVGs de marca, theme/ColorScheme del código, config de Tailwind |
-| Funcionalidades | Vistas y features reales del código — leer el proyecto, no inventar |
-
-### 1.2 Preguntar al usuario (AskUserQuestion, no párrafos)
-
-- Objetivo de esta ronda: ¿ficha, video, campaña o el paquete completo?
-- Tiendas y canales: Play Store / App Store; redes donde vivirá la publicidad.
-- Público objetivo e **idioma de la ficha** (manda sobre capturas y copy, no
-  el idioma de la conversación).
-- Precio o planes (gratis, IAP, suscripción) — afecta copy y badges.
-- Claim de identidad si existe ("private", "offline", "sin cuenta"…).
-
-### 1.3 Inventario — conservación de recursos existentes
-
-Registrar ruta, formato y estado de todo recurso ya disponible:
-
-- **Imágenes**: capturas de la app (¿crudas o ya editadas/anonimizadas?),
-  piezas de marketing previas, logo y variantes.
-- **Videos**: clips o anuncios anteriores reutilizables.
-- **Audios**: voces, músicas o SFX ya generados.
-
-Reglas del inventario: lo que existe **no se regenera**; las capturas
-personales del usuario no se leen sin su autorización (se trabaja con rutas y
-metadatos); los recursos que falten se anotan como *pendientes* — se decidirá
-qué generar recién en Producción, con el plan aprobado.
-
-### 1.4 Entregable
-
-Brief corto en el chat: nombre, package, tiendas/canales, logo (ruta + hex),
-paleta, 4–6 features vendibles, público, precio, idioma, e inventario con
-pendientes. El usuario lo valida y se avanza.
+1. **Pipeline secuencial**: FASE 0 → 8, con los BREAKPOINTS obligatorios.
+   Nunca generar recursos antes del guión aprobado (BP-2).
+2. **HTML+CSS+SVG es el motor por defecto** para UI, textos, gráficas y
+   motion graphics: control absoluto, cero invención. IA generativa SOLO para
+   lo que HTML no puede: personas, mundo real, fotografía.
+3. Decisiones de gusto, gasto o capacidad → BREAKPOINT (AskUserQuestion) con
+   recomendación marcada. Nunca asumir.
+4. Intermedios en `/tmp`; entregables donde el usuario diga (`~/Descargas/`
+   por defecto).
+5. **Verificar cada export mirándolo** (screenshot, grilla de fotogramas,
+   medición). Nada se entrega a ciegas.
+6. Prompts para IAs del usuario: **textuales, en bloque de código, sin
+   explicación alrededor**, con archivo destino exacto.
+7. **El entorno se detecta, no se asume**: cada requisito de sistema lleva su
+   comando de comprobación y su alternativa.
+8. Antes de diseñar vistas, cargar el skill `davinci`.
 
 ---
 
-## Fase 2 · Ficha de tienda
+## MAPA DE CASOS — clasifica el encargo ANTES de empezar
 
-### 2.1 Planificar las imágenes de la ficha
+Clasifica la orden en UN caso principal (si piden varios, el master es el más
+rico y los demás derivan de sus piezas):
 
-Con el inventario a la vista, preguntar SIEMPRE:
-
-1. ¿Se usan las capturas existentes o se generan imágenes 100% IA?
-2. Si hay capturas crudas: ¿se editan con IA? (quitar status bar, traducir al
-   idioma de la ficha, anonimizar datos). La edición puede ser **general** (un
-   prompt maestro para todas) o **particular** (un prompt por imagen con línea
-   de contexto).
-
-El agente no edita: **redacta los prompts** (en inglés, donde los modelos de
-edición rinden) y el usuario los ejecuta en su IA preferida y devuelve los
-resultados a una carpeta acordada. Prompt maestro:
-
-```
-Edit this mobile app screenshot. Apply EXACTLY these changes and nothing else:
-1. Remove the OS status bar strip and extend the app background upward,
-   keeping the exact original dimensions.
-2. Translate every visible UI text to <IDIOMA DE LA FICHA>, preserving each
-   text's font style, size, weight, color and alignment.
-3. Replace personal data with realistic placeholders: names → common neutral
-   names, account/card numbers → "•••• 4821", real merchants → generic ones,
-   amounts plausible but altered.
-4. Change nothing else: identical layout, colors, spacing, icons and theme.
-Context for this screenshot: it shows the [<PANTALLA>].
-```
-
-> Si el modelo se resiste, correr en dos pasadas: 1+4 primero, 2+3 sobre el
-> resultado.
-
-### 2.2 Propuestas efímeras en /tmp
-
-- Carpeta temporal (`mktemp -d /tmp/publisher-XXXX`) con **un HTML de
-  propuestas** que el usuario abre en el navegador y recarga en cada
-  iteración. Es efímero: al proyecto no entra ningún archivo de marketing.
-- Cada pieza se maqueta como **lienzo a tamaño real** (1080×1920 / 1920×1080)
-  escalado para preview con `transform: scale(...)`: exportar después es
-  capturar el mismo nodo a escala 1, sin re-maquetar.
-- Las imágenes se referencian con `file://` a la carpeta del usuario: si él
-  reemplaza una captura editada, la propuesta se actualiza al recargar.
-
-### 2.3 Piezas a proponer (3 propuestas de cada una)
-
-1. **Banner 16:9** (1920×1080) — marca general; recortable a 1024×500 para el
-   feature graphic de Play.
-2. **Banner 9:16** (1080×1920) — vertical.
-3. **Splitted ×5** (5 piezas de 1080×1920) — un solo lienzo fragmentado.
-
-Gramática del splitted (validada contra referencias reales):
-
-- Las 5 piezas comparten **un mismo sistema de fondo**: misma base, misma
-  textura, mismo motivo de formas cruzando cada corte; solo rota el tinte.
-- **Nada se corta entre piezas**: titulares, teléfonos y chips viven completos
-  dentro de su pieza; la continuidad la dan fondo, paleta y formas.
-- Pieza 1 = manifiesto de marca (logo + claim, sin teléfono) · Piezas 2–4 =
-  features (titular arriba, teléfono grande, chips alusivos, mini-cards de UI)
-  · Pieza 5 = CTA de cierre.
-
-Reglas de artesanía (los banners simples se rechazan):
-
-- Logo real de la marca, SVG inline sin fondo, variantes clara/oscura.
-- Redacción completa: titular a dos tonos, subtítulo, checklist de features
-  con iconos, microcopy de cierre. Un banner sin contenido textual está a
-  medio hacer.
-- Chips con redacción específica del producto ("↑ 50 rows in 3 seconds",
-  "Nothing moves without your OK") — nunca genéricos.
-- Mini-cards de UI simulada (fila de transacción, badge de logro) dan vida.
-- **Z-index por capas, documentado**: fondo 0 · formas/anillos 1 · teléfonos
-  2–4 (solape intencional) · textos 5 · mini-UI 6 · chips 7.
-- Texturas con CSS (grillas de puntos, mallas de luz, anillos concéntricos vía
-  `radial-gradient`). Nada de fondos planos vacíos.
-- Sin métricas de reputación inventadas (ratings/reviews falsos): los números
-  salen de capacidades reales del producto.
-
-### 2.4 Iteración, export y textos
-
-- El usuario elige propuesta o mezcla; se itera sobre el mismo HTML efímero.
-- Aprobado el diseño, exportar con Chrome headless a resolución nativa (una
-  página HTML por pieza, mismo markup a escala 1):
-
-```bash
-google-chrome --headless=new --disable-gpu --hide-scrollbars \
-  --allow-file-access-from-files --force-device-scale-factor=1 \
-  --window-size=<W>,<H> --virtual-time-budget=4000 \
-  --screenshot=<salida>.png file://<pieza>.html
-```
-
-- **Verificar cada PNG visualmente** antes de entregar. Nombres predecibles en
-  la carpeta que el usuario indique: `16_9.png`, `9_16.png`,
-  `splitted-1..5.png`.
-- Completar con textos de tienda: título (≤30), descripción corta (≤80),
-  descripción larga con bullets, en el idioma de la ficha.
-
----
-
-## Fase 3 · Vídeo publicitario
-
-El agente es guionista y director de producción: planifica, redacta el guión,
-lo pule con el usuario y solo entonces se produce. No genera el video — entrega
-bloques copy-paste por proveedor y ensambla al final.
-
-### 3.1 Recaudo específico de video
-
-Sobre el brief e inventario de la Fase 1, cerrar cuatro ejes con el usuario:
-
-**Formato** — duración objetivo (15/30/60 s), aspecto (9:16 social, 16:9
-in-stream), destino (Reels/Shorts/TikTok exigen gancho en los primeros 2 s).
-
-**Voz** — idioma, acento, tono de dirección, velocidad. El diálogo se decide
-en planificación, no al final.
-
-**Música** — género acorde, instrumentación, curva de energía y dónde debe
-replegarse para dejar hablar a la voz.
-
-**Capacidades del proveedor** — responsabilidad del agente recaudarlas (pedir
-captura del panel si hace falta):
-
-- ¿Genera todo en conjunto (video+audio) o por partes (clips separados)?
-- ¿Clips con audio propio (**Unmuted**) o mudos (**Muted**)? Un clip Unmuted
-  lleva la redacción de su audio dentro del bloque; con clips Muted se avisa
-  ANTES de generar que el sonido saldrá aparte.
-- Duraciones por clip (suelen ser pasos fijos: 4/6/8 s), modelos disponibles,
-  aspectos/resoluciones, límites de caracteres de los prompts.
-- ¿Cómo se unen los fragmentos? ¿Editor del proveedor o ffmpeg del agente?
-
-### 3.2 Planificación de escenas — lo que tenemos contra lo que queremos
-
-Cada escena es su propio ecosistema y se decide antes del guión: qué se ve
-exactamente, cámara y movimiento, efectos, textos en pantalla, transiciones de
-entrada/salida, y qué dice la voz encima. Estructura narrativa por defecto:
-gancho-problema → producto en acción → claim de identidad → CTA con logo.
-
-El total se adapta a los pasos de duración reales del proveedor; si crece
-(p.ej. 15→16 s), el cierre estático del último clip absorbe el excedente — la
-voz nunca se estira.
-
-### 3.3 Redacción del guión — formato estándar
-
-UN guión paso a paso, bloques copy-paste separados por proveedor, sin
-explicaciones dirigidas al usuario. Cada bloque declara herramienta y
-parámetros entre corchetes:
-
-```
-Fotograma 1 [gemini-fast-lite]
-Una puerta...
-
-Fotograma 2 [gemini-fast-lite]
-...
-
-Clip 1 [Veo 3.1 - 4s - 9:16 - 720p - Unmuted] [Fotograma 1 > Fotograma 2]
-Movimiento: cámara, timing interno, qué permanece legible. Al ser Unmuted,
-incluye aquí la redacción del audio del clip: diálogo, ambiente, música, SFX.
-
-Música [ElevenLabs V2 - 16s]
-Brief con timestamps.
-
-SFX [ElevenLabs V3 - 1s]   (opcional, un efecto por bloque)
-...
-```
-
-Reglas de redacción:
-
-- Prompts de imagen/video en inglés; diálogos y textos en pantalla en el
-  idioma del anuncio.
-- **Mismo modelo para todos los clips** — mezclar modelos rompe la coherencia.
-- Referencias explícitas por fotograma: qué archivo del inventario adjuntar
-  (captura real para pantallas de la app — los modelos inventan UIs; piezas de
-  la ficha como referencia de estilo; el CTA del splitted suele servir de
-  fotograma final).
-- Si el modelo deforma tipografía, generar sin textos y sobreponerlos en el
-  editor.
-
-Reglas de voz (no negociables, aprendidas a golpes):
-
-- En anuncios cortos la locución es **UN párrafo continuo**: los bloques se
-  locutan como tomas separadas y el pegado se nota. Pausas por comas y puntos
-  suspensivos, no por estructura.
-- Compatibilidad de etiquetas por modelo: `<break time="0.4s"/>` funciona en
-  modelos v2 (Multilingual/Turbo); **Eleven v3 no lo reconoce** (v3 = tags de
-  emoción + puntuación). Verificable en el editor del proveedor: los tags
-  reconocidos se resaltan. Preguntar el modelo antes de redactar.
-- Cero o UN tag de emoción al inicio del párrafo; estabilidad hacia "Robusto";
-  pedir 2–3 tomas y elegir a oído.
-- Revisar el botón "mejorar" del proveedor contra la intención del anuncio:
-  sobreactúa ([surprised] donde va confianza, MAYÚSCULAS que gritan) y los
-  [whisper] mueren bajo música en parlante de celular.
-- Sincronía: ~150 palabras/minuto; si no cabe, se recorta el copy.
-
-Reglas de música y SFX:
-
-- Brief con timestamps + **variante comprimida ≤450 caracteres** por si el
-  proveedor limita el prompt.
-- Criterio de toma: el strip-back donde manda la voz es el filtro — si ahí
-  sigue sonando lleno, se descarta.
-- SFX opcionales, un efecto por bloque, cada uno con timestamp de ensamblaje.
-
-### 3.4 Presentar y pulir
-
-El guión completo se presenta al usuario y se itera con él (titulares, ritmo,
-diálogo, orden de escenas) hasta aprobación. Ningún recurso se genera durante
-el pulido.
-
-### 3.5 Producción — brechas contra el inventario
-
-Con el guión aprobado, comparar cada bloque contra el inventario:
-
-- Recurso existente → se usa tal cual (no se regenera).
-- Recurso faltante → se genera **a partir del guión completo**: imágenes
-  primero (acordes a sus bloques), luego clips, voz, música y SFX.
-- El usuario genera en sus proveedores; el agente revisa cada resultado y
-  corrige prompts puntualmente (qué cambiar del resultado, nunca re-redactar
-  desde cero).
-
-### 3.6 Ensamblaje
-
-Clips en orden, cortes al beat, voz encima, música ~−14 dB bajo la voz, SFX en
-sus timestamps. Lo ejecuta el agente con **ffmpeg** si el proveedor no trae
-editor, o lo hace el usuario directamente en su editor — preguntarle qué
-prefiere. Con el video final aprobado se pasa a la Fase 4.
-
----
-
-## Fase 4 · Publicidad (pauta paga)
-
-El dinero es del usuario: nada se crea, publica ni activa sin su confirmación
-explícita de presupuesto y alcance.
-
-### 4.1 Canales e identidad
-
-- Elegir canales (AskUserQuestion, multiselección): Facebook, Instagram,
-  WhatsApp, TikTok, Snapchat, YouTube. Cada canal abre su propio bloque; nada
-  se asume de un canal por lo respondido en otro.
-- Responder proactivamente la duda universal — *"¿saldrá mi perfil personal?"*:
-  los anuncios salen siempre a nombre de una **Página/identidad de marca**; el
-  perfil personal solo administra tras bambalinas y nunca se muestra. Setup
-  mínimo (caso Meta, análogo en otros): Página de la marca (logo + banner de
-  la Fase 2) → portafolio empresarial → cuenta publicitaria con método de
-  pago. En Instagram se puede anunciar sin cuenta de IG (usa la identidad de
-  la Página); crearla es opcional pero recomendable.
-
-### 4.2 ¿Manual o API?
-
-Para la **primera campaña**: manual en el Ads Manager con el agente dictando
-campo por campo — obtener tokens de Marketing API es burocracia que solo paga
-con escala (muchas campañas, A/B automatizado). Si se va por API, guiar la
-obtención de accesos y validar con una llamada de solo-lectura antes de crear:
-
-| Canal | Plataforma | Accesos |
+| Caso | Qué es | Fases que ejecuta |
 |---|---|---|
-| Facebook / Instagram / WhatsApp | Meta Marketing API | Token de usuario del sistema, `act_…`, Page ID; IG vinculada; número WABA |
-| TikTok | TikTok Ads API | App id + secret, access token, `advertiser_id` |
-| Snapchat | Snap Marketing API | Client id + secret, refresh token, `ad_account_id` |
-| YouTube | Google Ads API | Developer token, OAuth + refresh, `customer_id`, video en el canal |
+| **V1** Video con voz | reel/ad narrado | 0,1,2,3,4(completa),5,6,7,8 |
+| **V2** Video sin voz | música + textos en pantalla | 0,1,2,3,4(sin 4.V),5,6,7,8 — los eventos se anclan a la música/tiempo, los textos en pantalla cargan el mensaje |
+| **I1** Imagen única / banner / flyer | pieza estática | 0,1,2,3,4(guión = composición por pieza),5,6.EST,8 |
+| **I2** Ficha de tienda | banners + splitted + textos | como I1 ×N piezas con sistema visual común |
+| **C1** Campaña de pauta | ads pagos en canales | 0,1,2 y sección CAMPAÑA (el creativo sale de V*/I* primero) |
 
-Secretos: los tokens no se pegan en archivos del proyecto ni en memoria
-persistente, y no se re-imprimen en el chat.
+SI la orden no encaja en ningún caso → pregunta con las opciones de la tabla.
 
-### 4.3 Verificaciones bloqueantes + brief de campaña
+## BREAKPOINTS DE CONSULTA — puntos donde el agente SE DETIENE
 
-Dos verificaciones antes de todo:
+Cada breakpoint define: cuándo dispara, qué se presenta, qué se espera. El
+agente NO avanza de fase con un breakpoint pendiente.
 
-1. **¿La app está publicada y visible en la tienda?** Sin URL pública no hay
-   campaña; "en revisión" = dejar todo preparado.
-2. **¿Tiene el SDK del canal integrado?** Sin SDK de Meta no se optimiza por
-   instalaciones reales. Fallback pragmático: objetivo **Tráfico** hacia la
-   ficha, midiendo instalaciones en la consola de la tienda; el SDK se integra
-   cuando el creativo demuestre que convierte.
-
-Brief por canal (AskUserQuestion por bloques, con recomendación): objetivo ·
-presupuesto (diario o total + tope autorizado) · calendario · geografía
-(países/regiones/zonas) · audiencia (edades, géneros, idiomas, intereses,
-lookalikes) · placements · creativo (video en el aspecto correcto por canal,
-texto principal, titular, descripción, CTA, URL destino, píxel/eventos si
-existen). Particularidades: Meta → tipo de campaña y optimización, A/B;
-WhatsApp → click-to-WhatsApp con mensaje de bienvenida; TikTok → identidad del
-anunciante, Smart Performance; Snapchat → attachment de app; YouTube → formato
-(skippable, in-feed, Shorts) y bidding (tCPA/CPV).
-
-### 4.4 Heurísticas para presupuestos chicos (validación)
-
-- $3–5/día bastan para aprender y medir; escalar solo con datos.
-- **Sin filtros de interés** con poco presupuesto: amplio es más barato.
-- **Placements manuales que calcen con el creativo**: 9:16 → solo Reels,
-  Stories y Feeds; fuera Audience Network, Messenger y columna derecha.
-- Miniatura del video: el fotograma del producto, no el del gancho caótico.
-- Fase de aprendizaje: 2–3 días sin tocar la campaña aunque el costo baile.
-- Puertas de decisión desde el día 3: CTR ≥ 1% y CPC a la baja = el creativo
-  funciona; la curva de instalaciones en la consola dice si el clic convierte.
-  Con eso se decide: escalar, rotar copy, o integrar SDK.
-- Copy: texto principal breve con gancho, título ≤ 30 caracteres, descripción
-  corta, CTA del canal, 3–4 hashtags (en ads menos es más).
-
-### 4.5 Publicación segura y seguimiento
-
-1. Resumir la campaña por canal (objetivo, presupuesto, targeting, creativo) y
-   pedir confirmación final del gasto.
-2. Manual: dictar la configuración campo por campo con valores exactos,
-   nombres incluidos (`app · objetivo · país · v1`). API: crear campaña, adset
-   y anuncio **en estado PAUSED**; el usuario revisa y activa (o autoriza
-   explícitamente activar por API).
-3. Verificar post-creación que todo quedó como se definió y entregar los ids.
-4. Seguimiento: lectura periódica de spend, impresiones, CTR y CPI para
-   iterar copy y targeting con datos.
+| BP | Cuándo | Qué presentar | Qué esperar |
+|---|---|---|---|
+| **BP-1 Brief** | fin de FASE 1+2 | brief de 6 líneas: qué, mensaje único, público, idioma, formato(s), duración/medidas | ok o correcciones |
+| **BP-2 Guión** | fin de FASE 4 | el guión completo escena por escena | ok explícito; iterar hasta tenerlo |
+| **BP-3 Capacidades** | inicio de FASE 5 | AskUserQuestion multiSelect: "¿cuáles puedes generar tú?" (voz, música, imagen, video) + alternativas locales para el resto | selección |
+| **BP-4 Recursos del usuario** | cada tanda de prompts | bloques copy-paste + archivos destino | los archivos en su ruta |
+| **BP-5 Sincronía** (solo V1) | tras transcribir la voz | `/tmp/sub.html` verificador | "sincroniza" u offset en ms |
+| **BP-6 Selecciones** | cuando hay variantes | galería de variantes de vistas y/o audición de SFX con ids (`home-A`, `pop-2`) | lista de elegidos |
+| **BP-7 Preflight de render** | antes del render final | preview reproducible (el player) o grilla de stills | ok para renderizar |
+| **BP-8 Gasto** (solo C1) | antes de crear campaña | resumen de presupuesto/targeting/creativo | confirmación del monto |
 
 ---
 
-## Reglas transversales
+## FASE 0 — Parsear la orden
 
-- **El método manda**: Información → Inventario → Planificación → Producción →
-  Ensamblaje/Publicación. La generación de recursos nunca precede al plan.
-- Decisiones de gusto o de gasto → AskUserQuestion con recomendación marcada;
-  nunca asumir.
-- Lo que existe en el inventario no se regenera; lo que falta se produce desde
-  el plan aprobado.
-- No leer capturas personales del usuario sin autorización.
-- Todo intermedio (HTML de propuestas, páginas de export) vive en /tmp y es
-  efímero.
-- Verificar cada export (PNG, video, audio) antes de entregarlo.
-- El idioma de la ficha definido en Fase 1 gobierna piezas, copy y diálogos.
-- Dinero y secretos: ninguna operación con costo sin confirmación explícita
-  del monto; campañas nacen en PAUSED; los tokens no se persisten ni se
-  re-imprimen.
+0.1. Extrae: (a) QUÉ se promociona, (b) CÓMO/formato, (c) recursos
+     mencionados (rutas), (d) canal destino. Clasifica el caso (MAPA).
+0.2. SI hay rutas → inventaríalas ya (FASE 3): muchas preguntas se responden
+     viendo qué hay.
+0.3. Pregunta SOLO lo que la orden no diga. Lo dicho no se re-pregunta.
+
+## FASE 1 — EL QUÉ
+
+1.1. Clasifica: `app` | `producto físico` | `sitio/servicio` | `evento`.
+1.2. SI `app` y estás en su repo → recolectar SIN preguntar: nombre/versión
+     (pubspec/package.json/manifest), logo **sin fondo** (`*foreground*`,
+     SVG de marca; si solo hay con fondo → pedirla), colores del theme,
+     features reales leyendo las vistas (jamás inventar capacidades).
+1.3. SI `producto físico` → pedir fotos reales, nombre, precio, diferencial,
+     dónde se compra. SI `evento` → fecha, lugar, entrada, motivo para ir.
+1.4. Determinar siempre: público, **idioma del anuncio** (manda sobre el
+     idioma de la conversación), claim de identidad.
+1.5. Escribir el **mensaje único** (UNA frase que el espectador debe
+     recordar). SI no sale con lo que hay → seguir preguntando.
+
+## FASE 2 — EL CÓMO
+
+2.1. Parámetros por formato:
+
+| Formato | Fijar |
+|---|---|
+| Video 9:16 | duración (15–30 s ads; gancho legible en 1 s) · 1080×1920 · 30 fps · ¿voz? · ¿subtítulos quemados? (ads: normalmente NO, togglables en el player) |
+| Video 16:9 | duración · 1920×1080 · 30 fps · ídem |
+| Imagen/banner | medidas del canal · con/sin texto |
+| Splitted/carrusel | nº piezas · 1080×1920 c/u |
+| Flyer | impresión o digital · medidas |
+| Ficha tienda | 16:9 + 9:16 + splitted ×5 + textos (título ≤30 · corta ≤80 · larga) |
+
+2.2. → **BP-1**: presentar el brief y esperar ok.
+
+## FASE 3 — INVENTARIO
+
+3.1. Por cada recurso: `ls -la` + **`file *`** (⚠️ las extensiones mienten:
+     un `.svg` puede ser WEBP) + dimensiones/alpha con Pillow.
+3.2. Clasificar: captura de app | logo | foto producto | voz | música | SFX |
+     fuente | icono de terceros | video.
+3.3. ⚠️ Capturas con **datos reales** (nombres, montos, statusbar) nunca se
+     publican tal cual: o se editan con IA (prompt maestro en 5.4, datos de
+     reemplazo **coherentes ENTRE capturas**) o se recrea la vista en HTML
+     (mejor: HD y control total).
+3.4. Lo que existe NO se regenera. Lo que falta se anota como pendiente para
+     FASE 5 — todavía no se genera nada.
+3.5. Normalizar a `/tmp/brand/norm/`: PNG ≥256 px con alpha, nombres kebab
+     predecibles; logos anchos recortados a su bbox.
+
+## FASE 4 — GUIÓN (la redacción textual y exacta de lo que se construirá)
+
+4.V. **Solo caso V1 — la voz primero** (es la columna vertebral):
+     a. Redactar el texto: ~150 palabras/min (30 s ≈ 70–75 palabras), UN
+        párrafo continuo, pausas con comas y puntos suspensivos, CTA al final.
+     b. Entregar versiones por modelo de TTS (si es ElevenLabs: v2 admite
+        `<break time="0.5s"/>`, v3 NO — usa `[excited] [happy] [confident]
+        [curious]` + puntuación; carisma = Stability "Creative" + 3–4 tomas +
+        valle de calma antes del cierre; tag que el editor no resalte, se
+        borra). Si es otro TTS → preguntar qué markup soporta.
+     c. Con el mp3 → **timestamps palabra a palabra** (receta R-1 whisper
+        local). Salida: `words.json` = `[{w, s, e}]`.
+     d. Generar `/tmp/sub.html`: audio + palabras resaltándose + cronómetro
+        ms + click-para-saltar + 0.5× + slider offset ±500 ms.
+        → **BP-5**: el usuario valida; si da offset, es constante global.
+4.1. Redactar el **guión maestro** en `/tmp/adplan.md`:
+     - V1: por escena `[t_ini–t_fin]` anclado a PALABRAS de words.json.
+     - V2: por escena `[t_ini–t_fin]` anclado a la curva de la música.
+     - I1/I2: por pieza → composición exacta (fondo, z-capas, titulares,
+       chips, mini-UI) — es un guión de composición, no de tiempo.
+     Por escena/pieza: qué se ve, datos concretos, animación de entrada de
+     cada elemento, eventos (`palabra/instante → efecto`), SFX, transición.
+4.2. Narrativa por defecto (video): **gancho** (0–3 s, legible en 1 s, nunca
+     pantalla plana de color ni títulos PowerPoint) → problema → producto en
+     acción (2–4 features) → claim → **CTA** (logo + botón + badge tienda).
+     El excedente lo absorbe el cierre estático; la voz no se estira.
+4.3. → **BP-2**: presentar el guión completo, iterar hasta ok.
+
+## FASE 5 — BRECHAS (qué falta y quién lo genera)
+
+5.1. Del guión, listar faltantes por tipo: VOZ | MÚSICA | SFX | IMAGEN-IA |
+     VIDEO-IA | ICONOS/LOGOS | FUENTE | TRANSCRIPCIÓN.
+5.2. → **BP-3**: AskUserQuestion multiSelect "¿cuáles puedes generar tú?"
+     listando las herramientas típicas (ElevenLabs, Gemini/Veo, otra).
+5.3. Para lo que el usuario NO pueda, alternativa local (proponer; instalar
+     solo con aprobación explícita):
+
+| Falta | Alternativa local |
+|---|---|
+| SFX | Sintetizar con WebAudio (receta R-3) + audición para que el usuario marque (BP-6) |
+| Vista de UI / gráfica / texto animado | NUNCA IA → HTML+SVG |
+| Iconos/logos de terceros | Tabla exacta de descargas para el usuario: `archivo destino → qué es`; SVG o PNG ≥256 alpha |
+| Fuente | `@fontsource` vía jsdelivr (R-4) |
+| Transcripción | whisper local en Docker (R-1) |
+| Imagen realista/persona | IA del usuario; si no tiene → rediseñar la escena para no necesitarla |
+| Video realista | IA del usuario; si no tiene → resolver con motion HTML |
+| Modelos por API | Ofrecer OpenRouter / HuggingFace Inference con aprobación y keys del usuario |
+
+5.4. → **BP-4**: por cada pieza que genere el usuario, bloque copy-paste
+     EXACTO + destino (`guárdalo como /tmp/brand/x.png`). Redacción:
+     - Imagen/video: **en inglés**; textos visibles/diálogos en el idioma del
+       anuncio; incluir "render all text EXACTLY as written, crisp, high
+       definition".
+     - Edición de capturas (prompt maestro): quitar statusbar extendiendo el
+       fondo, traducir la UI, reemplazar datos personales por placeholders
+       coherentes entre capturas, NO tocar layout/colores. Si el modelo se
+       resiste → dos pasadas.
+     - Música: brief con timestamps de energía (apertura con golpe si el
+       corte es en t=0 — sirve de ancla, ver R-5 —, valle bajo la voz,
+       remonte en CTA, botón final) + variante ≤450 caracteres.
+5.5. Verificar CADA recurso al recibirlo: `file`, medidas; video IA se revisa
+     **fotograma a fotograma** (grilla cada 0.5 s): inventa UI, duplica
+     tarjetas, agrega statusbars — recortar la ventana limpia o sustituir por
+     HTML.
+5.6. Datos en pantalla: verosímiles y coherentes con el resto del anuncio;
+     jamás métricas de reputación inventadas.
+
+## FASE 6 — CONSTRUCCIÓN
+
+6.1. Cargar `davinci`. Planificar vistas/componentes/transiciones en
+     `/tmp/adplan.md` antes del markup. Contra el "look IA": iconos SVG
+     stroke propios o reales (cero emoji), UN acento de marca, datos
+     coherentes entre escenas, counts-up `tabular-nums`, fuente propia (sin
+     ella los títulos parecen presentación).
+6.2. SI hay variantes de vistas que decidir → galería `/tmp/template.html`
+     (2–3 variantes por vista, con id visible) → **BP-6**.
+6.3. **Video (V1/V2)** → construir el player (receta R-2, adaptando el
+     escenario lógico al aspecto: 360×640 para 9:16, 640×360 para 16:9).
+     - V2 (sin voz): omitir WORDS/subtítulos/transcript; los eventos se
+       anclan a tiempos de la música; los textos en pantalla llevan el
+       mensaje único.
+6.4. **Estático (I1/I2)** → una página HTML por pieza a tamaño real, reglas
+     del splitted (sistema de fondo común, z-capas documentadas, chips
+     específicos del producto, mini-cards de UI, nada cortado entre piezas,
+     titulares a dos tonos) y exportar:
+     ```bash
+     google-chrome --headless=new --disable-gpu --hide-scrollbars \
+       --force-device-scale-factor=1 --window-size=W,H \
+       --virtual-time-budget=4000 --screenshot=salida.png file:///tmp/pieza.html
+     ```
+     (SI no hay google-chrome → `chromium`/`chromium-browser`; detectar con
+     `command -v`.)
+6.5. **Verificación obligatoria** (video): stills de `?t=` en 8–14 instantes
+     clave → grilla etiquetada con PIL → MIRARLA → corregir → repetir.
+     ⚠️ `--virtual-time-budget` NO avanza transiciones CSS: sirve para stills
+     asentados, jamás para renderizar animación (por eso el render es captura
+     real, FASE 7).
+6.6. → **BP-7**: entregar el player/las piezas al usuario como preview
+     reproducible y esperar ok para el render final.
+
+## FASE 7 — RENDER a archivo de video (V1/V2)
+
+7.1. **Detección de entorno** (no asumir):
+     - `command -v Xvfb` → SI falta → pedir `sudo apt install -y xvfb`.
+     - `ffmpeg -formats 2>/dev/null | grep pulse` → SI el ffmpeg no trae
+       `pulse` (típico en builds de brew) → capturar audio aparte con
+       `parecord`/`pw-record` (pistas separadas están bien: cada una lleva su
+       ancla, 7.3).
+     - `pactl info` → confirmar PulseAudio/PipeWire; SI no hay → grabar solo
+       video y construir la pista de audio por mezcla determinista (voz +
+       música + SFX sintetizados en sus tiempos con ffmpeg).
+     - `command -v google-chrome chromium` → navegador disponible.
+7.2. Pipeline de captura (receta R-5). Claves: pantalla virtual del tamaño
+     EXACTO del video; Chrome con `--user-data-dir` propio (sin él se cuelga
+     de la sesión real del usuario), `--autoplay-policy=no-user-gesture-required`;
+     recorders arrancan ANTES que Chrome; modo `?rec` del player (claqueta).
+7.3. **Anclas de t=0**: video → fin del ÚLTIMO tramo negro inicial
+     (`blackdetect=d=0.3:pix_th=0.06`, la claqueta); audio → primer onset
+     (`silencedetect=n=-45dB:d=0.4`; por eso la música abre con golpe).
+     Cortar CADA pista en SU ancla → alineación por construcción.
+7.4. Ensamble: `-ss $TV` video, `-ss $TA` audio, `-t DUR`, `yuv420p`,
+     `libx264 -crf 18 -preset slow`, `aac 192k`, `+faststart`. SI la cama
+     musical queda débil tras la voz (medir, no adivinar) → rampa
+     `volume='if(gte(t,X),min(2,1+(t-X)*0.55),1)':eval=frame`. Extraer
+     `track.mp3` si el usuario la quiere.
+7.5. Verificar SIEMPRE: duración exacta (ffprobe), grilla de fotogramas del
+     MP4 final (¿pantalla completa? ¿sin subtítulos si no van? ¿texto
+     nítido?), `ebur128` por ventanas (voz −11…−16 LUFS; cierre no más de
+     6 LU por debajo).
+7.6. NO intentar: animar con virtual-time · grabar pantalla real de aspecto
+     contrario al video · upscalar capturas pequeñas (354→1080 = papilla).
+7.7. Limpieza total: procesos, sinks, perfiles; imágenes Docker → pedir ok.
+
+## FASE 8 — ENTREGA
+
+8.1. Nombres predecibles en el destino acordado (`X_ad_30s.mp4`, `track.mp3`,
+     `16_9.png`, `splitted-1..5.png`).
+8.2. SendUserFile + resumen: qué se construyó, dónde está, pendientes.
+8.3. Pedir reproducción real (la escucha no es verificable desde aquí) y
+     ofrecer ciclo corto de retoques (con el player, recapturar toma ~1 min).
+
+---
+
+## RECETAS PROBADAS (defaults verificados; adaptar si el entorno difiere)
+
+### R-1 · Timestamps palabra a palabra (whisper local, sin tocar el host)
+```bash
+docker run --rm -v /tmp/whisper-out:/out python:3.11-slim bash -c \
+  "pip install -q faster-whisper && python /out/transcribe.py"
+# transcribe.py: WhisperModel('small', device='cpu', compute_type='int8')
+#   .transcribe(mp3, language=XX, word_timestamps=True,
+#               initial_prompt=<texto exacto del guión>)  → /out/words.json
+```
+CPU basta para <60 s. SI PyPI baja lento (<200 KB/s) avisar ETA (el modelo
+viene de HuggingFace, que vuela). Al terminar, ofrecer borrar la imagen.
+
+### R-2 · Player HTML (el corazón del video)
+Archivo `/tmp/ads.html`, autocontenido, recursos relativos en /tmp:
+- Escenario lógico del aspecto del video (9:16 → 360×640) escalado a la
+  ventana; esquinas CUADRADAS; ningún control dentro del stage.
+- **Reloj maestro = la música** (`music.currentTime`); la voz se resincroniza
+  si deriva >0.12 s; `VOICE_OFFSET` = ajuste validado en BP-5.
+- Datos embebidos: `WORDS`, `SCENES [{id, from}]`, `EVENTS [{t, k, fn}]`
+  (Set de disparados).
+- **Aterrizajes con CSS `transition` (idempotentes), NUNCA `animation`
+  one-shot** (se re-disparan tras cada seek); `animation` solo para efectos
+  transitorios (anillos, ripples) o giros que toleren replay.
+- `seek(t)`: reset TOTAL (clases, contadores, anchos, dashoffsets) + catch-up
+  silencioso (`quiet=true` apaga SFX) bajo `.notrans`; **en pausa `.notrans`
+  se queda** (stills perfectos); se quita al reanudar.
+- Subtítulos kinéticos palabra a palabra (color según escena clara/oscura)
+  con toggle CC. Player FUERA del stage: play/pausa, cronómetro, transcript
+  clickeable, timeline por capas (escenas/voz/música/SFX) con playhead y
+  scrub.
+- Modos URL: `?t=SEG` (still exacto sin audio) · `?rec` (claqueta negra
+  1.4 s → autoplay con audio, sin CC, stage a pantalla completa) ·
+  `?rec&cc=1`.
+- ⚠️ En modo rec, el contenedor del stage: `position:fixed; inset:0` (un
+  `align-items:center` del layout lo colapsa y el video sale en miniatura).
+- ⚠️ CSS de igual especificidad: `.scene.on` va DESPUÉS de las variantes
+  `data-fx` o la escena activa hereda el blur de entrada.
+- Transiciones de escena variadas (crossfade, zoom, swipe-blur, push,
+  zoom-through), solo `transform/opacity/filter`.
+
+### R-3 · SFX sintetizados (WebAudio, cero archivos)
+Osciladores con decay exponencial + ruido blanco con bandpass barrido:
+`pop` 520→900 Hz · `swipe` ruido 900→300 · `ding` 1318+2637 · `coin` squares
+1975/2637 · `unlock` 880→1320 · `whoosh` ruido 150→900 · `slam` ruido
+2000→300 + triángulo grave · `suck` · `spin` · `flick` · `stamp` · `sprout` ·
+`bounce` · `ripple`. Guardia global `quiet` para el catch-up del seek.
+Audición con botones por candidato → el usuario marca (BP-6).
+
+### R-4 · Fuente sin instalar nada
+```bash
+curl -o /tmp/fonts/outfit-800.woff2 \
+  https://cdn.jsdelivr.net/npm/@fontsource/outfit@5.2.5/files/outfit-latin-800-normal.woff2
+```
+(@font-face con ruta relativa funciona en file://. La API css de Google
+Fonts puede fallar según UA; jsdelivr no.)
+
+### R-5 · Captura en pantalla virtual (render final)
+```bash
+MOD=$(pactl load-module module-null-sink sink_name=adrec)
+Xvfb :99 -screen 0 1080x1920x24 & XPID=$!; sleep 1.5
+timeout 40 parecord -d adrec.monitor --file-format=wav /tmp/adcap_audio.wav & APID=$!
+ffmpeg -y -f x11grab -draw_mouse 0 -framerate 30 -video_size 1080x1920 \
+  -i :99 -c:v libx264 -preset ultrafast -qp 0 -t 38 /tmp/adcap_video.mkv & VPID=$!
+sleep 0.7
+DISPLAY=:99 PULSE_SINK=adrec google-chrome --user-data-dir=/tmp/chrome-rec \
+  --no-first-run --kiosk --window-size=1080,1920 \
+  --autoplay-policy=no-user-gesture-required "file:///tmp/ads.html?rec=1" & CPID=$!
+wait $VPID; kill $APID $CPID; kill $XPID
+pactl unload-module $MOD; rm -rf /tmp/chrome-rec
+```
+Ajustar `-video_size`/`-screen` al aspecto del video. Luego anclas (7.3) y
+ensamble (7.4).
+
+---
+
+## CAMPAÑA DE PAUTA (caso C1)
+
+El dinero es del usuario: nada se crea ni activa sin **BP-8**.
+
+C.1. Canales por AskUserQuestion (multiselección): Meta (FB/IG/WhatsApp),
+     TikTok, Snapchat, YouTube. Aclarar proactivamente: los anuncios salen a
+     nombre de una Página/identidad de marca, nunca del perfil personal.
+C.2. Verificaciones bloqueantes: ¿producto/app publicado con URL visible?
+     ¿SDK del canal integrado? Sin SDK → objetivo Tráfico midiendo en la
+     consola de la tienda.
+C.3. Primera campaña: manual en el Ads Manager, dictada campo por campo con
+     valores exactos (nombres: `app · objetivo · país · v1`). API solo con
+     escala; tokens jamás se persisten ni se re-imprimen.
+C.4. Presupuestos chicos: $5/día; sin filtros de interés; placements manuales
+     acordes al aspecto (9:16 → Reels/Stories/Feeds); miniatura = fotograma
+     del producto; 2–3 días de aprendizaje sin tocar; desde el día 3, decidir
+     con CTR ≥1% y CPC a la baja.
+C.5. Todo nace en PAUSED → **BP-8** → el usuario activa. Verificar
+     post-creación, entregar ids, seguimiento de spend/CTR/CPI.
+
+---
+
+## FALLOS CONOCIDOS (consultar cuando algo no cuadre)
+
+- Las extensiones mienten → `file` siempre.
+- Video IA inventa UI pasados 1–2 s (statusbars falsos, tarjetas duplicadas,
+  texto corrupto) → grilla cada 0.5 s; recortar o sustituir por HTML.
+- `animation` one-shot se re-dispara tras seek → aterrizajes con `transition`.
+- `--virtual-time-budget` avanza JS/rAF pero NO transiciones CSS.
+- `align-items:center` colapsa el contenedor del stage en captura.
+- ffmpeg de brew sin entrada `pulse` → `parecord` + anclas separadas.
+- ElevenLabs: v3 no reconoce `<break/>`; v2 no reconoce `[tags]`; el botón
+  "mejorar" sobreactúa.
+- PyPI puede ir a 160 KB/s con la red sana → medir con curl antes de culpar
+  al contenedor; HuggingFace y jsdelivr suelen volar.
+- Chrome sin `--user-data-dir` propio abre en la sesión real del usuario.
+- Logo del usuario: pedir la variante sin fondo; si es blanca sobre
+  transparente, colorearla con `mask-image` o usarla sobre fondos oscuros.
+- Grabaciones de pantalla del usuario suelen venir a resolución CSS
+  (~360 px): no upscalar; recapturar con R-5.
