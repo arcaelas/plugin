@@ -1,2291 +1,1399 @@
 ---
 name: clean-code
 description: >
-  The stable core of the user's coding conventions — the baseline for every coding task.
-  Covers naming (snake_case for variables/functions, PascalCase for classes/types,
-  UPPER_SNAKE_CASE for exported constants), recursive component/folder structure, hooks in
-  lib/use_*, control flow (affirmative blocks, no early returns), reuse vs fragmentation,
-  bilingual JSDoc, native runtime APIs over external libraries, standardized API response
-  envelopes, SSR guards, file-based routing, package management (yarn local, npm -g global,
-  tsx over ts-node), and git workflow (issue → branch → PR, Spanish commit messages with
-  fix/feat/chore/docs prefixes). Load it for any task that writes, refactors, or reviews code.
-  When it conflicts with the RAG, the RAG wins.
+  The user's coding LAW — the mandatory baseline for every coding task, written as
+  numbered laws in dependency order (each law may rely only on earlier ones). Every law
+  is one objective statement plus a `good` and a `bad` code block whose line comments
+  justify each part. Covers naming (snake_case), project format, imports, control flow
+  (nested affirmative blocks, no early returns, braces by body size), data expressions,
+  functions (zero single-use module helpers), compact domain classes, strict typing,
+  promise pipelines, errors, structural JSDoc (no inner comments), file architecture
+  (folders born from internal dependencies), backend (lib = primitives, service
+  orchestrates), React/Next, Flutter (snake_case too), runtime-first and git flow.
+  Load it for any task that writes, refactors, or reviews code. When it conflicts with
+  the RAG, the RAG wins.
 ---
 
-# Clean Code — convenciones base de código
+# Clean Code — Ley de construcción de código
 
-## Jerarquía de componentes (recursiva)
+## Cómo leer esta ley
 
-Estructura cada componente con su propio `components/` y `lib/`. El patrón se repite **idénticamente** en cualquier nivel de profundidad. Un componente solo importa **hacia arriba** (propio `lib/`, padre, abuelo, root). **Nunca** importa de hermanos, descendientes ni ramas no relacionadas.
+> Este documento es LEY, no una guía de sugerencias. Cada ley tiene un número, una regla objetiva, un bloque `good` y un bloque `bad`. El código se construye cumpliendo TODAS las leyes a la vez.
 
-```
-// BIEN — estructura recursiva
-src/components/Button/
-├── index.tsx
-├── lib/
-│   └── use_button_state/
-│       └── index.ts
-└── components/
-    └── ButtonIcon/
-        ├── index.tsx
-        ├── lib/
-        │   └── use_icon_size/
-        │       └── index.ts
-        └── components/
-            └── SpinnerDot/
-                ├── index.tsx
-                └── lib/
-                    └── use_dot_pulse/
-                        └── index.ts
+- Las leyes están en orden de dependencia: cada ley solo usa conceptos de leyes anteriores. Si una ley menciona `(Ley N)`, esa N ya quedó atrás.
+- Los comentarios `//` DENTRO de los bloques `good`/`bad` explican la ley al lector de ESTE documento. La Ley 31 los excluye del código real: no copiar los comentarios al código producido.
+- `good` = forma exigida. `bad` = forma prohibida; sus comentarios dicen por qué falla.
+- Si el caso no está cubierto por ninguna ley ni por el RAG: proponer y preguntar. Nunca inventar una convención.
+- El RAG (preferencias vivas del usuario) está por encima de esta ley cuando se contradicen.
+- Al agregar leyes nuevas: la línea de ley instruye lo que SÍ se hace; lo prohibido vive únicamente en el bloque `bad` con su porqué.
 
-// MAL — archivos sueltos rompen la jerarquía
-src/components/Button/
-├── index.tsx
-├── useButtonState.ts        // archivo suelto: va en lib/use_button_state/index.ts
-├── helpers.ts               // genérico sin carpeta: va en lib/use_*/
-└── ButtonIcon.tsx           // hijo aplanado: va en components/ButtonIcon/index.tsx
-```
+---
 
-```ts
-// BIEN — imports desde ./src/components/Button/components/ButtonIcon/index.tsx
-import useIconSize from "./lib/use_icon_size"; // propio
-import useButtonState from "../../lib/use_button_state"; // padre
-import useTheme from "@/lib/use_theme"; // raíz
-import Input from "@/components/Input"; // componente raíz
+# PARTE I — Nombres y formato
 
-// MAL
-import { x } from "../ButtonSpinner/lib/x"; // hermano: prohibido
-import { y } from "@/components/Form/lib/y"; // rama no relacionada: prohibido
-```
+## Ley 1 — Naming: snake_case como base universal
 
-- **Prohibido**: archivos sueltos en el root del componente (todo helper, hook o constante vive en `lib/use_*` / `lib/{name}`).
-- **Prohibido**: componentes hijos como archivos planos (cada hijo tiene su propia carpeta).
-- **Prohibido**: importar de hermanos, descendientes o ramas no relacionadas.
-- Si dos hermanos requieren la misma lógica, esa lógica sube al `lib/` del padre común.
+> Todo identificador propio va en snake_case — variables, parámetros, funciones, métodos, campos, booleans desnudos, archivos, carpetas normales y claves de payloads. PascalCase para clases, tipos, enums, interfaces y carpetas de componente visual. UPPER_SNAKE_CASE para constantes exportadas de módulo y keys de enum. camelCase únicamente donde React lo impone: hooks (`useX`) y setters de useState.
 
-### Root `src/` como scope global
+```good
+export const MAX_RETRIES = 3            // exportada de módulo: UPPER_SNAKE_CASE
+const cache_key = `user:${user_id}`     // local: snake_case, aunque sea constante
+const loading = false                   // boolean desnudo: sin prefijo is_/has_/can_
 
-Los archivos en `src/components/` y `src/lib/` son accesibles desde cualquier componente a cualquier profundidad. **Reservar el root para abstracciones base compartidas**: hooks transversales, cliente HTTP, componentes base reusables.
-
-```
-src/
-├── lib/
-│   ├── use_theme/         // hook global
-│   ├── use_auth/          // hook global
-│   └── api/               // cliente HTTP único
-└── components/
-    ├── Button/            // componente base reusable
-    ├── Input/
-    └── Modal/
-```
-
-- **Permitido en root**: lo que usan ≥2 componentes no relacionados.
-- **Prohibido en root**: lógica específica de un componente (queda en su `lib/` propio).
-- **Prohibido en componente**: utilidad que ya necesitan otros (sube al root).
-
-## Estructura de carpetas
-
-```
-// BIEN
-src/components/Button/
-├── index.tsx                // obligatorio, export default al final
-├── types.d.ts               // opcional, solo si exporta tipos externos globales, como api, mutaciones de tipado existente y otros
-├── lib/                     // opcional, hooks y lógica pura sin markup
-└── components/              // opcional, subcomponentes visuales con markup
-
-// MAL
-src/components/Button/
-├── Button.tsx               // nombrar al archivo como el componente: usa index.tsx
-├── Button.css               // CSS separado: prohibido (usar Tailwind / clases nativas)
-├── Button.test.tsx          // test no solicitado
-└── README.md                // documentación no solicitada
-```
-
-- **Obligatorio**:
-  - `index.tsx` con `export default` al final.
-  - carpeta `lib/` para los que requieren sub utilidades
-  - carpeta `components/` para los que requieren componentes hijos
-- **Prohibido** sin solicitud explícita: CSS, tests, stories, READMEs, doc.md, archivos nombrados como el componente.
-
-## Hooks en `lib/`
-
-Cada hook vive en su propia subcarpeta dentro del `lib/` del componente que lo usa. **Un hook pertenece a su componente** — no se comparte con hermanos ni padres.
-
-- Carpeta: `snake_case` con prefijo `use_` → `use_button_state/`.
-- Archivo: `index.ts`.
-- Función exportada: `camelCase` con `export default` → `export default function useButtonState() {}`.
-- Esta es la **única excepción** al `snake_case` general (el camelCase del nombre de la función es por compatibilidad con la convención de React).
-
-```
-// BIEN
-src/components/Button/lib/
-├── use_button_state/
-│   ├── index.ts                 // export default function useButtonState() {}
-│   └── types.d.ts
-└── use_button_animation/
-    └── index.ts                 // export default function useButtonAnimation() {}
-
-// MAL
-src/components/Button/lib/
-├── useButtonState.ts            // archivo suelto sin carpeta: prohibido
-├── use_button_state.ts          // archivo suelto sin carpeta: prohibido
-└── hooks.ts                     // múltiples hooks agrupados: prohibido
-```
-
-- **Prohibido**: archivos sueltos `*.ts` directamente bajo `lib/` (cada hook tiene su carpeta).
-- **Prohibido**: agrupar varios hooks en un mismo archivo (`hooks.ts`).
-- **Prohibido**: subir un hook al `lib/` del padre/root salvo que se use desde dos hermanos (entonces aplica la regla del padre común).
-
-## Orden de exports en `index.tsx`
-
-El archivo `index.tsx` de cada componente sigue este orden estricto. `export default` del componente **siempre** va al final. Los hooks **nunca** aparecen aquí (viven en `lib/use_*`).
-
-1. `enum`
-2. `type`
-3. `interface` (Props, Config)
-4. `const` (constantes)
-5. `function` utilitaria — solo si es compleja; las triviales van inline
-6. `export default` del componente
-
-```tsx
-// BIEN
-export enum ButtonSize { SM = "sm", MD = "md", LG = "lg" }
-export type ButtonVariant = "primary" | "secondary" | "ghost"
-export interface ButtonProps { size?: ButtonSize; variant?: ButtonVariant }
-export const DEFAULT_SIZE = ButtonSize.MD
-
-export default function Button({ size = DEFAULT_SIZE }: ButtonProps) {
-    return <button />
+enum TicketStatus {                     // enum: PascalCase
+    IN_PROGRESS = "in_progress",        // key: UPPER_SNAKE_CASE
 }
 
-// MAL
-export default function Button() { ... }    // default primero: prohibido
-export enum ButtonSize { ... }              // enum después del componente: prohibido
-export function useButtonState() { ... }    // hook en index.tsx: prohibido (va en lib/use_*)
-```
-
-- **Prohibido**: declarar hooks dentro de `index.tsx`.
-- **Prohibido**: poner `export default` antes que enums/types/interfaces/constants.
-- **Prohibido**: utility functions triviales — van inline en el call site.
-
-
-## Naming
-
-| Identificador                          | Convención            | Ejemplo                       |
-|----------------------------------------|-----------------------|-------------------------------|
-| Variable, parámetro, función           | `snake_case`          | `user_id`, `get_user()`       |
-| Método de clase                        | `snake_case`          | `service.find_one()`          |
-| Método privado de clase                | `_snake_case`         | `_normalize_phone()`          |
-| Boolean                                | `snake_case` desnudo  | `loading`, `disabled`         |
-| Constante local                        | `snake_case`          | `const code = '...'`          |
-| Constante exportada de módulo          | `UPPER_SNAKE_CASE`    | `MAX_RETRIES`, `API_URL`      |
-| Clase                                  | `PascalCase`          | `class UserService { }`       |
-| Interface, type, enum                  | `PascalCase`          | `interface UserProps { }`     |
-| Interface de props de componente       | `{ComponentName}Props`| `ButtonProps`, `UserFormProps`|
-| Campo dentro de interface/type         | `snake_case`          | `initial_name`, `error_message` |
-| Tipo global compartido                 | `I{Domain}`           | `IAuth`, `IProduct`           |
-| Enum keys                              | `UPPER_SNAKE_CASE`    | `Status.ACTIVE`               |
-| Hook (función)                         | `camelCase` con `use` | `useButtonState()`            |
-| Carpeta de hook                        | `snake_case` con `use_` | `lib/use_button_state/`     |
-| Setter de `useState`                   | `camelCase`           | `[loading, setLoading]`       |
-| Carpeta de componente visual           | `PascalCase`          | `components/Button/`          |
-| Carpeta normal (lib, view, módulo)     | `snake_case`          | `lib/use_theme/`              |
-| Archivo                                | `snake_case`          | `format_date.ts`              |
-| Archivo principal de componente        | `index.tsx`           | (no `Button.tsx`)             |
-| Callback prop                          | `on_{action}`         | `on_search`, `on_submit`      |
-
-```ts
-// BIEN
-// Constantes exportadas a nivel módulo
-export const MAX_RETRIES = 3
-export const API_BASE_URL = "https://api.example.com"
-export const DEFAULT_TIMEOUT = 30_000
-
-// Enum: PascalCase + keys UPPER_SNAKE_CASE
-enum TicketStatus {
-    OPEN = "open",
-    IN_PROGRESS = "in_progress",
-    RESOLVED = "resolved",
-}
-const status = TicketStatus.IN_PROGRESS
-
-// Interface de props: PascalCase + sufijo Props + campos snake_case
-interface UserFormProps {
-    initial_name: string
-    disabled?: boolean
-    on_submit: () => void
+interface UserFormProps {               // props de componente: PascalCase + sufijo Props
+    initial_name: string                // campo: snake_case
+    on_submit: () => void               // callback: on_{accion}
 }
 
-type ButtonVariant = "primary" | "secondary" | "ghost"
-
-// Tipo global compartido (./src/lib/types/global.d.ts): prefijo I{Domain}
-interface IAuth {
+interface IAuth {                       // tipo global compartido entre módulos: prefijo I{Dominio}
     user_id: string
-    token: string
-    expires_at: number
-}
-const auth: IAuth = await get_session()
-
-// Locales
-const user_id = "abc-123"
-const loading = false
-function get_user(user_id: string) {
-    const cache_key = `user:${user_id}`
-    return cache.get(cache_key)
 }
 
-class UserService {
-    find_one(id: string) { ... }
-    private _normalize_phone(p: string) { ... }
+class UserService {                     // clase: PascalCase
+    find_one(id: string) {}             // método: snake_case
+    private _normalize_phone(p: string) {}  // privado: _snake_case
 }
 
-import useButtonState from "./lib/use_button_state"
-const [loading, setLoading] = useState(false)
+const [open, setOpen] = useState(false)          // setter camelCase: React lo impone
+import useButtonState from "@/components/Button/lib/use_button_state"  // hook: función useX, carpeta/archivo use_x
 
-// MAL
-const userId = "abc-123"                  // camelCase: prohibido
-function getUser(userId: string) { ... }  // camelCase: prohibido
-const isLoading = false                   // prefijo is_: prohibido
-class userService {                       // clase debe ser PascalCase
-    findOne(id: string) { }               // método camelCase: prohibido
+// components/Button/index.tsx          // carpeta de componente visual: PascalCase
+// lib/use_theme/index.ts               // carpeta normal (lib, view, módulo): snake_case
+// src/lib/format_date.ts               // archivo: snake_case
+res.success({ file_path, total_lines }) // claves de payloads/respuestas: snake_case
+```
+
+```bad
+const userId = "abc"                    // camelCase en variable: prohibido
+function getUser() {}                   // camelCase en función: prohibido
+const isLoading = false                 // prefijo is_: prohibido, el boolean va desnudo
+const handleClick = () => {}            // handle{Action}: prohibido, es on_click
+export const maxRetries = 3             // exportada sin UPPER: prohibido
+function calc(weight: number) {
+    const BASE_RATE = 5.99              // UPPER en constante local: prohibido (las locales van snake_case)
 }
-const handleClick = () => { }             // handle*: usar on_click
-export const maxRetries = 3               // camelCase en global exportada: prohibido
-export const api_base_url = "..."         // snake_case en global exportada: prohibido
-enum ticketStatus {                       // enum debe ser PascalCase
-    open = "open",                        // key debe ser UPPER_SNAKE_CASE
-    inProgress = "in_progress",           // key camelCase: prohibido
+interface Auth {}                       // tipo global sin prefijo I: prohibido (es IAuth)
+interface ProductType {}                // sufijo Type: prohibido (es IProduct)
+res.json({ filePath, totalLines })      // claves camelCase en payload: prohibido (file_path, total_lines)
+```
+
+## Ley 2 — Formato: manda el proyecto; defaults personales en proyectos nuevos
+
+> Comillas, indentación y ancho los define la configuración existente del proyecto (.prettierrc, .editorconfig); en proyectos nuevos se usa: singleQuote true, tabWidth 4, printWidth 200, semi true, trailingComma es5, bracketSameLine true. Números grandes siempre con separador `_`.
+
+```good
+const timeout = 30_000                  // separador numérico: 30_000 se lee, 30000 no
+const limit = 200_000
+// En un repo que ya usa comillas dobles y 2 espacios, se escriben comillas
+// dobles y 2 espacios: la consistencia local pesa más que el gusto personal.
+```
+
+```bad
+const timeout = 30000                   // sin separador: ilegible a partir de 5 cifras
+// Cambiar las comillas o la indentación de un repo existente "porque el
+// default personal es otro": prohibido — se sigue lo que el repo ya usa.
+```
+
+## Ley 3 — Imports: alias sobre relativos, módulo sobre miembros
+
+> Los alias del tsconfig/jsconfig se prefieren SIEMPRE a rutas relativas largas (el relativo queda para lo interno inmediato del propio módulo); se importa el módulo completo (`import path from 'node:path'`) antes que sus miembros sueltos; un módulo que ES la unidad (lib, hook, componente) se exporta e importa por default, y los named quedan para tipos y anexos; la agrupación/orden la resuelven los linters del proyecto.
+
+```good
+import path from "node:path"            // módulo completo: path.dirname() documenta su origen en cada uso
+import session from "@/lib/session"     // la unidad viaja por default; el alias sobrevive a mover archivos
+import type { ISession } from "@/lib/session"   // los named quedan para tipos y anexos
+import helper from "./lib/helper"       // relativo solo para lo interno inmediato del propio módulo
+```
+
+```bad
+import { dirname, join } from "node:path"   // miembros sueltos: dirname() a secas no dice de dónde viene
+import { session } from "@/lib/session"     // named para la unidad misma: la unidad viaja por default
+import session from "../../lib/session"     // relativo largo: se rompe al mover el archivo; existe el alias
+```
+
+---
+
+# PARTE II — Flujo de control
+
+## Ley 4 — Llaves por tamaño del cuerpo
+
+> Un cuerpo de UNA línea va sin llaves; un cuerpo de varias líneas va con llaves. Aplica a if/else/for/while y cada rama decide la suya. Esta ley se usa dentro de todos los ejemplos siguientes.
+
+```good
+if (user.name) user.username = rand()   // una línea: sin llaves
+else {                                  // esta rama tiene 3 líneas: lleva llaves
+    let tmp = rand()
+    user.name = tmp.slice(0, 4)
+    user.username = tmp.replace(/\W+/gi, "-")
 }
-interface userFormProps {                 // interface debe ser PascalCase + sufijo Props
-    initialName: string                   // campo camelCase: prohibido
-    isDisabled?: boolean                  // prefijo is_ + camelCase: doble prohibido
-    onSubmit: () => void                  // onSubmit camelCase: usar on_submit
+
+for (const sig of ["SIGTERM", "SIGINT"] as const) process.on(sig, () => process.exit(0))  // setup de una línea
+```
+
+```bad
+if (user.name) {
+    user.username = rand()              // una sola línea con llaves: ceremonia innecesaria
 }
-interface Auth { }                        // tipo global sin prefijo I: prohibido
-interface ProductType { }                 // sufijo Type en vez de prefijo I: prohibido
-function calculate(weight: number) {
-    const BASE_RATE = 5.99                // UPPER_SNAKE_CASE local: prohibido (usar base_rate)
+if (ok)
+    save()                              // cuerpo en línea SEPARADA sin llaves: ambiguo al agregar líneas
+    notify()                            // ← parece parte del if pero NO lo es: el bug clásico
+```
+
+## Ley 5 — Condicionales anidadas en afirmativo
+
+> Toda condición se escribe en afirmativo y anidada una dentro de otra; el camino feliz vive en el bloque más profundo y cada throw/return de error queda como rama final de su nivel, así siempre se sabe qué condición exacta falló. La negación se reserva para la idempotencia (hacer algo una sola vez).
+
+```good
+if (email) {
+    if (password) {
+        return save({ email, password })    // el happy path queda al fondo; si mañana la lógica crece, crece aquí
+    } else throw new Error("ERR_PASSWORD")  // rama de una línea: sin llaves (Ley 4); else opcional
+} else throw new Error("ERR_EMAIL")         // cada error cierra SU nivel: se sabe exactamente qué faltó
+
+if (!store.has(key)) store.set(key, value)  // negación permitida: garantiza idempotencia (setear una sola vez)
+const stored = store.get(key)!
+```
+
+```bad
+if (!email || !password)
+    throw new Error("ERR_FIELDS")       // early-throw como guardia: si mañana llega otro campo, este OR crece
+                                        // y ya no distingue QUÉ falló; valida lo que necesito, no lo que "podría fallar"
+return save({ email, password })
+
+if (user.type !== "premium") return 0   // early-return con negación: invierte la lectura — el caso real
+return amount * 0.15                    // (premium) queda implícito y sin bloque propio
+```
+
+## Ley 6 — Dispatch por casos: cadena de returns con default final
+
+> Cuando una función es una tabla de decisión (clasificar, traducir, mapear), se redacta como cadena de `if (cond) return valor` con el default al final: cada return ES el resultado de un caso terminal. Esta forma convive con la Ley 5 porque cada return resuelve un caso completo, en vez de escapar de una validación.
+
+```good
+function humanize(error: unknown): string {
+    const msg = error instanceof Error ? error.message : String(error)
+    if (/rate.?limit|429/i.test(msg)) return "Estoy saturado, probá en un ratito."   // cada if ES un caso terminal
+    if (/network|timeout/i.test(msg)) return "No pude conectar, probá de nuevo."    // no hay lógica después: solo casos
+    return "Algo falló de mi lado, ya quedó registrado."                            // default SIEMPRE al final
 }
 ```
 
-- **Prohibido**: `camelCase` en variables, parámetros, funciones, métodos. Las únicas excepciones son hooks y setters de `useState`, ambos impuestos por React.
-- **Prohibido**: prefijos `is_`/`has_`/`can_` en booleans.
-- **Prohibido**: `handle{Action}` para callbacks (usar `on_{action}`).
-- **Prohibido**: `UPPER_SNAKE_CASE` en constantes locales (solo se permite en constantes exportadas a nivel módulo).
-
-
-## Métodos privados (`_snake_case`) — solo encapsulación
-
-Un método privado se justifica **únicamente** cuando encapsula estado interno compartido por **varios** métodos públicos. **Prohibido** crear privados para fragmentar un método público en helpers que solo se llaman una vez: esa lógica va inline.
-
-```ts
-class PaymentService {
-    // BIEN — comparte estado/lógica entre múltiples métodos públicos
-    private _build_headers(): Record<string, string> {
-        return { Authorization: `Bearer ${this._token}` }
-    }
-
-    charge(amount: number) {
-        if (amount > 0) {
-            const headers = this._build_headers()    // encapsulación reutilizable
-            return api.post("/charge", { amount }, { headers })
-        }
-        throw new Error("Invalid")                   // throw como rama negativa al final
-    }
-
-    refund(id: string) {
-        const headers = this._build_headers()        // mismo helper, justifica el privado
-        return api.post(`/refund/${id}`, {}, { headers })
-    }
-
-    // MAL — solo lo llama charge(), debería ir inline
-    private _validate_amount(amount: number) {
-        if (amount > 0) {
-            return
-        }
-        throw new Error("Invalid")
-    }
+```bad
+function humanize(error: unknown): string {
+    const msg = error instanceof Error ? error.message : String(error)
+    if (!msg) return "Error"            // esto NO es un caso: es una guardia de entrada disfrazada (Ley 5)
+    let result = ""                     // mezcla dispatch con acumulación: o es tabla o es proceso
+    if (/429/.test(msg)) result = "Saturado"
+    return result || "Error"
 }
 ```
 
-- **Permitido**: privado con `_snake_case` cuando se llama desde **2 o más** métodos públicos.
-- **Prohibido**: privado que solo se llama desde un único método público (va inline).
-- **Prohibido**: privados con `_camelCase` (ver tabla de Naming).
+## Ley 7 — Ternario para asignar valores
 
+> La asignación con dos ramas que resuelven a un valor usa ternario en una expresión; la clasificación por escalones usa ternario encadenado con salto de línea por rama. El if/else se reserva para ramas con lógica (varios statements o efectos).
 
-## Reutilización vs fragmentación
+```good
+const role = name === "Admin" ? "admin" : "member"      // dos ramas, un valor: ternario simple
 
-Preferir código **in-situ** (inline) sobre crear métodos auxiliares para fragmentar lógica que solo se usa en un lugar. **Consolidar y compactar** sobre dispersar.
+const tier = total >= 150 ? "distribuitor"              // clasificación por escalones: encadenado,
+    : total >= 30 ? "plus"                              // una rama por línea, se lee como tabla
+    : "basic"
+```
 
-Solo extraer a método/función reutilizable cuando:
-- La misma lógica se usa en **2 o más** lugares con la **misma forma exacta**.
-- Encapsula estado interno compartido por varios métodos.
+```bad
+let role                                // let + if/else para asignar: tres líneas para una expresión
+if (name === "Admin") role = "admin"
+else role = "member"
 
-**Caso típico**: en clases CRUD, `get(id)` valida existencia y `update`/`delete` lo reutilizan; `create` delega directo al storage.
+const x = a ? b : c ? d : e ? f : g     // encadenado SIN estructura de escalones ni saltos: ilegible
+```
 
-```ts
-// BIEN — get() es base, update/delete reusan
+## Ley 8 — Operaciones atómicas inline
+
+> Incrementos, math simple, accesos y conversiones van inline en su expresión cuando el lector entiende la intención sin línea dedicada; la asignación dentro de una expresión es válida cuando compacta una intención única. Extraer a variable solo si el valor se reusa o el cómputo necesita nombre.
+
+```good
+timer = setTimeout(connect, Math.min(retries++ * 3_000, 60_000))  // una intención: "reintentar con backoff acotado"
+return (active = candidate)                                       // asignar y retornar: una sola intención
+const digits = (process.env.PHONE_NUMBER = value.replace(/\D/g, ""))  // normalizar, publicar y capturar en una expresión
+```
+
+```bad
+const delay = Math.min(retries * 3_000, 60_000)   // tres líneas para lo que es una sola intención;
+retries++                                         // el desglose no agrega claridad ni reuso
+timer = setTimeout(connect, delay)
+```
+
+---
+
+# PARTE III — Datos y expresiones
+
+## Ley 9 — Objetos declarativos: spread, `??` y propiedades condicionales
+
+> Un objeto se construye completo en UNA declaración: spread del original, `??` para defaults y `...(cond && { clave })` para propiedades condicionales — la forma final del objeto se lee entera en su declaración.
+
+```good
+options.where = {
+    ...options.where,                                       // spread sobre undefined es vacío: no necesita guarda previa
+    expired_at: options.expired_at ?? { [Op.gt]: new Date() },  // override del caller o default, en una expresión
+}
+
+const payload = {
+    id: instance.id,
+    ...(instance.email && { email: instance.email }),       // spread sobre false es no-op: la clave solo entra si hay valor
+    ...(from && to && { created_at: { [Op.between]: [from, to] } }),  // varias claves bajo una misma condición
+}
+```
+
+```bad
+const payload: any = { id: instance.id }    // el ": any" lo fuerza la mutación posterior: el tipo delata el diseño roto
+if (instance.email) payload.email = instance.email   // la forma final del objeto queda dispersa en ifs
+options.where = options.where || {}                  // reasignación intermedia: el spread ya cubre undefined
+```
+
+## Ley 10 — Operadores nullish: `?.` `??` `?.()` `??=` `||=` `&&=`
+
+> El acceso, la llamada y el default sobre valores posiblemente nulos se resuelven con los operadores del lenguaje en una sola expresión: `?.` para acceder, `?.()` para llamar, `??`/`??=` para defaults (actúan solo ante null/undefined y respetan 0/""/false), `||`/`||=` para inicializar contenedores (actúan ante cualquier falsy) y `&&=` para transformar solo lo que ya existía.
+
+```good
+const port = config?.server?.port ?? 3000   // ?? actúa solo ante null/undefined: respeta 0/""/false como válidos
+callback?.(value)                           // "llama si existe": la primitiva del lenguaje
+user.preferences ??= defaults               // mutate-or-default en una operación
+options.where ||= {}                        // ||= actúa ante TODO falsy: ideal para contenedores no inicializados
+flags.dirty &&= validate(state)             // &&= transforma solo si el valor previo era truthy
+```
+
+```bad
+if (json.user) {
+    if (json.user.name) return json.user.name   // cascada de guards: json.user?.name ?? "Unknown" lo cubre
+}
+const limit = config.limit || 100           // BUG: si limit === 0 devuelve 100; los defaults numéricos usan ??
+if (typeof on_change === "function") on_change(value)   // el contrato ya dice que es opcional: on_change?.(value)
+user.preferences = user.preferences ?? defaults          // reasignación manual: existe ??=
+```
+
+## Ley 11 — Arrays declarativos: `map`/`filter(Boolean)`/`flatMap`
+
+> Las transformaciones de arrays se encadenan declarativamente: 1→1 con `map`, descartar nulos con `.filter(Boolean)`, 1→N con `flatMap` en una sola pasada.
+
+```good
+const tokens = sessions.map((s) => s.fcm).filter(Boolean) as string[]  // cast acotado al final para el tipo limpio
+const counts = items.map((i) => i.count).filter((x) => x != null)      // 0 es válido aquí: != null descarta SOLO null/undefined
+const role_ids = users.flatMap((u) => u.roles.map((r) => r.id))        // 1→N en una pasada
+const valid = users.flatMap((u) => u.active ? [u] : [])                // [] filtra: filter+map en una pasada
+```
+
+```bad
+const tokens: string[] = []
+for (const s of sessions) {
+    if (s.fcm) tokens.push(s.fcm)       // loop imperativo para lo que es una cadena declarativa
+}
+const ids = users.map((u) => u.roles.map((r) => r.id)).flat()   // dos pasadas: flatMap lo hace en una
+const counts = items.map((i) => i.count).filter(Boolean)        // Boolean también bota 0 y "": aquí 0 era un count válido
+```
+
+## Ley 12 — `Map` y `Set` sobre arrays para agrupar y deduplicar
+
+> El lookup por clave repetido se pre-indexa en un `Map` (O(1)); la deduplicación usa `Set`; el diccionario desde un array se construye con `Object.fromEntries(arr.map(...))` si se serializa o `new Map(arr.map(...))` si se consulta.
+
+```good
+const by_id = new Map(users.map((u) => [u.id, u]))          // pre-indexar UNA vez…
+for (const order of orders) assign(by_id.get(order.user_id))  // …lookup O(1) dentro del loop
+
+const seen = new Set<string>()
+for (const row of rows) {
+    if (!seen.has(row.token)) {         // negación por idempotencia (Ley 5): contar una sola vez
+        seen.add(row.token)
+        devices.push(row)
+    }
+}
+
+const ws_by_role = Object.fromEntries(roles.map((r) => [r.id, r.ws]))  // resultado plano serializable
+```
+
+```bad
+for (const order of orders) {
+    const user = users.find((u) => u.id === order.user_id)  // find dentro de loop: O(n²)
+    if (!list.includes(user)) list.push(user)               // includes para deduplicar: existe Set
+}
+const dict: Record<string, string> = {}
+for (const r of roles) dict[r.id] = r.ws                    // acumulador mutable: existe Object.fromEntries
+```
+
+## Ley 13 — Destructuring profundo con defaults y rename
+
+> Los valores anidados con defaults se extraen en UNA declaración de destructuring con `=` (default) y `:` (rename); los huecos de tuplas se saltan con comas.
+
+```good
+const {
+    data: {
+        limit = 100,                                    // default si undefined
+        user: { name: user_name = "unknown" } = {},     // navegar + rename + default; el ={} evita crash si user falta
+    },
+} = response
+
+const [, , ...messages] = lines         // hueco de tupla: las dos primeras líneas no interesan
+
+const title = data.title ?? "untitled"  // el default de destructuring ignora null: si la fuente trae null explícito, ?? lo resuelve
+```
+
+```bad
+const data = response.data
+const limit = data.limit !== undefined ? data.limit : 100   // ternario de verificación: es { limit = 100 }
+const user_name = data.user && data.user.name ? data.user.name : "unknown"  // cascada manual del mismo patrón
+```
+
+---
+
+# PARTE IV — Funciones
+
+## Ley 14 — Parámetros: defaults se destructuran; lo que se transforma viaja entero
+
+> Si la firma declara defaults o usa los valores tal cual, se destructura en la firma. Si lo primero es transformar el valor, el objeto viaja entero (`params`) y el nombre limpio queda para el resultado transformado.
+
+```good
+async function read(_: unknown, { pathname, offset = 0, limit = 2000 }: ReadInput) {
+    const lines = (await fs.readFile(pathname, "utf8")).split("\n")   // valores usados tal cual: destructurados
+}
+
+async function fetch_page(ctx: Context, params: FetchInput) {
+    const url = params.url.replace(/^http:\/\//i, "https://")   // el nombre "url" queda para el valor TRANSFORMADO
+}
+```
+
+```bad
+async function fetch_page(ctx: Context, { url: raw_url }: FetchInput) {
+    const url = raw_url.replace(/^http:\/\//i, "https://")   // dos nombres para un valor: raw_url solo existe para morir
+}
+```
+
+## Ley 15 — Lo de un solo uso vive inline
+
+> Todo lo que tiene UN solo llamador vive inline en su punto de uso: expresión directa, IIFE si es un campo calculado, const local dentro del proceso que lo necesita, closure local si es recursivo. Los valores de configuración de un solo uso siguen la misma regla: literal donde actúan (separador `_` si es numérico, Ley 2). El nivel de módulo queda reservado para lo que se reusa o es un contrato (constante UPPER).
+
+```good
+const timer = setTimeout(() => ctrl.abort(), 30_000)   // config de un solo uso: el lector ve el valor DONDE actúa
+const PHONE_RE = /^\+?\d{10,15}$/       // contrato del módulo usado por varias funciones: constante UPPER
+
+export const POST = http.auth(async (req, res) => {
+    // helper DEL proceso: const flecha LOCAL dentro del handler, no de módulo
+    const format_number = (n: number) => new Intl.NumberFormat("es-VE").format(n)
+
+    const order = {
+        // campo calculado: IIFE in-situ — el parseo vive pegado al campo que llena
+        payments: (() => {
+            try {
+                const raw = JSON.parse(attrs.payments || "[]")
+                return Array.isArray(raw) ? raw.filter((p) => p?.type) : []
+            } catch { return [] }
+        })(),
+    }
+
+    // recursión de un solo uso: closure local dentro de su único consumidor
+    const walk = (rest: Drop[], path: Drop[], km: number) => {
+        if (km >= best_km) return       // poda de recursión: caso terminal que cierra la rama (Ley 6)
+        for (let i = 0; i < rest.length; i++) walk(rest.filter((_, j) => j !== i), [...path, rest[i]], km + dist(rest[i]))
+    }
+    walk(drops, [], 0)
+})
+```
+
+```bad
+const fetch_timeout_ms = 30_000         // constante nombrada con UN solo uso: obliga a saltar
+const timer = setTimeout(() => ctrl.abort(), fetch_timeout_ms)   // arriba para saber cuánto es
+
+function sanitize_name(v: string) { return v.trim().slice(0, 60) }   // módulo-level con UN llamador: prohibido,
+                                                                     // dispersa la lógica lejos de su único punto de uso
+function parse_payments(value?: string) { /* 15 líneas */ }          // ídem: va como IIFE en el campo payments
+export const POST = http.auth(async (req, res) => {
+    const name = sanitize_name(req.body.name)                        // el lector salta 200 líneas para ver qué hace
+})
+```
+
+## Ley 16 — Extraer solo con ≥2 usos; las variantes se componen
+
+> Extraer a función, método o privado de clase (`_snake_case`) exige ≥2 llamadores con la misma forma exacta, o estado compartido encapsulado. Una variante (`once` sobre `listen`, `fetch_with_retry` sobre `fetch`) se compone sobre su método base agregando solo su delta de comportamiento.
+
+```good
 class ProductService {
     get(id: string): Product {
-        const product = db.products.findUnique({ where: { id } })
-        if (product) {
-            return product
-        }
-        throw new Error("Not found")
+        const product = db.products.find(id)
+        if (product) return product     // afirmativo con throw final (Ley 5)
+        throw new Error("ERR_NOT_FOUND")
     }
-
-    create(data: CreateInput): Product {
-        return db.products.create({ data })
+    update(id: string, data: UpdateInput) {
+        this.get(id)                    // ≥2 llamadores reusan la validación de get(): extracción justificada
+        return db.products.update(id, data)
     }
-
-    update(id: string, data: UpdateInput): Product {
-        this.get(id)                                 // reusa, no duplica validación
-        return db.products.update({ where: { id }, data })
+    delete(id: string) {
+        this.get(id)                    // segundo reuso: get() se ganó existir
+        db.products.delete(id)
     }
-
-    delete(id: string): void {
-        this.get(id)                                 // reusa, no duplica validación
-        db.products.delete({ where: { id } })
+    private _audit(action: string) {    // privado justificado: lo comparten update() y delete()
+        log.write({ action, at: Date.now() })
     }
 }
 
-// MAL — wrapper trivial sin valor
-class ProductService {
-    get_by_id(id: string): Product { ... }
-    get(id: string) {
-        return this.get_by_id(id)                    // wrapper redundante
-    }
-    update(id: string) {
-        const p = this.get_by_id(id)                 // ¿usar get o get_by_id? ambigüedad innecesaria
-    }
-}
-
-// MAL — fragmentación prematura
-class ProductService {
-    private _validate_id(id: string) { /* solo lo llama get */ }
-    private _build_query(id: string) { /* solo lo llama get */ }
-    get(id: string) {
-        this._validate_id(id)
-        const q = this._build_query(id)
-        // ...
-    }
-}
-```
-
-- **Permitido extraer**: lógica reusada en ≥2 callers con misma forma exacta, o estado interno compartido entre métodos.
-- **Prohibido**: helpers/privados que solo se llaman una vez (va inline).
-- **Prohibido**: wrappers triviales sobre métodos existentes (`get_by_id` que solo llama a `get`, `format_x(x)` que solo hace `x.toUpperCase()`).
-- **Prohibido**: extraer "para tener limpio" sin reuso real ni encapsulación de estado.
-
-### Variantes se componen sobre el método base
-
-Cuando una API tiene métodos relacionados (`listen`/`once`, `subscribe`/`subscribe_until`, `fetch`/`fetch_with_retry`), la variante **se compone** sobre el método base. **Prohibido** mantener infraestructura paralela para variantes del mismo comportamiento.
-
-```ts
-// BIEN — once compuesto sobre listen (unsuscribe en el primer disparo)
-const once = useCallback((cb: Listener): (() => void) => {
-    const unsub = listen((event, data) => {
-        unsub()
+const once = (cb: Listener) => {
+    const unsub = listen((event, data) => {   // la variante SE COMPONE sobre listen:
+        unsub()                               // solo agrega su delta (desuscribirse al primer disparo)
         cb(event, data)
     })
     return unsub
-}, [listen])
-
-// MAL — once con su propia infraestructura paralela (Set, dispatch, cleanup)
-const once_listeners = useRef<Set<Listener>>(new Set())
-
-const once = useCallback((cb: Listener): (() => void) => {
-    once_listeners.current.add(cb)
-    return () => { once_listeners.current.delete(cb) }
-}, [])
-
-function dispatch(event: string, data: unknown) {
-    for (const fn of listeners.current) fn(event, data)
-    const pending = [...once_listeners.current]
-    once_listeners.current.clear()
-    for (const fn of pending) fn(event, data)
-}
-// Duplica state, dispatch logic y cleanup. Si listen() cambia (filtro, prioridad,
-// namespace), once() no lo hereda y queda inconsistente.
-```
-
-- **Permitido**: la variante reusa el método base y solo agrega su delta de comportamiento.
-- **Prohibido**: variantes con su propio storage / dispatch / cleanup paralelo al método base.
-- **Heurística**: si el cuerpo de tu método "extendido" comparte ≥80% con el base, está mal: refactoriza para componer.
-
-
-## Flujo de control — bloques afirmativos, sin early returns
-
-**Prohibido absoluto**: early returns como guardia (`if (!x) return`). Toda condición usa bloque afirmativo con llaves. La negación `!x` solo se autoriza para garantizar **idempotencia** (asegurar que algo se hace una sola vez).
-
-```ts
-// BIEN — bloque afirmativo
-if (store.has(key)) {
-    return store.get(key)
-}
-return null
-
-// BIEN — negación para idempotencia
-if (!store.has(key)) {
-    store.set(key, value)
-}
-const stored = store.get(key)!
-
-// MAL — early return como guardia (prohibido absoluto)
-if (!store.has(key)) return
-return store.get(key)
-
-// MAL — early return con negación temprana
-if (user.type !== "premium") return 0
-return amount * 0.15
-```
-
-- **Prohibido**: leading-return / leading-throw / leading-`||` para bailar de la función al inicio.
-- **Permitido**: `!cond` solo cuando garantiza idempotencia (initialize-once, prevent-duplicate, ensure-unique).
-- Cada `if` lleva llaves, incluso una sola línea adentro.
-- El throw como rama negativa va al **final** de la función (ver patrón "afirmativo + throw fallback" del CRUD).
-
-
-## Gestor de paquetes
-
-- **Local del proyecto**: usar `yarn`. **Prohibido** `npm` para dependencias o scripts locales.
-- **Global (CLIs del sistema)**: usar `npm i -g`. **Prohibido** `yarn global add`.
-
-```bash
-# BIEN — yarn para todo lo local
-yarn                       # instalar dependencias del proyecto
-yarn add axios             # agregar dependencia
-yarn add -D typescript     # agregar devDependency
-yarn remove axios          # eliminar dependencia
-yarn dev                   # ejecutar script
-yarn build
-yarn test
-
-# BIEN — npm solo para instalaciones globales (CLI del sistema)
-npm i -g typescript
-npm i -g eslint
-npm i -g @arcaelas/mcp
-
-# MAL — npm en operaciones locales
-npm install axios          # prohibido
-npm run dev                # prohibido
-npm run build              # prohibido
-
-# MAL — yarn para instalaciones globales
-yarn global add typescript # prohibido (usar npm i -g)
-```
-
-- **One-off (uso único)**: usar `npx`/`npx -y` en lugar de instalar globalmente algo que solo se usa una vez.
-
-```bash
-# BIEN — npx para uso único
-npx prettier --write .
-npx create-next-app
-npx eslint .
-npx -y @arcaelas/mcp --stdio
-
-# MAL — instalar globalmente algo de un solo uso
-npm i -g prettier          # prohibido si solo se usa una vez
-```
-
-- **TypeScript en desarrollo**: usar `tsx` para ejecutar archivos `.ts` directamente. **Prohibido** compilar (`tsc`) y luego ejecutar el `.js` en el ciclo de desarrollo.
-
-```bash
-# BIEN — tsx ejecuta TS sin paso de build
-tsx src/server.ts
-tsx scripts/migrate.ts
-tsx scripts/seed.ts
-npx tsx bot.ts
-
-# MAL — compilar y luego ejecutar en desarrollo
-npx tsc && node dist/server.js   # prohibido en desarrollo
-```
-
-
-## Flujo Git
-
-Dos tipos de proyectos:
-- **Tipo 1**: tiene ramas `dev`, `main`, `prod` → PR target es `dev`. Flujo: issue → dev → main → prod.
-- **Tipo 2**: solo tiene `main` → PR target es `main`. Flujo: issue → main.
-
-Pasos comunes para cualquier cambio:
-
-1. Crear issue en el proyecto.
-2. Sync con la rama target (`git checkout {target} && git pull origin {target}`).
-3. Crear rama desde la target con formato `{prefijo}/{issue-id}` — prefijos válidos: `fix/`, `feat/`, `chore/`, `docs/`. El issue es **obligatorio**.
-4. Commits en la rama nueva.
-5. Subir la rama al remoto (`-u origin {rama}`) y crear PR (`gh pr create --base {target}`).
-6. Tras el merge, limpiar la rama local.
-
-```bash
-# Tipo 1 — proyecto con dev/main/prod
-git checkout dev
-git pull origin dev
-git checkout -b feat/54        # prefijo + issue id
-# ... commits ...
-git push -u origin feat/54
-gh pr create --base dev        # PR hacia dev
-
-# Tipo 2 — proyecto solo con main
-git checkout main
-git pull origin main
-git checkout -b fix/54
-# ... commits ...
-git push -u origin fix/54
-gh pr create --base main       # PR hacia main
-```
-
-- **Prohibido**: trabajar sin issue (no hay rama sin `{prefijo}/{ID}`).
-- **Prohibido**: prefijos distintos a `fix/`, `feat/`, `chore/`, `docs/`.
-- **Prohibido**: push directo a `main`, `dev` o `prod` (todo cambio pasa por PR).
-
-Cleanup después del merge:
-
-```bash
-git checkout main          # o dev, según el target
-git pull origin main
-git branch -d feat/54      # eliminar rama local fusionada
-```
-
-### Mensajes de commit
-
-Los mensajes se escriben en **español** con prefijo obligatorio. Mismos prefijos que las ramas: `fix:`, `feat:`, `chore:`, `docs:`.
-
-```bash
-# BIEN
-git commit -m "fix: corregir validación de email en formulario de registro"
-git commit -m "feat: agregar filtro de búsqueda por categoría"
-git commit -m "chore: actualizar dependencias de desarrollo"
-git commit -m "docs: agregar documentación del endpoint de pagos"
-
-# MAL
-git commit -m "fix login bug"            # en inglés: prohibido
-git commit -m "updated dependencies"     # sin prefijo + inglés: prohibido
-git commit -m "corregir bug"             # sin prefijo: prohibido
-```
-
-
-## `memo()` solo cuando hay props recalculados
-
-Usar `memo()` **únicamente** cuando el componente recibe props que se recalculan en cada render del padre (objetos derivados, arrays filtrados, callbacks recreados). **Prohibido** envolver en `memo()` componentes cuyos props son primitivos o referencias estables.
-
-```tsx
-// BIEN — props recalculados (callback recreado): memo aporta
-// ./src/components/UserCard/index.tsx
-export interface UserCardProps {
-    user: User
-    on_select: (user: User) => void
-}
-
-export default memo(function UserCard({ user, on_select }: UserCardProps) {
-    return <div onClick={() => on_select(user)}>{user.name}</div>
-})
-
-// BIEN — props primitivos / inmutables: sin memo
-// ./src/components/StatusBadge/index.tsx
-export interface StatusBadgeProps {
-    label: string
-    color: string
-}
-
-export default function StatusBadge({ label, color }: StatusBadgeProps) {
-    return <span className={`text-${color}`}>{label}</span>
-}
-
-// MAL — memo sin razón (props primitivos estables)
-// ./src/components/Title/index.tsx
-export interface TitleProps {
-    text: string
-}
-
-export default memo(function Title({ text }: TitleProps) {
-    return <h1>{text}</h1>
-})
-```
-
-- **Permitido**: `memo()` cuando el padre pasa objetos/arrays/callbacks recreados en cada render y el componente es costoso de re-renderizar.
-- **Prohibido**: `memo()` con props solo primitivos (string, number, boolean) — la comparación shallow ya es trivial sin memo.
-- **Prohibido**: `memo()` "por las dudas" — agrega comparación sin payback.
-- **Prohibido**: declarar `function ComponentName()` y luego `export default memo(ComponentName)` como dos statements; envolver inline con `export default memo(function ComponentName() {...})` para mantener la regla "`export default` al final con el componente directamente".
-
-
-## JSDoc obligatorio + sin comentarios internos
-
-Toda función, método y clase lleva JSDoc **bilingüe** (español + inglés) en el mismo bloque. Los tags (`@param`, `@returns`, `@type`, `@typedef`) son deseables. **Prohibido** redactar comentarios dentro del cuerpo de la función — si algo necesita explicación, va en el JSDoc.
-
-```ts
-// BIEN — JSDoc bilingüe
-/**
- * Calcula minutos hábiles entre dos fechas excluyendo fines de semana.
- * Calculates business minutes between two dates excluding weekends.
- *
- * @param start - Fecha de inicio / Start date
- * @param minutes - Minutos a agregar / Minutes to add
- * @returns Fecha resultante / Resulting date
- */
-function add_business_minutes(start: Date, minutes: number): Date {
-    return ...
-}
-
-// MAL — sin JSDoc
-function add_business_minutes(start: Date, minutes: number): Date { ... }
-
-// MAL — JSDoc en un solo idioma
-/** Calculates business minutes */
-function add_business_minutes(start: Date, minutes: number): Date { ... }
-
-// MAL — comentarios dentro del cuerpo
-function add_business_minutes(start: Date, minutes: number): Date {
-    // calcular diferencia                 ← prohibido (va en el JSDoc o nombre de variable)
-    const diff = ...
 }
 ```
 
-- **Obligatorio**: JSDoc en toda función / método / clase.
-- **Obligatorio**: bilingüe (español + inglés) en el mismo bloque.
-- **Recomendado**: tags `@param`, `@returns`, `@throws`, `@example`.
-- **Prohibido**: comentarios dentro del cuerpo de una función (variables y nombres deben cargar el sentido).
-- **Prohibido**: JSDoc en un solo idioma.
-
-
-## APIs nativas sobre librerías externas
-
-Usar APIs nativas del lenguaje/runtime antes de agregar dependencias externas. **Prohibido** instalar paquetes para resolver lo que el runtime ya provee.
-
-```ts
-// BIEN — primitivas nativas del runtime
-const id = crypto.randomUUID()
-const data = await fetch(url).then((r) => r.json())
-const hash = crypto.createHash("sha256").update(text)
-const formatted = new Intl.DateTimeFormat("es").format(date)
-const cloned = structuredClone(obj)
-
-// MAL — librería externa cuando el runtime ya lo cubre
-import { v4 } from "uuid"          // usar crypto.randomUUID()
-import moment from "moment"        // usar Intl.DateTimeFormat
-import _ from "lodash"             // usar Array/Object nativo
-import axios from "axios"          // usar fetch (salvo interceptors complejos)
-```
-
-- **Prohibido**: dependencia externa que duplica una primitiva del runtime.
-- **Excepción**: cuando la librería aporta funcionalidad real que el runtime no cubre (ej. parsers de zona horaria complejos, retry/backoff configurable, semantic versioning, etc.).
-- **Justificable solo si**: la primitiva nativa exige >20 líneas de wrapper para cubrir el caso.
-
-### No reimplementar primitivas del runtime
-
-Si el runtime ya ofrece la primitiva, **prohibido** reimplementarla manualmente. Aplica a `EventTarget` (pub/sub), `AbortController` (cancelación), `URLSearchParams` (query strings), `FormData` (multipart), `Headers` (HTTP headers), `Intl.*` (i18n).
-
-```ts
-// BIEN — extender EventTarget nativo
-class Bus extends EventTarget {
-    listen<T>(event: string, fn: (data: T) => void) {
-        const handler = (e: Event) => fn((e as CustomEvent<T>).detail)
-        this.addEventListener(event, handler)
-        return () => this.removeEventListener(event, handler)
-    }
-    emit<T>(event: string, data: T) {
-        this.dispatchEvent(new CustomEvent(event, { detail: data }))
+```bad
+class ProductService {
+    get_by_id(id: string): Product { /* ... */ }
+    get(id: string) { return this.get_by_id(id) }   // wrapper trivial: dos nombres para lo mismo, ambigüedad gratis
+    private _validate_amount(amount: number) {      // privado con UN solo llamador: su lógica va inline
+        if (amount > 0) return                      // en el único método que la usa
+        throw new Error("ERR_AMOUNT")
     }
 }
 
-// MAL — reimplementar pub/sub con Sets manuales
-const listeners = new Set<Listener>()
-const once_listeners = new Set<Listener>()
-
-function dispatch(event: string, data: unknown) {
-    for (const fn of listeners) fn(event, data)
-    const pending = [...once_listeners]
+const once_listeners = new Set<Listener>()          // variante con infraestructura PARALELA a listen:
+function dispatch_once(event: string, data: unknown) {  // si listen() cambia (filtro, prioridad),
+    for (const fn of once_listeners) fn(event, data)    // once no lo hereda y queda inconsistente
     once_listeners.clear()
-    for (const fn of pending) fn(event, data)
-}
-// Hace lo mismo que EventTarget pero a mano:
-//   - Sin once() compuesto sobre listen() (ver patrón "variantes se componen").
-//   - Sin manejo seguro de errores en handlers (un throw rompe el loop).
-//   - Sin protección contra mutación durante iteración (agregar listener mientras se dispatcha).
-//   - Sin priority/bubbling/capture si algún día los necesitas.
-```
-
-- **Prohibido**: reimplementar `EventTarget` con `Set<listener>` + dispatch loop manual.
-- **Prohibido**: reinventar cancelación con flags `destroyed` cuando `AbortController` resuelve el caso.
-- **Prohibido**: parsear/serializar query strings a mano cuando `URLSearchParams` lo hace.
-- **Prohibido**: armar headers HTTP como objeto plano cuando `Headers` los normaliza.
-- **Variantes** del primitivo (ej. `once()` sobre `listen()`) se componen sobre el método base, no se reimplementan en paralelo (ver "Reutilización vs fragmentación").
-
-
-## Respuesta API estandarizada
-
-Toda API responde con envelope uniforme. El cliente HTTP extrae `data` automáticamente; los consumidores reciben el payload directo.
-
-| Caso | Forma del envelope |
-|---|---|
-| Éxito (recurso) | `{ success: true, data: <objeto> }` |
-| Éxito (lista paginada) | `{ success: true, data: { rows, count, offset, limit, order } }` |
-| Error | `{ success: false, message, cause?: { code } }` |
-
-```ts
-// BIEN — handlers usan helpers que arman el envelope
-res.success({ id: "abc-123", name: "Miguel" })
-// → { "success": true, "data": { "id": "abc-123", "name": "Miguel" } }
-
-res.success({ rows, count: 100, offset: 0, limit: 20, order: "ASC" })
-// → { "success": true, "data": { "rows": [...], "count": 100, ... } }
-
-res.error("Usuario no encontrado", 404, { code: "ERR_NOT_FOUND" })
-// → { "success": false, "message": "Usuario no encontrado", "cause": { "code": "ERR_NOT_FOUND" } }
-
-// BIEN — el cliente recibe el payload directo (sin destructuring repetido)
-const user = await api.get<User>("/v1/users/abc-123")
-// user es { id: "abc-123", name: "Miguel" }
-
-// MAL — respuestas crudas sin envelope
-res.json({ id: "abc-123" })              // sin wrapper success/data: prohibido
-res.status(404).send("Not found")        // sin estructura: prohibido
-res.json({ users, total })               // forma ad-hoc, no { rows, count }: prohibido
-```
-
-- **Obligatorio**: todos los endpoints retornan `{ success: boolean, data | message }`.
-- **Obligatorio**: listas paginadas usan exactamente `{ rows, count, offset, limit, order }` dentro de `data`.
-- **Obligatorio**: el cliente HTTP centralizado extrae `data` y lanza el `message` como error cuando `success: false`.
-- **Prohibido**: payloads crudos sin envelope.
-- **Prohibido**: variantes ad-hoc del shape de paginación (`users/total`, `items/count`, etc.).
-
-### Cliente HTTP con autenticación automática
-
-Cliente HTTP único en `src/lib/api/index.ts`. Centraliza:
-- Inyección automática del token desde `localStorage`.
-- Redirect a `/login` en `401`.
-- Extracción automática de `data` del envelope `{ success, data }`.
-- Genéricos TypeScript en cada método.
-
-```ts
-// ./src/lib/api/index.ts
-import axios from "axios"
-
-const client = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL,
-    timeout: 30_000,
-})
-
-client.interceptors.request.use((config) => {
-    if (typeof window !== "undefined") {
-        const token = localStorage.getItem("auth_token")
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-    }
-    return config
-})
-
-client.interceptors.response.use(
-    (res) => res.data?.data,
-    (error) => {
-        if (error.response?.status === 401) {
-            window.location.href = "/login"
-        }
-        throw new APIError(error)
-    },
-)
-
-export const api = {
-    get:   <T>(url: string, config?) => client.get<T>(url, config),
-    post:  <T>(url: string, body?, config?) => client.post<T>(url, body, config),
-    put:   <T>(url: string, body?, config?) => client.put<T>(url, body, config),
-    patch: <T>(url: string, body?, config?) => client.patch<T>(url, body, config),
-    del:   (url: string, config?) => client.delete(url, config),
-}
-
-export default api
-```
-
-- **Obligatorio**: un único cliente HTTP en `src/lib/api/index.ts`. No instanciar `axios.create(...)` en otros lugares.
-- **Obligatorio**: el interceptor de response devuelve `res.data?.data` (los consumidores reciben el payload, no el envelope).
-- **Obligatorio**: el interceptor de error redirige a `/login` en `401` y lanza `APIError` con el `message`/`cause` del envelope.
-- **Prohibido**: pasar el token manualmente en cada llamada.
-- **Prohibido**: crear instancias paralelas de cliente HTTP en componentes o servicios.
-
-
-## SSR — guardar acceso a APIs del navegador
-
-En entornos con SSR (Next.js, Remix), el código corre primero en server (sin `window`, `document`, `localStorage`). Toda lógica que dependa de APIs del navegador debe protegerse.
-
-```ts
-// BIEN — guard con typeof window
-client.interceptors.request.use((config) => {
-    if (typeof window !== "undefined") {
-        const token = localStorage.getItem("auth_token")
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`
-        }
-    }
-    return config
-})
-
-// BIEN — patrón mounted para componentes que dependen del navegador en render
-const [mounted, setMounted] = useState(false)
-useEffect(() => setMounted(true), [])
-if (mounted) {
-    return <ThemeAwareUI />          // bloque afirmativo
-}
-return null                          // rama negativa al final
-
-// MAL — acceso directo a APIs del navegador en código que corre en SSR
-const token = localStorage.getItem("auth_token")     // ReferenceError en server
-const w = window.innerWidth                          // ReferenceError en server
-```
-
-- **En interceptors / handlers / efectos**: usar `typeof window !== "undefined"` como guard.
-- **En render de componentes que dependen de browser**: usar el patrón `mounted` (`useState(false)` + `useEffect(setMounted(true))`). El render se decide con bloque afirmativo `if (mounted) { return <UI /> }` y `return null` como rama negativa al final — sigue la regla "Flujo de control" sin excepción.
-- **Prohibido**: acceder a `window`, `document`, `localStorage`, `navigator` sin guard en código que corre en SSR.
-- **Prohibido**: `if (!mounted) return null` (es leading-return; usar el bloque afirmativo arriba).
-
-
-## File-based routing (serverless / Next.js API)
-
-En proyectos serverless (AWS Lambda) o Next.js (`app/api/`), cada carpeta representa un segmento de URL. Parámetros dinámicos van entre corchetes `[param]`. Cada `index.ts` (o `route.ts` en Next.js) exporta los handlers por método HTTP como **constantes nombradas**.
-
-```
-src/
-├── auth/
-│   ├── index.ts                  # POST /v1/auth
-│   ├── challenge/
-│   │   └── index.ts              # POST /v1/auth/challenge
-│   └── keys/
-│       ├── index.ts              # GET/POST /v1/auth/keys
-│       └── [id]/
-│           └── index.ts          # DELETE /v1/auth/keys/{id}
-├── chat/
-│   └── completions/
-│       └── index.ts              # POST /v1/chat/completions
-└── models/
-    ├── index.ts                  # GET /v1/models
-    └── [id]/
-        └── index.ts              # GET/DELETE /v1/models/{id}
-```
-
-```ts
-// ./src/chat/completions/index.ts — un handler por método HTTP exportado como constante
-import { http } from "~/app/lib/http"
-
-export const POST = http(async (req, res) => {
-    res.success({ choices: [...] })
-})
-```
-
-- **Obligatorio**: la carpeta refleja el path; los parámetros dinámicos usan `[param]`.
-- **Obligatorio**: cada método HTTP se exporta como constante en mayúsculas (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
-- **Obligatorio**: alias `~/*` → `./src/*` en `tsconfig.json` para imports absolutos.
-- **Prohibido**: routing programático tipo `router.get(...)` / `app.post(...)` dentro de un endpoint serverless o Next.js.
-- **Prohibido**: agrupar varios métodos en una misma función con `switch (req.method)`.
-
-### Variantes según runtime
-
-**Serverless / Next.js** — cada archivo exporta constantes por método HTTP:
-
-```ts
-// ./src/users/index.ts
-export const GET = http(async (req, res) => {
-    const users = await User.all()
-    res.success(users)
-})
-
-export const POST = http(async (req, res) => {
-    const user = await User.create(req.body)
-    res.success(user)
-})
-```
-
-**Express** — `http(pathname, handler)` con el método inferido del nombre de la función:
-
-```ts
-http("/users", async function GET(req, res, next) {
-    const users = await User.all()
-    res.success(users)
-})
-
-http("/users", async function POST(req, res, next) {
-    const user = await User.create(req.body)
-    res.success(user)
-})
-```
-
-- **Prohibido**: usar `router.get(path, fn)` / `router.post(path, fn)` estilo Express clásico (usar `http(path, function GET(){})`).
-
-
-## No reimplementar lo que el framework ya ofrece
-
-Cuando un framework UI (MUI, Chakra, shadcn, Mantine) ya provee un componente o prop, usarlo directo. **Prohibido** crear wrappers que solo re-exponen capacidades del framework sin agregar comportamiento, estado o lógica propia.
-
-```tsx
-// BIEN — usar lo que el framework ya ofrece
-import EditIcon from "@mui/icons-material/Edit"
-import { IconButton, Button, Chip } from "@mui/material"
-
-<IconButton onClick={on_edit}><EditIcon /></IconButton>
-<Button startIcon={<EditIcon />}>Editar</Button>
-<Chip label={status} color={status === "active" ? "success" : "default"} />
-
-// MAL — wrapper sin comportamiento nuevo
-function Icon({ name, ...props }) {
-    const icons = { edit: EditIcon, delete: DeleteIcon }
-    const Component = icons[name]
-    return <Component {...props} />
-}
-// agrega una capa de indirección, rompe tree-shaking, fuerza string keys en vez de imports tipados
-```
-
-- **Permitido envolver el framework**: cuando el wrapper agrega comportamiento real (estado, validación, side effects, accesibilidad propia, theming compartido).
-- **Prohibido**: wrappers que solo cambian props, agregan defaults triviales o re-exportan componentes con otro nombre.
-- **Prohibido**: lookup objects (`{ edit: EditIcon, delete: DeleteIcon }`) que sustituyen imports tipados por strings.
-- Si la personalización no cubre lo que el framework no ofrece directamente, no es justificada.
-
-
-## Componentes: abstracción justificada vs microfragmentación
-
-Crear un componente solo se justifica cuando **encapsula una unidad funcional completa**: estado propio, ciclo de vida, side effects, orquestación. **Prohibido** crear micro-componentes que solo mapean props a otra forma de presentación sin agregar comportamiento.
-
-```tsx
-// BIEN — abstracción válida: encapsula comportamiento completo
-// Internamente: conexión SSE, formulario de registro, PIN de sincronización,
-// eventos de conexión/desconexión. Unidad funcional aislada con estado propio.
-<WhatsApp
-    phone={phone}
-    workspace={workspace_id}
-    on_open={() => {}}
-    on_close={() => {}}
-/>
-
-// MAL — micro-componente sin comportamiento (solo presentación)
-function StatusChip({ status }: { status: string }) {
-    const color = status === "active" ? "success" : "default"
-    return <Chip label={status} color={color} />
-}
-// 4 líneas, sin estado, sin lifecycle, sin lógica.
-// Va inline donde se use:
-//   <Chip label={status} color={status === "active" ? "success" : "default"} />
-```
-
-- **Permitido extraer a componente**: lleva estado propio, hooks propios, side effects, integraciones externas (API, SSE, sockets), orquestación de subcomponentes.
-- **Prohibido**: componentes de 2-4 líneas que solo mapean props a otro shape de presentación.
-- **Prohibido**: componentes con un solo caller que no encapsulan nada que no se pueda escribir inline.
-- Misma regla que aplica a helpers: si no tiene estado, side effects ni reuso real ≥2 lugares, va inline.
-
-
-## Arquitectura frontend: dos hooks centrales + API
-
-El frontend se apoya sobre **dos hooks fundamentales** y el resto se resuelve vía API:
-
-- `useAuth()` — usuario autenticado, sus datos y permisos.
-- `useWorkSpace()` — workspace activo (resuelto por URL o por datos del user) y permisos dentro de ese contexto.
-
-Todo lo demás (tickets, productos, mensajes, etc.) se obtiene con `api.get()` desde el componente que lo necesita. **Prohibido** crear hooks custom que envuelvan llamadas API por entidad: duplican lógica que ya vive en el backend y proliferan sin control.
-
-```tsx
-// BIEN — dos hooks centrales, el resto es API directa
-function TicketList() {
-    const { user } = useAuth()
-    const { workspace, permissions } = useWorkSpace()
-    const [tickets, setTickets] = useState([])
-
-    useEffect(() => {
-        api.get(`/workspaces/${workspace.id}/tickets`).then(setTickets)
-    }, [workspace.id])
-
-    return (
-        <List>
-            {permissions.can_create && (
-                <Button onClick={create_ticket}>Nuevo</Button>
-            )}
-            {tickets.map((t) => <TicketRow key={t.id} ticket={t} />)}
-        </List>
-    )
-}
-
-// MAL — hooks custom por entidad que duplican lógica del backend
-function useTickets() { ... }
-function useTicketActions() { ... }
-function useTicketFilters() { ... }
-function useTicketSort() { ... }
-// proliferación de hooks que solo envuelven `api.get`/`api.post` con un poco de useState
-```
-
-- **Permitido**: `useAuth`, `useWorkSpace` y otros hooks transversales que cruzan toda la app (theme, locale).
-- **Prohibido**: hooks custom por entidad (`useTickets`, `useProducts`, `useUsers`) que solo encapsulan `api.get` + `useState`.
-- **Prohibido**: cadenas de hooks especializados (`useTickets → useTicketSort → useTicketFilters`) cuando un solo `useEffect` resolvería el caso.
-- Los componentes consumen API directamente desde el efecto que las necesita.
-
-
-## Consistencia entre vistas equivalentes
-
-Vistas que resuelven el **mismo problema** (fetch + lista + acciones, formularios CRUD, dashboards de detalle) siguen el **mismo patrón de composición**. No se trata de forzar un componente global, sino de que al abrir dos vistas hermanas (`TicketList`, `ClientList`) se reconozca la misma estructura, mismas convenciones, mismos componentes base.
-
-```tsx
-// BIEN — vistas hermanas con la misma composición
-function TicketList() {
-    const [items, setItems] = useState([])
-    return (
-        <VirtualList
-            data={items}
-            renderItem={(t) => <TicketRow ticket={t} />}
-        />
-    )
-}
-
-function ClientList() {
-    const [items, setItems] = useState([])
-    return (
-        <VirtualList
-            data={items}
-            renderItem={(c) => <ClientRow client={c} />}
-        />
-    )
-}
-
-// MAL — cada vista inventa su propio approach
-function TicketList() {
-    return <div onScroll={handle_scroll}>{tickets.map(...)}</div>     // scroll infinito
-}
-function ClientList() {
-    return <Table pagination={{ page, onChange: setPage }}>...</Table> // paginación manual
-}
-// Mismo problema, dos soluciones inconsistentes.
-```
-
-- **Obligatorio**: vistas que resuelven el mismo problema usan el mismo componente base (`VirtualList`, `Table`, `Form`, etc.).
-- **Obligatorio**: estructura de loading / empty / error es idéntica en vistas equivalentes.
-- **Prohibido**: mezclar paradigmas (scroll infinito en una, paginación manual en otra) sin razón funcional concreta.
-- **Prohibido**: que cada vista invente su propio shape de fetch/loading/empty.
-
-
-## Complejidad proporcional al problema
-
-El código refleja la complejidad real del problema. Si el caso es `fetch + render + acciones básicas`, la implementación debe reducirse a `useState + useEffect + render`. **Prohibido** introducir capas, hooks especializados o componentes intermedios cuando el problema no los exige.
-
-```tsx
-// BIEN — complejidad proporcional
-function TicketList() {
-    const [tickets, setTickets] = useState([])
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        api.get("/tickets")
-            .then(setTickets)
-            .finally(() => setLoading(false))
-    }, [])
-
-    return (
-        <Table
-            loading={loading}
-            data={tickets}
-            renderItem={(ticket) => <TicketRow ticket={ticket} />}
-            actions={(ticket) => [
-                { label: "Abrir", on_click: () => navigate(ticket.id) },
-                { label: "Eliminar", on_click: () => remove(ticket.id) },
-            ]}
-        />
-    )
-}
-
-// MAL — capas innecesarias para un problema simple
-function TicketList() {
-    const { tickets, loading, filters, actions } = useTickets()
-    const { sorted } = useTicketSort(tickets)
-    const { filtered } = useTicketFilters(sorted, filters)
-    const { paginated } = useTicketPagination(filtered)
-    return <TicketTable data={paginated} actions={actions} />
-}
-// Cinco hooks + un componente extra para resolver lo mismo que el BIEN.
-```
-
-- **Regla**: si el problema no supera `useState + useEffect + render`, la implementación tampoco lo supera.
-- **Prohibido**: cadenas de hooks `useTickets → useTicketSort → useTicketFilters → useTicketPagination` cuando un solo `useEffect` y un sort/filter inline lo resuelven.
-- **Prohibido**: extraer componentes intermedios (`TicketTable`) cuando el componente base (`Table`) ya cubre el caso.
-- **Prohibido**: state managers, contexts globales o reducers para datos locales que solo viven en un componente.
-
-
-## Dashboards: cards independientes con su propio fetch
-
-En dashboards y vistas con **múltiples widgets/métricas no relacionadas**, cada card es una **unidad autónoma** que monta, hace su propio `useEffect + api.get`, muestra su propio skeleton del tamaño final, y renderiza su métrica. Cards distintas no comparten ciclo de vida, no comparten loading y no comparten error.
-
-```tsx
-// BIEN — cada card es autónoma
-function TicketCountCard() {
-    const [count, setCount] = useState(0)
-    const [loading, setLoading] = useState(true)
-
-    useEffect(() => {
-        api.get("/metrics/tickets/count")
-            .then(setCount)
-            .finally(() => setLoading(false))
-    }, [])
-
-    if (loading) {
-        return <Skeleton variant="rectangular" width={240} height={120} />
-    }
-    return <MetricCard title="Tickets abiertos" value={count} />
-}
-
-function Dashboard() {
-    return (
-        <Grid container spacing={2}>
-            <Grid item><TicketCountCard /></Grid>
-            <Grid item><RevenueCard /></Grid>
-            <Grid item><UsersOnlineCard /></Grid>
-        </Grid>
-    )
-}
-
-// MAL — endpoint único que devuelve todos los datos del dashboard
-function Dashboard() {
-    const [data, setData] = useState(null)
-    useEffect(() => { api.get("/dashboard").then(setData) }, [])
-    if (data) {
-        return (
-            <>
-                <Card>{data.ticket_count}</Card>
-                <Card>{data.revenue}</Card>
-            </>
-        )
-    }
-    return <Loading />
-}
-// Modos de fallo:
-//   1. Si /dashboard tarda 3s, toda la UI espera 3s (no progressive rendering).
-//   2. Si una sola métrica falla, /dashboard devuelve error y NINGÚN card se muestra.
-//   3. Si una métrica es lenta de calcular en backend, contagia su latencia a todas las demás.
-//   4. Cualquier card nueva obliga a modificar el endpoint backend + el shape del response.
-
-// MAL — paralelizar en cliente con allSettled tampoco soluciona
-function Dashboard() {
-    const [data, setData] = useState(null)
-    useEffect(() => {
-        Promise.allSettled([
-            api.get("/metrics/tickets/count"),
-            api.get("/metrics/revenue"),
-            api.get("/metrics/users-online"),
-        ]).then(setData)
-    }, [])
-    if (!data) return <Loading />
-    // Sigue siendo render-after-all: la UI espera al endpoint más lento del array.
 }
 ```
 
-**Reglas:**
+## Ley 17 — IIFE async para definir-y-ejecutar
 
-- **Obligatorio**: cada card monta y hace su propio `useEffect` + `api.get` independiente, sin compartir state con sus hermanas.
-- **Obligatorio**: cada card maneja su `loading` con un `<Skeleton />` del **tamaño exacto del card final** (`width`/`height` fijos). Esto evita layout shift cuando el contenido aparece.
-- **Obligatorio**: cada card maneja su `error` localmente (mostrar un estado de error inline en ESA card, no propagarlo al dashboard).
-- **Prohibido**: endpoints "todo-en-uno" tipo `/dashboard`, `/home-data`, `/overview` que agregan métricas de dominios distintos.
-- **Prohibido**: bloquear el render del dashboard hasta que todas las métricas hayan llegado (incluido `Promise.allSettled` en el cliente — sigue siendo render-after-all).
-- **Prohibido**: compartir un `loading` global del dashboard. Cada card decide cuándo está listo.
+> La lógica async dentro de un scope síncrono (useEffect, handlers) se define y ejecuta en una sola expresión IIFE `(async () => {...})()`; lleva nombre únicamente cuando se auto-invoca (polling/retry).
 
-**Cuándo SÍ se justifica un endpoint agregado:**
-
-- Es el detalle de **una sola entidad** (`GET /tickets/{id}` con sus campos, comentarios, attachments) — todos los datos vienen del mismo dominio y se renderizan juntos lógicamente.
-- Es una vista de configuración / settings donde los grupos están realmente acoplados.
-- NO es el caso de un dashboard con widgets de dominios distintos (tickets + revenue + users + etc.).
-
-
-## Cruzar APIs cuando los datos pertenecen a una misma vista
-
-> **Esta regla NO contradice "Dashboards: cards independientes"**. Aquella aplica a widgets de dominios distintos que se pueden fragmentar y mostrar por separado. **Esta** aplica al caso opuesto: una vista cohesiva que **no puede fragmentarse** en micro-componentes autónomos porque sus datos vienen cruzados de varios endpoints y se renderizan juntos como una sola unidad lógica.
-
-Cuando una vista representa **una entidad cohesiva** cuyos datos están repartidos en múltiples endpoints (porque el árbol REST no devuelve todo en una sola llamada), el componente combina los fetch con `Promise.all([...])` y los unifica en **un único `useState`**. Un solo estado, un solo loading, un solo error.
-
-```tsx
-// BIEN — vista de UNA publicación: datos repartidos, unificados en cliente
-interface PostViewState {
-    post: Post
-    comments: Comment[]
-    reactions: Reaction[]
-}
-
-function PostView({ post_id }: { post_id: string }) {
-    const [data, setData] = useState<PostViewState | null>(null)
-
-    useEffect(() => {
-        Promise.all([
-            api.get<Post>(`/posts/${post_id}`),
-            api.get<Comment[]>(`/posts/${post_id}/comments`),
-            api.get<Reaction[]>(`/posts/${post_id}/reactions`),
-        ]).then(([post, comments, reactions]) => {
-            setData({ post, comments, reactions })
-        })
-    }, [post_id])
-
-    if (data) {
-        return (
-            <article>
-                <PostMedia src={data.post.image} />
-                <ReactionBar items={data.reactions} />
-                <CommentList items={data.comments} />
-            </article>
-        )
-    }
-    return <PostSkeleton />
-}
-
-// MAL — fragmentar en micro-componentes con fetch propio cuando los datos son una unidad
-function PostView({ post_id }: { post_id: string }) {
-    return (
-        <article>
-            <PostMedia post_id={post_id} />        // hace su propio fetch
-            <ReactionBar post_id={post_id} />      // hace su propio fetch
-            <CommentList post_id={post_id} />      // hace su propio fetch
-        </article>
-    )
-}
-// 3 requests en paralelo a 3 montajes que aparecen escalonados,
-// el usuario ve la foto sin reacciones, luego reacciones sin comentarios.
-// Un post NO es un dashboard: se ve completo o no se ve.
-
-// MAL — tres useState/useEffect separados dentro del mismo componente
-function PostView({ post_id }: { post_id: string }) {
-    const [post, setPost] = useState(null)
-    const [comments, setComments] = useState(null)
-    const [reactions, setReactions] = useState(null)
-
-    useEffect(() => { api.get(`/posts/${post_id}`).then(setPost) }, [post_id])
-    useEffect(() => { api.get(`/posts/${post_id}/comments`).then(setComments) }, [post_id])
-    useEffect(() => { api.get(`/posts/${post_id}/reactions`).then(setReactions) }, [post_id])
-    // 3 estados separados → 3 condiciones de loading → render parcial inconsistente.
-}
-```
-
-**Decisión: ¿esta vista es cohesiva o son cards independientes?**
-
-| Pregunta | Cohesiva (este patrón) | Independiente (Dashboards) |
-|---|---|---|
-| ¿Los datos representan **una sola entidad** lógica? | Sí (un post, un ticket, un perfil) | No (métricas de dominios distintos) |
-| ¿Tiene sentido mostrar una parte sin las otras? | No (post sin comentarios se ve roto) | Sí (revenue puede aparecer sin user-count) |
-| ¿Una sección lenta debe bloquear el resto? | Sí (todo o nada) | No (progressive rendering) |
-| ¿Un error en una sección invalida la vista? | Sí (no hay post sin contenido) | No (otras métricas siguen útiles) |
-
-**Reglas:**
-
-- **Obligatorio**: para vistas de entidad cohesiva, un solo `useState` con shape unificado + un solo `Promise.all` que lo llena.
-- **Obligatorio**: render condicional con bloque afirmativo `if (data) { return <vista /> }` y `<Skeleton />` como rama por defecto al final.
-- **Prohibido**: fragmentar una vista cohesiva en micro-componentes con fetch propio (genera render escalonado y vista incompleta).
-- **Prohibido**: tres `useState`/`useEffect` paralelos para datos que son partes de la misma entidad.
-- **Prohibido**: pedir al backend un endpoint mega-denormalizado cuando el cliente puede componer con `Promise.all` desde endpoints REST limpios.
-
-
-## Convenciones del framework sobre componentes custom
-
-Los frameworks proveen convenciones estructurales para problemas comunes (drawers, modales, sidebars, layouts, error boundaries, loading states). **Obligatorio** usar la convención del framework cuando existe. **Prohibido** inventar componentes custom que ignoran la arquitectura nativa.
-
-```tsx
-// BIEN — Next.js @drawer (parallel route) inyecta el drawer en el layout
-// app/(dashboard)/@drawer/default.tsx
-export default function DashboardDrawer() {
-    const { workspace } = useWorkSpace()
-    const pathname = usePathname()
-
-    return (
-        <Drawer variant="permanent">
-            <List>
-                {workspace.menu.map((item) => (
-                    <ListItemButton key={item.path} selected={pathname === item.path}>
-                        <ListItemText primary={item.label} />
-                    </ListItemButton>
-                ))}
-            </List>
-        </Drawer>
-    )
-}
-
-// MAL — Sidebar custom que ignora la convención de parallel routes
-import Sidebar from "@/components/Sidebar"
-export default function Layout({ children }) {
-    return (
-        <Box sx={{ display: "flex" }}>
-            <Sidebar items={[...]} activeItem={...} onNavigate={...} />
-            <Box component="main">{children}</Box>
-        </Box>
-    )
-}
-// Reinventa parallel routing manualmente, pierde el slot system de Next.js,
-// fuerza al padre a manejar items/active/navigation que el framework ya provee.
-```
-
-**Convenciones del framework a usar primero:**
-
-| Necesidad | Convención Next.js |
-|---|---|
-| Drawer / sidebar contextual | `@drawer/`, `@sidebar/` (parallel routes) |
-| Modal contextual | `@modal/` (parallel route) + `intercepting routes` |
-| Loading boundary | `loading.tsx` |
-| Error boundary | `error.tsx` |
-| Not found | `not-found.tsx` |
-| Layout compartido | `layout.tsx` por nivel |
-| Route group sin URL | `(group_name)/` |
-| Param dinámico | `[param]/` o `[...catchall]/` |
-| API route | `route.ts` con `GET`/`POST`/etc. exportados |
-
-**Reglas:**
-
-- **Obligatorio**: usar la convención del framework cuando existe (`@slot`, `loading.tsx`, `error.tsx`, etc.).
-- **Prohibido**: reinventar drawers/modales/sidebars como componentes custom cuando el framework provee parallel routes / intercepting routes.
-- **Prohibido**: manejar loading/error globalmente desde un Provider cuando `loading.tsx`/`error.tsx` cubren el caso por route.
-- **Justificable solo si**: el framework no cubre el caso (componente que NO es por-ruta, ni modal, ni drawer, ni sidebar — entonces sí componente custom propio).
-
-
-## Estructuras de datos: `Map` y `Set` sobre arrays
-
-Usar la estructura adecuada al problema. **`Map`** agrupa por clave sin buscar (O(1) lookup). **`Set`** deduplica sin filtrar. **Prohibido** forzar arrays con `find()` / `includes()` / `reduce()` cuando hay una estructura nativa que lo resuelve mejor. Al final del cómputo, si el consumidor necesita arrays planos, se convierten con `[...map.values()]` / `[...set]`.
-
-```ts
-// BIEN — Map agrupa, Set deduplica
-const orgs = new Map<string, { name: string; workspaces: Map<string, { permission: Set<string> }> }>()
-for (const role of roles) {
-    if (!orgs.has(role.org.id)) {
-        orgs.set(role.org.id, { ...role.org, workspaces: new Map() })
-    }
-    const o = orgs.get(role.org.id)!
-    if (!o.workspaces.has(role.ws.id)) {
-        o.workspaces.set(role.ws.id, { ...role.ws, permission: new Set() })
-    }
-    o.workspaces.get(role.ws.id)!.permission.add(role.permission.name)
-}
-
-// Convertir a plano solo al final, para el consumidor
-const result = [...orgs.values()].map((o) => ({
-    ...o,
-    workspaces: [...o.workspaces.values()].map((w) => ({
-        ...w,
-        permission: [...w.permission],
-    })),
-}))
-
-// MAL — arrays + find + includes + reduce para hacer lo mismo
-roles.reduce((acc, role) => {
-    let org = acc.find((o) => o.id === role.org.id)        // O(n) por iteración → O(n²) total
-    if (!org) {
-        org = { ...role.org, workspaces: [] }
-        acc.push(org)
-    }
-    let ws = org.workspaces.find((w) => w.id === role.ws.id) // otro O(n)
-    if (!ws) {
-        ws = { ...role.ws, permission: [] }
-        org.workspaces.push(ws)
-    }
-    if (!ws.permission.includes(role.permission.name)) {     // otro O(n)
-        ws.permission.push(role.permission.name)
-    }
-    return acc
-}, [])
-```
-
-**Cuándo usar qué:**
-
-| Caso | Estructura |
-|---|---|
-| Lookup por clave (`x.id === id`) ≥2 veces | `Map<key, value>` |
-| Deduplicación (`if (!arr.includes(x)) arr.push(x)`) | `Set<value>` |
-| Iterar con efecto (sin acumular) | `for...of` |
-| Acumular en estructura compleja | `Map`/`Set` y al final spread a array |
-| Transformación 1→1 sin agrupar | `array.map(...)` |
-| Filtrar | `array.filter(...)` |
-| Agrupar 1→N | `Map<key, T[]>` o `Object.fromEntries(...)` (ver patrón "array a diccionario") |
-| Aplanar 1→N items | `array.flatMap(...)` |
-
-**Reglas:**
-
-- **Prohibido**: `arr.find(x => x.id === id)` dentro de loop (es O(n²)). Pre-construir `Map` y usar `.get(id)`.
-- **Prohibido**: `if (!arr.includes(x)) arr.push(x)` para deduplicar. Usar `Set`.
-- **Prohibido**: `reduce` para construir un objeto agrupado cuando un `Map` + spread final es más legible.
-- **Permitido**: convertir `Map`/`Set` a array al final con spread cuando el consumidor (UI, JSON, API) requiere array plano.
-
-### Array → diccionario/objeto indexado
-
-Para construir un diccionario indexado desde un array, usar **`Object.fromEntries(arr.map(...))`** o **`new Map(arr.map(...))`** según uso. **Prohibido** loop con objeto acumulador mutable.
-
-```ts
-// BIEN — Object.fromEntries (resultado plano serializable a JSON)
-const ws_by_role = Object.fromEntries(
-    new_roles.map((r) => [r.id, r.id_workspace]),
-)
-
-// BIEN — Map (lookups frecuentes con .get(), mejor performance)
-const ws_by_role = new Map(
-    new_roles.map((r) => [r.id, r.id_workspace]),
-)
-
-// MAL — loop con objeto acumulador mutable
-const ws_by_role: Record<string, string> = {}
-for (const r of new_roles) {
-    ws_by_role[r.id] = r.id_workspace
-}
-```
-
-- **Usar `Object.fromEntries`** cuando el resultado se va a serializar (JSON.stringify), iterar (`Object.entries`/`Object.keys`), o pasar a una API que espera objeto plano.
-- **Usar `new Map`** cuando el principal uso es `.get(key)` repetido (mejor performance, API más rica con `.has()`, `.size`, `.delete()`, iteración ordenada por inserción).
-- **Prohibido**: `{}; for (...) obj[k] = v` cuando una de las dos formas declarativas lo cubre.
-
-
-## IIFE async para "definir y ejecutar ahora"
-
-Cuando una función async se define y se llama inmediatamente en el mismo scope (típicamente dentro de `useEffect`, addEventListener handlers, o cualquier scope síncrono donde necesitas `await`), usar **IIFE async** `(async () => { ... })()`. **Prohibido** declarar una función nombrada solo para llamarla en la línea siguiente.
-
-```ts
-// BIEN — IIFE async: una sola expresión, una sola intención
+```good
 useEffect(() => {
     if (token) {
-        (async function connect() {
-            // lógica de conexión
+        (async function connect() {     // nombrada SOLO porque se re-invoca a sí misma
+            await open_socket()
             timer = setTimeout(connect, delay)
         })()
     }
     return () => { destroyed = true }
 }, [])
+```
 
-// MAL — declarar y luego llamar como dos statements
+```bad
 useEffect(() => {
-    if (token) {
-        async function connect() {
-            // misma lógica
-            timer = setTimeout(connect, delay)
-        }
-        connect()                        // dos statements para una sola intención
-    }
-    return () => { destroyed = true }
+    async function connect() { await open_socket() }
+    connect()                           // dos statements para una sola intención: definir y ejecutar ya
 }, [])
 ```
 
-- **Permitido**: IIFE `(async () => { ... })()` para ejecutar lógica async dentro de un scope síncrono.
-- **Permitido**: nombrar la IIFE (`(async function connect() { ... })()`) cuando la función se auto-invoca recursivamente (ej. polling, retry).
-- **Prohibido**: declarar una función nombrada y llamarla justo abajo si nunca más se usa.
-- **Justificable separar declaración + llamada**: cuando la función se reusa (varias llamadas, se pasa como referencia a cleanup u otro handler).
+---
 
+# PARTE V — Clases
 
-## Inline operaciones atómicas
+## Ley 18 — Dominio con estado: clase compacta, sin degradarla
 
-Si una operación es atómica y el lector entiende qué pasa sin línea dedicada, va **inline**. Incrementos (`x++`), cálculos simples (`Math.min(...)`), accesos (`obj.field`), conversiones (`Number(x)`) y asignaciones directas no necesitan paso intermedio cuando el contexto los hace obvios.
+> Un dominio con estado (cart, session, driver) se modela como clase compacta: cada método es una operación REAL del dominio, los pasos internos van inline (Ley 15) y el naming es snake_case (Ley 1). Al pasar un método como callback se envuelve en arrow para conservar this. Las clases impuestas por framework/ORM (decoradores, herencia, instanceof) se abrazan completas.
 
-```ts
-// BIEN — operación inline
-timer = setTimeout(connect, Math.min(retries++ * 3_000, MAX_DELAY))
+```good
+export class Cart {
+    /** Items del carrito / Cart items */
+    private items: { id: string; count: number }[] = []
 
-// MAL — desglosar lo que se entiende junto
-const delay = Math.min(retries * 3_000, MAX_DELAY)
-retries++
-timer = setTimeout(connect, delay)
-// Tres líneas para lo que es una sola intención: "reintentar con backoff acotado".
-```
+    constructor(private customer: string) {}
 
-- **Permitido inline**: incrementos, math simple (`Math.min`/`max`/`abs`), accesos directos, ternarios atómicos, llamadas con un solo argumento computado.
-- **Justificable extraer a variable**: cuando el resultado se reusa, cuando el cómputo es complejo y necesita nombre semántico, o cuando ayuda al debugging (poder inspeccionar el valor intermedio).
-- **Heurística**: si el desglose no agrega claridad ni reuso, va inline.
-- **No confundir** con la regla "no helpers triviales" — esa aplica a **funciones**; esta aplica a **statements** dentro de una función.
-
-
-## Flutter — estilos con FlutterWind
-
-En proyectos Flutter, **obligatorio** usar `.className('...')` de FlutterWind con clases Tailwind para todos los estilos. **Prohibido** usar `TextStyle(...)`, `Container(color: ...)`, `BoxDecoration(...)`, padding/margin/borders manuales cuando existe equivalente en FlutterWind. Antes de escribir cualquier widget, verificar primero si el estilo se resuelve con `.className()`.
-
-```dart
-// BIEN — FlutterWind con clases Tailwind
-Container().className('bg-blue-500 p-4 rounded-lg shadow-md')
-Text('Hola').className('text-white text-lg font-bold')
-Column(children: [...]).className('gap-2 items-center')
-
-// MAL — propiedades manuales cuando existe equivalente FlutterWind
-Container(
-    color: Colors.blue,
-    padding: EdgeInsets.all(16),
-    decoration: BoxDecoration(borderRadius: BorderRadius.circular(8)),
-)
-
-Text(
-    'Hola',
-    style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-)
-```
-
-- **Obligatorio**: `.className('...')` con clases Tailwind para colores, padding, margin, gap, border, radius, shadow, typography, layout.
-- **Prohibido**: `TextStyle`, `BoxDecoration`, `EdgeInsets`, `Container(color:)` cuando hay equivalente en FlutterWind.
-- **Permitido propiedades directas**: solo cuando NO existe equivalente FlutterWind para el caso (ej. callbacks, controllers, widgets propios del framework como `child:`, `children:`, `onPressed:`).
-
-
-## Flutter — jerarquía de archivos
-
-Estructura obligatoria para proyectos Flutter. Cada módulo (lib, widget, view) es una carpeta con `main.dart` como entry point. Archivos auxiliares (`model.dart`, etc.) solo cuando son estrictamente necesarios. Patrón **recursivo**: una view puede tener su propio `lib/` y `widget/`, y un widget puede tener los suyos.
-
-```
-lib/
-├── main.dart                              # entry point de la app
-├── assets/                                # iconos, sonidos, estáticos
-│   ├── icons/
-│   └── sounds/
-├── lib/                                   # libs globales (compartidas entre views)
-│   └── {modulo}/main.dart
-├── widget/                                # widgets globales (compartidos entre views)
-│   └── {widget}/main.dart
-└── view/                                  # vistas / pantallas
-    └── {vista}/
-        ├── main.dart                      # entrypoint de la vista
-        ├── lib/{modulo}/main.dart         # lib local de esta vista
-        └── widget/                        # widgets locales de esta vista
-            └── {widget}/
-                ├── main.dart              # entrypoint del widget
-                ├── lib/{modulo}/main.dart # lib local del widget
-                └── widget/{hijo}/main.dart # sub-widget anidado
-```
-
-- **Obligatorio**: cada módulo/widget/view es una carpeta con `main.dart` como entrypoint. Sin archivos planos.
-- **Obligatorio**: jerarquía recursiva — una view tiene su `lib/` y `widget/`; un widget local también puede tener los suyos.
-- **Permitido en root**: `lib/lib/` (libs globales compartidas), `lib/widget/` (widgets globales compartidos), `lib/view/` (pantallas).
-- **Prohibido**: carpetas genéricas `models/`, `utils/`, `helpers/`, `constants/`, `providers/` en cualquier nivel. Romperían la jerarquía recursiva.
-- **Prohibido**: archivos sueltos en el root del módulo. Todo va en su carpeta con `main.dart`.
-- **Permitido auxiliar**: archivos como `model.dart` solo cuando es estrictamente necesario, junto al `main.dart` del módulo.
-- **Imports**: solo hacia arriba (igual regla que React) — un widget local solo importa de su lib, su padre, su abuelo o `lib/lib/` global.
-
-**Principio**: encapsulación por contexto. Un widget que solo se usa en una view vive dentro de esa view. Una lib que solo sirve a un widget vive dentro de ese widget. Solo sube a `lib/lib/` o `lib/widget/` lo que se comparte entre **múltiples** views.
-
-**Aplicación**: antes de crear cualquier archivo Flutter, determinar su scope:
-- Si lo usan ≥2 views → global (`lib/lib/` o `lib/widget/`).
-- Si lo usa solo una view → local (`view/{x}/lib/` o `view/{x}/widget/`).
-- Nunca poner widgets locales en la carpeta global ni viceversa.
-
-
-## Tipado estricto — sin `any`
-
-Todo el código TypeScript usa tipado explícito en parámetros, retornos y estructuras de datos. **Prohibido** `any` y **prohibido** dejar inferencia ambigua en APIs públicas (funciones exportadas, métodos públicos de clase, props de componente, schemas).
-
-```ts
-// BIEN — tipado explícito en API pública
-export function get_user(id: UserId): Promise<User | null> {
-    return db.users.findUnique({ where: { id } })
-}
-
-export interface SearchProps {
-    query: string
-    on_result: (items: SearchResult[]) => void
-}
-
-// MAL — any o inferencia ambigua en lo que se exporta
-export function get_user(id: any): any {
-    return db.users.findUnique({ where: { id } })
-}
-
-export function search(query, on_result) { ... }   // sin tipos en params
-```
-
-- **Prohibido**: `any` en parámetros, retornos, propiedades, generics. Si el tipo realmente es desconocido, usar `unknown` y narrow con type guard / cast acotado.
-- **Prohibido**: omitir tipos de parámetros en funciones exportadas o métodos públicos.
-- **Permitido inferencia**: en variables locales con asignación directa (`const x = 1`), en arrow functions inline (`arr.map((x) => x.id)`), donde el tipo es obvio del contexto.
-- **Recomendado**: usar branded types (`UserId`, `Email`) para distinguir strings semánticamente diferentes (ver tabla de Naming + sección RAG sobre branded types).
-
-
-## Construcción declarativa de objetos (spread + `??`)
-
-Construir objetos de opciones (`options.where` en Sequelize, `config`, `headers`, etc.) con **una sola asignación declarativa**: spread del original + nullish coalescing para defaults. **Prohibido** mutaciones imperativas con guardas y early returns para "asegurar que el campo existe".
-
-```ts
-// BIEN — una asignación, sin guardas
-options.where = {
-    ...options.where,
-    expired_at: options.expired_at ?? { [Op.gt]: new Date() },
-}
-
-// MAL — imperativo con guardas y early return
-options.where = options.where || {}
-if (options.where.expired_at !== undefined) return
-options.where = { ...options.where, expired_at: { [Op.gt]: new Date() } }
-```
-
-**Reglas:**
-
-- **Usar `...obj` aunque `obj` pueda ser `undefined`** — spread sobre undefined es vacío, no requiere guarda previa (`obj || {}`).
-- **Usar `??` para override-vs-default en una sola expresión** — el caller pasa el flag top-level (`options.expired_at`), el operador resuelve con el default si no viene.
-- **Exponer overrides como flags top-level del `options`** (`options.expired_at`, `options.limit`) en vez de meterlos dentro del `where`/`config` general. Hace el override explícito, separable y tipable.
-- **Prohibido**: reasignaciones intermedias del mismo objeto (`x = x || {}; x.field = ...`).
-- **Prohibido**: condicionales con early return (`if (x.field !== undefined) return`) para validar si el campo ya está seteado.
-- **Prohibido**: verificaciones `!== undefined` cuando el ternario / `??` expresa lo mismo en una línea.
-- **Aplica a**: cualquier objeto de opciones que pueda recibir overrides del caller (`where`, `include`, `attributes`, `headers`, `query`, `body`).
-
-
-## `Promise.all` con ramas condicionales (`&&` inline)
-
-Cuando una operación lanza N promesas en paralelo y algunas son condicionales, **inline el cortocircuito `&&`** dentro del array de `Promise.all`. **Prohibido** acumular promesas en un array intermedio con `if/push`.
-
-```ts
-// BIEN — cortocircuito && dentro del array
-await Promise.all([
-    instance.email && VerificationCode.create({
-        email: instance.email,
-        code: generate_otp(),
-        expires_at,
-    }, { transaction }),
-    instance.phone && VerificationCode.create({
-        phone: instance.phone,
-        code: generate_otp(),
-        expires_at,
-    }, { transaction }),
-])
-
-// MAL — array intermedio con if/push
-const tasks = []
-if (instance.email) {
-    tasks.push(VerificationCode.create({
-        email: instance.email,
-        code: generate_otp(),
-        expires_at,
-    }, { transaction }))
-}
-if (instance.phone) {
-    tasks.push(VerificationCode.create({
-        phone: instance.phone,
-        code: generate_otp(),
-        expires_at,
-    }, { transaction }))
-}
-await Promise.all(tasks)
-```
-
-- **`Promise.all` ignora valores falsy** (`false`, `undefined`, `null`, `0`, `""`) en el array — no crea promesa para esa rama.
-- **Permitido**: `cond && fn()` para que la promesa solo se cree cuando la condición se cumple.
-- **Prohibido**: array `tasks = []` mutable + `if (...) tasks.push(...)` para construir la lista.
-- **Prohibido**: ternario que devuelve `undefined` o `Promise.resolve()` como rama negativa (`cond ? fn() : Promise.resolve()`) — el `&&` ya cubre el caso sin valor placeholder.
-- **Cuidado con tipos**: TS infiere `Array<false | Promise<T>>`. En contextos estrictos donde necesites tipo limpio, `await Promise.all([...].filter(Boolean))` o cast acotado.
-
-
-## Optional chaining `?.` + nullish coalescing `??`
-
-Para acceso seguro a propiedades/métodos potencialmente null/undefined con fallback, usar `?.` + `??` en **una sola expresión**. **Prohibido** ifs anidados que verifican cada nivel de la cadena antes de acceder.
-
-```ts
-// BIEN — una expresión declarativa
-return json.user?.name ?? "Unknown"
-
-const port = config?.server?.port ?? 3000
-const first_tag = post?.tags?.[0] ?? "uncategorized"
-const result = obj?.method?.(arg) ?? default_value
-
-// MAL — guards anidados
-if (json.user) {
-    if (json.user.name) {
-        return json.user.name
+    add(id: string, count = 1) {
+        this.items.push({ id, count })      // operación real del dominio: nada que fragmentar
+    }
+    total() {
+        return this.items.reduce((sum, item) => sum + item.count, 0)
+    }
+    async save() {
+        await api.put(`/v1/cart/${this.customer}`, { items: this.items })
     }
 }
-return "Unknown"
 
-// MAL — usar `||` en vez de `??` cuando 0/""/false son valores válidos
-const limit = config.limit || 100         // si config.limit === 0, retorna 100 (BUG)
-const port = config.port ?? 3000          // BIEN: respeta 0 si fuera válido (no aplica a port pero ilustra)
+button.onclick = () => cart.save()      // arrow en el punto de uso: this sobrevive
 ```
 
-- **`?.`** corta la cadena en cualquier null/undefined sin throw. Funciona para propiedades (`a?.b`), índices (`a?.[i]`), llamadas (`a?.()`).
-- **`??`** retorna el lado derecho **solo si el izquierdo es nullish** (`null`/`undefined`). Respeta `0`, `""`, `false`, `NaN` como valores válidos.
-- **`||`** retorna el lado derecho si el izquierdo es **falsy** (incluyendo `0`, `""`, `false`). **Prohibido** usar `||` para defaults numéricos/string/boolean — hay riesgo de overrides accidentales.
-- **Combinar libremente**: `obj?.deep?.nested?.[0]?.fn?.() ?? fallback`.
-- **Prohibido**: cascadas de `if (a) if (a.b) if (a.b.c) ...` para acceso seguro.
-- **Prohibido**: try/catch para "atrapar acceso a undefined" — usar `?.`.
-
-
-## Filtrar nulls de un array: `.map().filter(Boolean)`
-
-Para extraer valores no-null/no-undefined de un array, encadenar `.map(...).filter(Boolean)`. **Prohibido** loop con `push` + guarda explícita.
-
-```ts
-// BIEN — cadena declarativa
-const tokens = sessions.map((s) => s.fcm).filter(Boolean)
-const ids = items.map((i) => i.user?.id).filter(Boolean)
-
-// MAL — loop imperativo
-const tokens: string[] = []
-for (const s of sessions) {
-    if (s.fcm) tokens.push(s.fcm)
-}
-```
-
-**Tipado estricto:** TS infiere `Array<string | null | undefined>` después del `filter(Boolean)`. Si necesitas tipo limpio:
-
-```ts
-// Opción A: cast acotado al final
-const tokens = sessions.map((s) => s.fcm).filter(Boolean) as string[]
-
-// Opción B: type guard explícito (más estricto, sin cast)
-const tokens = sessions.map((s) => s.fcm).filter((x): x is string => Boolean(x))
-```
-
-- **Permitido**: `.filter(Boolean)` para descartar `null`/`undefined`/`""`/`0`/`false`.
-- **Prohibido**: loop mutable con `push` para hacer lo mismo.
-- **Cuidado**: `Boolean` también descarta `0` y `""`. Si esos valores son válidos en tu dominio, usar `.filter((x) => x != null)` para descartar solo `null`/`undefined`.
-- **Para tipos estrictos**: type guard `.filter((x): x is T => Boolean(x))` o cast acotado al final.
-
-
-## Ternario para asignación condicional simple
-
-Para asignar un valor según una condición simple, usar **operador ternario en una sola expresión**. **Prohibido** `let` + `if/else` que solo asigna a la misma variable.
-
-```ts
-// BIEN — ternario en una expresión
-const role = instance.name === "Admin" ? "admin" : "member"
-const max = current > previous ? current : previous
-const label = is_active ? "Activo" : "Inactivo"
-
-// MAL — let + if/else solo para asignar
-let role
-if (instance.name === "Admin") {
-    role = "admin"
-} else {
-    role = "member"
-}
-```
-
-- **Permitido**: ternario cuando hay **dos ramas** y cada una resuelve a un **valor**.
-- **Permitido**: ternarios atómicos en una sola línea.
-- **Prohibido**: `let` con asignación posterior cuando un `const` con ternario lo cubre.
-- **Prohibido**: ternarios anidados (`a ? b : c ? d : e`) — usar `Record` lookup o `if/else` explícito.
-- **Justificable `if/else`**: cuando cada rama tiene **lógica compleja** (varios statements, side effects, llamadas async). El ternario es solo para resolver un **valor**.
-
-
-## Propiedades condicionales: spread inline `...(cond && { key: value })`
-
-Para incluir una propiedad en un objeto **solo si una condición se cumple**, usar **spread condicional inline**. **Prohibido** construir el objeto base y mutarlo con `if`s posteriores.
-
-```ts
-// BIEN — spread condicional dentro de la declaración
-const payload = {
-    id: instance.id,
-    name: instance.name,
-    ...(instance.email && { email: instance.email }),
-    ...(instance.phone && { phone: instance.phone }),
-}
-
-const where = {
-    organization_id,
-    ...(filter.status && { status: filter.status }),
-    ...(filter.from && filter.to && { created_at: { [Op.between]: [filter.from, filter.to] } }),
-}
-
-// MAL — construir y mutar después
-const payload: any = { id: instance.id, name: instance.name }
-if (instance.email) payload.email = instance.email
-if (instance.phone) payload.phone = instance.phone
-```
-
-- **Mecánica**: spread sobre `false` (o sobre `{}`) es **no-op** — no agrega nada. Solo agrega cuando `cond` es truthy y devuelve el objeto literal.
-- **Permitido**: `...(cond && { k: v })` para una propiedad condicional.
-- **Permitido**: `...(cond && { k1: v1, k2: v2 })` para múltiples propiedades agrupadas bajo la misma condición.
-- **Prohibido**: construir `obj = {...}` y luego `if (cond) obj.field = value` (forza `: any` y dispersa la lógica).
-- **Cuidado**: usar `??` en el cond da error de TS (espera boolean). Usar `&&` o convertir explícitamente a boolean (`!!value`).
-- **Combinable** con destructuring + defaults: `const { a = "x", b } = props; const out = { a, ...(b && { b }) }`.
-
-
-## Operadores de asignación compuestos `??=` `||=` `&&=`
-
-Para **"mutate-or-default"** en una sola operación atómica, usar los compound assignment operators. **Prohibido** reasignar manualmente con `x = x || ...` / `x = x ?? ...`.
-
-```ts
-// BIEN — compound assignment
-options.where ||= {}
-options.timeout ||= 5000
-user.preferences ??= defaults
-flags.dirty &&= validate(state)
-
-// MAL — reasignación manual
-options.where = options.where || {}
-options.timeout = options.timeout || 5000
-user.preferences = user.preferences ?? defaults
-if (flags.dirty) flags.dirty = validate(state)
-```
-
-**Diferencias entre los tres operadores:**
-
-| Operador | Asigna cuando el valor actual es… | Respeta como válido |
-|---|---|---|
-| `\|\|=` | falsy (`null`, `undefined`, `0`, `""`, `false`, `NaN`) | nada de lo anterior |
-| `??=` | nullish (`null` o `undefined`) | `0`, `""`, `false`, `NaN` |
-| `&&=` | truthy (cualquier valor truthy) | el valor previo si era falsy |
-
-- **`??=`** para defaults numéricos, strings, booleans (donde `0`/`""`/`false` son válidos).
-- **`||=`** para inicializar contenedores (objetos/arrays) donde falsy = "no inicializado".
-- **`&&=`** para "actualizar solo si ya existe" (transformar el valor sin sobrescribir cuando es falsy).
-- **Prohibido**: `x = x || default` / `x = x ?? default` cuando el compound operator hace lo mismo en menos código.
-- **Prohibido**: `if (x) x = transform(x)` cuando `x &&= transform(x)` lo cubre.
-
-
-## `flatMap()` para 1→N items
-
-Para transformaciones donde **un item produce N items** (extraer relaciones, expandir listas, aplanar grupos), usar **`Array.prototype.flatMap()`**. **Prohibido** loops manuales con `push` y **prohibido** `map().flat()` (dos pasadas innecesarias).
-
-```ts
-// BIEN — flatMap: una sola pasada, intención clara
-const role_ids = users.flatMap((u) => u.roles.map((r) => r.id))
-const all_tags = posts.flatMap((p) => p.tags)
-const valid_emails = users.flatMap((u) => u.emails.filter(is_valid))
-
-// SUBÓPTIMO — map + flat (dos pasadas)
-const role_ids = users.map((u) => u.roles.map((r) => r.id)).flat()
-
-// MAL — loop manual con push
-const role_ids: string[] = []
-for (const user of users) {
-    for (const role of user.roles) {
-        role_ids.push(role.id)
+```bad
+function buildCartPayload(items) {}     // helper FUERA de la clase con un llamador (Ley 15) + camelCase (Ley 1)
+export class Cart {
+    private _validate_item(item) {}     // privado con UN llamador: va inline
+    private _build_payload() { return buildCartPayload(this.items) }   // wrapper trivial (Ley 16)
+    async save() {
+        this._validate_item(this.items[0])
+        await api.put("/v1/cart", this._build_payload())   // la clase degradada: 3 saltos para leer un método
     }
 }
+button.onclick = cart.save              // método suelto: this se pierde en runtime → this.customer undefined
 ```
 
-- **`flatMap`** aplana **un nivel**. Para más profundidad: `.flat(Infinity)` o `flatMap` recursivo.
-- **Permitido**: retornar `[]` desde la callback de `flatMap` para "filtrar" — el resultado se aplana ignorando los vacíos. Equivale a `filter + map` en una sola pasada.
-- **Prohibido**: `map().flat()` cuando `flatMap()` lo hace en una pasada.
-- **Prohibido**: loop con `push` cuando `flatMap` cubre el caso.
-- **Aplica a**: extraer relaciones (roles de usuarios, tags de posts), expandir listas, transformaciones 1→N, generar opciones de selects desde grupos.
+## Ley 19 — Parameter properties cuando el constructor solo asigna
 
+> Si el constructor solo copia parámetros a campos, se usan parameter properties (`constructor(public readonly id: string)`); si transforma, normaliza o deriva, se usa constructor body con los campos declarados.
 
-## Optional call `?.()` para funciones opcionales
-
-Para llamar a una función que puede ser `undefined`/`null`, usar **optional call `?.()`**. **Prohibido** guards explícitos como `if (fn) fn()` o `typeof fn === "function"`.
-
-```ts
-// BIEN — optional call
-callback?.(value)
-on_change?.(value)
-config.logger?.warn("deprecated")
-items.find((x) => x.id === id)?.activate()
-obj?.method?.(arg)?.then?.(handle_result)
-
-// MAL — guard explícito con if
-if (callback) {
-    callback(value)
-}
-
-// MAL — typeof === "function" (excesivo)
-if (typeof on_change === "function") {
-    on_change(value)
-}
-
-// MAL — extraer a variable solo para verificar
-const item = items.find((x) => x.id === id)
-if (item) item.activate()
-```
-
-- **`?.()`** es la primitiva del lenguaje para "llama si existe". Una sola expresión, sin branching ni reasignaciones intermedias.
-- **Encadenable**: `obj?.method?.()`, `arr?.[0]?.()`, `obj?.fn?.(arg)?.then?.(cb)`.
-- **Prohibido**: `if (fn) fn()` cuando el contrato declara la función como opcional.
-- **Prohibido**: `typeof fn === "function"` — si el contrato es opcional, `?.()` ya cubre `undefined`/`null`. Si el caller pasa algo que no es función, es bug de tipo (lo detecta TS).
-- **Prohibido**: extraer a variable temporal solo para verificarla antes de llamar.
-- **Aplica a**: callbacks de props, hooks opcionales, eventos opcionales, métodos de objetos posiblemente undefined.
-
-
-## Destructuring profundo con defaults y rename
-
-Para extraer múltiples valores anidados con defaults, usar **destructuring profundo en una sola declaración** con defaults `=` y rename `:`. **Prohibido** accesos sucesivos con guards y ternarios.
-
-```ts
-// BIEN — destructuring profundo, una sola declaración
-const {
-    data: {
-        limit = 100,
-        offset = 0,
-        user: { name: user_name = "unknown" } = {},
-    },
-} = response
-
-// BIEN — props con defaults + rename
-function Modal({
-    open = false,
-    title: header = "Untitled",
-    on_close,
-}: ModalProps) { ... }
-
-// MAL — accesos paso a paso con ternarios
-const data = response.data
-const limit = data.limit !== undefined ? data.limit : 100
-const offset = data.offset !== undefined ? data.offset : 0
-const user_name = data.user && data.user.name ? data.user.name : "unknown"
-```
-
-**Sintaxis del destructuring:**
-
-| Patrón | Significado |
-|---|---|
-| `{ key }` | extraer `key` con su nombre |
-| `{ key = default }` | aplicar default si `key` es `undefined` (NO si es `null` o falsy) |
-| `{ key: alias }` | renombrar `key` como `alias` durante la extracción |
-| `{ key: alias = default }` | combinar rename + default |
-| `{ nested: { inner } = {} }` | navegar nested; el `= {}` previene crash si `nested` es `undefined` |
-| `{ nested: { inner: alias = "x" } = {} }` | combinar todo: navegar + rename + default |
-
-- **Prohibido**: `const x = obj.a.b.c.d` sin guards cuando algún nivel puede ser `undefined`.
-- **Prohibido**: cascadas de `obj.a !== undefined ? obj.a : default` cuando `{ a = default } = obj` lo cubre.
-- **Cuidado**: el default solo aplica a `undefined`, no a `null`. Si la API puede devolver `null` explícito, usar `??` después o validar Zod antes.
-- **Heurística**: si la profundidad supera 3 niveles o hay 4+ defaults, considerar parsear con Zod antes de destructurar.
-
-
-## Parameter properties en constructores
-
-Para inicializar campos de clase, usar **parameter properties** (modificadores `public`/`private`/`readonly` en parámetros del constructor) cuando el constructor solo asigna primitivos o referencias simples. Usar **constructor body** cuando hay normalización, derivación o construcción de sub-propiedades.
-
-```ts
-// BIEN — parameter properties para campos simples
+```good
 class User {
     constructor(
-        public readonly id: string,
+        public readonly id: string,     // solo asigna: parameter property, cero body
         public name: string,
-        public email: string | null,
     ) {}
 }
 
-// BIEN — constructor body cuando hay transformación
 class Workspace {
-    public readonly id: string
     public name: string
-    public config: { theme: string; lang: string }
-
+    public config: { theme: string }
     constructor(input: WorkspaceInput) {
-        this.id = input.id
-        this.name = input.name.trim()
-        this.config = {
-            theme: input.theme ?? "light",
-            lang: input.lang ?? "es",
-        }
-    }
-}
-
-// MAL — declarar y reasignar campos primitivos
-class User {
-    public id: string
-    public name: string
-    public email: string | null
-    constructor(id: string, name: string, email: string | null) {
-        this.id = id
-        this.name = name
-        this.email = email
+        this.name = input.name.trim()               // transforma: body justificado
+        this.config = { theme: input.theme ?? "light" }
     }
 }
 ```
 
-- **Permitido**: parameter properties cuando el constructor solo asigna lo recibido.
-- **Permitido**: constructor body cuando hay transformación, normalización, defaults derivados o construcción de sub-propiedades.
-- **Prohibido**: declarar campo + reasignar en body cuando el campo es primitivo y la asignación es directa.
-- **Heurística**: si el body sería puro `this.x = x; this.y = y; ...`, usar parameter properties; si transforma, usar body.
-
-
-## Method chaining con `return this`
-
-En clases tipo builder/DSL/configurador, los métodos mutadores retornan `this` (con tipo `this`) para encadenar operaciones en una sola expresión. **Prohibido** mutadores que retornan `void` cuando el caller los usa secuencialmente.
-
-```ts
-// BIEN — chaining con tipo `this`
-class QueryBuilder {
-    where(field: string, value: any): this {
-        this.conditions.push({ field, value })
-        return this
+```bad
+class User {
+    public id: string
+    public name: string
+    constructor(id: string, name: string) {
+        this.id = id                    // body que solo copia: es la parameter property con más líneas
+        this.name = name
     }
-    limit(n: number): this {
-        this.limit_value = n
-        return this
-    }
-    execute() { ... }
 }
+```
 
+## Ley 20 — Builders encadenan con `return this`
+
+> En builders/configuradores/DSL, los mutadores retornan `this` (tipo `this`, para que las subclases hereden el chaining) y la construcción completa se encadena en una sola expresión; los métodos que retornan datos conservan su retorno.
+
+```good
 const result = new QueryBuilder()
-    .where("id", 1)
-    .where("active", true)
+    .where("id", 1)                     // cada mutador retorna this: la construcción es UNA expresión
     .limit(10)
     .execute()
 
-// MAL — sin chaining, statements sueltos
+class QueryBuilder {
+    where(field: string, value: unknown): this {   // tipo this: las subclases heredan el chaining
+        this.conditions.push({ field, value })
+        return this
+    }
+}
+```
+
+```bad
 const qb = new QueryBuilder()
-qb.where("id", 1)
-qb.where("active", true)
+qb.where("id", 1)                       // mutadores void: cuatro statements para una construcción
 qb.limit(10)
 const result = qb.execute()
 ```
 
-- **Tipo de retorno `this`** (no la clase concreta): permite que subclases mantengan el chaining con su propio tipo.
-- **Solo en mutadores**: getters/queries que retornan un valor crítico no aplican.
-- **Aplica a**: builders, configuradores, DSL declarativos, query builders, request chains, validators encadenados.
-- **Prohibido**: mutadores con `return void` cuando se usan secuencialmente.
-- **Prohibido**: forzar chaining en métodos que retornan datos útiles (no son mutadores).
+---
 
+# PARTE VI — Tipado
 
-## Type narrowing: `as` casting con validación inline
+## Ley 21 — Tipado estricto: tipos reales; `!` solo demostrable
 
-Para narrowing de tipos (`unknown` → `T`), usar **`as` casting con validación inline** en la función consumidora cuando el tipo proviene de fuente confiable. **Prohibido** extraer type guards (`is_user(x): x is User`) a funciones auxiliares cuando solo se usan una vez.
+> Cada parámetro, retorno, propiedad y generic lleva su tipo real; lo desconocido entra como `unknown` y se estrecha con validación. El non-null `!` se usa cuando la no-nulidad es demostrable por una invariante (bounds de loop, chequeo previo, contrato garantizado). La inferencia queda para locales obvias.
 
-```ts
-// BIEN — as + validación inline
-function process(item: unknown): string {
-    const user = item as User
-    if (typeof user.email === "string") {
-        return user.email
-    }
-    throw new Error("Not a user")
+```good
+export function get_user(id: string): Promise<User | null> {   // API pública: tipos explícitos
+    return db.users.find(id)
 }
+const first = items[0]                  // local con asignación directa: inferencia permitida
+if (list.length > 0) use(list.at(-1)!)  // ! demostrable: el length ya se verificó
+```
 
-// MAL — type guard auxiliar usado una sola vez
-function is_user(item: unknown): item is User {
-    return typeof item === "object"
-        && item !== null
-        && "email" in item
-        && typeof (item as any).email === "string"
-}
+```bad
+export function get_user(id: any): any {}   // any: prohibido en ambos lados
+const token = session.fcm!              // ! a ciegas: nada demostró que fcm existe
+```
 
+## Ley 22 — Narrowing con `as` + validación inline
+
+> Cuando el dato viene de fuente confiable, se castea con `as` y se valida inline en el consumidor. El type guard extraído (`x is User`) solo existe con ≥2 usos (la Ley 16 aplicada a tipos) o cuando el narrowing es complejo.
+
+```good
 function process(item: unknown): string {
-    if (is_user(item)) {
-        return item.email
-    }
-    throw new Error("Not a user")
+    const user = item as User           // fuente confiable (parseado antes) + validación inline abajo
+    if (typeof user.email === "string") return user.email
+    throw new Error("ERR_NOT_USER")     // afirmativo + throw final (Ley 5)
 }
 ```
 
-- **Permitido `as` cast** cuando: (1) el tipo viene de fuente confiable (parsed por Zod, ORM, JWT validado), y (2) la validación runtime se hace inline en el consumer.
-- **Cuándo SÍ extraer type guard a función**: usado en 3+ lugares con misma forma exacta, narrowing complejo (varios checks, recursión), narrowing exhaustivo en switch sobre DU con muchas ramas.
-- **Prohibido**: type guards extraídos solo "para tener limpio" cuando se usan una sola vez (ver "Reutilización vs fragmentación").
-- **Prohibido**: confiar en `as` sin validación runtime cuando el dato viene de fuente externa no validada.
+```bad
+function is_user(item: unknown): item is User {   // guard auxiliar con UN uso: fragmentación de tipos (Ley 15)
+    return typeof item === "object" && item !== null && "email" in item
+}
+function process(item: unknown): string {
+    if (is_user(item)) return item.email
+    throw new Error("ERR_NOT_USER")
+}
+```
 
+## Ley 23 — `satisfies` para validar sin perder literales
 
-## `satisfies` operator para tipos literales precisos
+> Para validar el shape de un objeto conservando sus tipos literales se usa `satisfies`; la anotación `: Tipo` ensancha y pierde los literales; `as Tipo` no valida nada.
 
-Para validar el shape de un objeto sin perder los tipos literales inferidos, usar **`satisfies`** (TS 4.9+). **Prohibido** usar type annotation `: Type` cuando se necesita inferencia precisa.
-
-```ts
-// BIEN — satisfies preserva tipos literales
+```good
 const STATUS_LABELS = {
     active: "Activo",
-    pending: "Pendiente",
     archived: "Archivado",
-} satisfies Record<string, string>
-// STATUS_LABELS.active es 'Activo' (literal, no string)
-// keyof typeof STATUS_LABELS es 'active' | 'pending' | 'archived'
-
-// BIEN — combinable con `as const`
-const ROUTES = {
-    users: "/v1/users",
-    auth: { login: "/v1/auth/login", logout: "/v1/auth/logout" },
-} as const satisfies Record<string, string | Record<string, string>>
-
-// MAL — type annotation hace widening
-const STATUS_LABELS: Record<string, string> = {
-    active: "Activo",
-    pending: "Pendiente",
-    archived: "Archivado",
-}
-// STATUS_LABELS.active es `string` (perdimos 'Activo')
-// Cualquier string es key válida (perdimos enum)
+} satisfies Record<string, string>      // valida el shape Y conserva 'Activo' como literal;
+                                        // keyof typeof da 'active' | 'archived' exacto
 ```
 
-- **`satisfies`**: valida shape sin alterar el tipo inferido. Mantiene literales, `as const`, autocompletado preciso.
-- **Type annotation `: T`**: hace widening del valor al tipo. Pierde inferencia precisa.
-- **Casos donde brilla `satisfies`**:
-  - Configuración con `as const satisfies Config`.
-  - Routing con paths literales tipados.
-  - Object maps que necesitan keys exhaustivas + valores literales.
-  - Discriminated unions donde el discriminador debe ser literal.
-- **Prohibido**: `: Type` cuando necesitas mantener literales (usar `satisfies`).
-- **Prohibido**: `as Type` cuando `satisfies` validaría el shape sin cast peligroso.
-
-
-## Result type — clases con métodos vs discriminated union
-
-Para modelar resultados de operaciones que pueden fallar (`Result<T>`), usar **clase abstracta con subclases concretas** (`OkResult`/`ErrResult`) cuando el tipo lleva métodos asociados (`is_ok()`, `unwrap()`, `map()`). **Prohibido** discriminated union pura cuando el consumidor termina escribiendo el mismo check + acceso en cada uso.
-
-```ts
-// BIEN — clases hermanas con métodos encapsulados
-abstract class Result<T> {
-    abstract is_ok(): boolean
-    abstract unwrap(): T
-    abstract map<U>(fn: (value: T) => U): Result<U>
+```bad
+const STATUS_LABELS: Record<string, string> = {   // anotación: ensancha a string,
+    active: "Activo",                             // cualquier clave pasa, se pierde el enum implícito
 }
-
-class OkResult<T> extends Result<T> {
-    constructor(public data: T) { super() }
-    is_ok() { return true }
-    unwrap() { return this.data }
-    map<U>(fn: (value: T) => U): Result<U> {
-        return new OkResult(fn(this.data))
-    }
-}
-
-class ErrResult<T> extends Result<T> {
-    constructor(public error: string) { super() }
-    is_ok() { return false }
-    unwrap(): T { throw new Error(this.error) }
-    map<U>(): Result<U> { return this as unknown as Result<U> }
-}
-
-// Uso
-const result = parse(input)
-if (result.is_ok()) {
-    use(result.unwrap())
-}
-
-// MAL — discriminated union pura cuando hay comportamiento por variante
-type Result<T> =
-    | { ok: true; data: T }
-    | { ok: false; error: string }
-
-if (result.ok) use(result.data)
-else log(result.error)
-// El consumidor escribe el check + acceso en cada uso, repetido en cada caller.
 ```
 
-**Heurística de cuándo usar qué:**
+## Ley 24 — Tipos derivados con utility types
 
-| Caso | Estructura |
-|---|---|
-| El tipo lleva **métodos por variante** (`is_ok`, `unwrap`, `map`, `or_else`) | Clases hermanas |
-| El tipo es solo **shape de datos** que se pasa entre funciones | Discriminated union |
-| Salida con **comportamiento operacional** asociado | Clases |
-| Inputs/parámetros con N criterios excluyentes | Discriminated union (ver "Search variants con DU") |
+> Update/Public/Search se DERIVAN del tipo base con Partial/Pick/Omit/Record: un cambio en la base se propaga solo a todos los derivados.
 
-- **NOTA importante**: este patrón **contrasta** con la regla "DU para search variants" que aplica a parámetros/inputs. Para outputs/resultados con comportamiento asociado, las clases ganan porque agrupan datos + operaciones.
-- **Prohibido**: discriminated union para tipos que requieren los mismos métodos en cada variante (lleva a duplicación en cada caller).
-
-
-## Tipos derivados con utility types
-
-Derivar tipos relacionados desde un tipo base usando los **utility types de TypeScript** (`Partial`, `Pick`, `Omit`, `Record`, etc.). **Prohibido** definir interfaces paralelas que duplican campos del tipo base.
-
-```ts
-// BIEN — utility types derivan automáticamente
+```good
 interface UserCreateInput {
     email: string
     name: string
     password: string
 }
+type UserUpdateInput = Partial<UserCreateInput>         // deriva: un cambio en la base se propaga solo
+type UserPublic = Omit<UserCreateInput, "password">     // deriva quitando lo sensible
+type UserAuth = Pick<UserCreateInput, "email" | "password">
+```
 
-type UserUpdateInput = Partial<UserCreateInput>
-type UserPublic     = Omit<UserCreateInput, "password">
-type UserAuth       = Pick<UserCreateInput, "email" | "password">
-type UserSearch     = Partial<Pick<UserCreateInput, "email" | "name">>
-
-// MAL — duplicación manual
-interface UserCreateInput {
-    email: string
-    name: string
-    password: string
-}
-interface UserUpdateInput {
-    email?: string
-    name?: string
+```bad
+interface UserUpdateInput {             // copia manual de la base con ?:
+    email?: string                      // al agregar un campo a UserCreateInput,
+    name?: string                       // nadie recuerda actualizar esta copia
     password?: string
 }
-interface UserPublic {
-    email: string
-    name: string
-}
 ```
 
-**Utility types más usados:**
+## Ley 25 — Branded types para strings semánticos
 
-| Utility | Resultado |
-|---|---|
-| `Partial<T>` | todos los campos opcionales |
-| `Required<T>` | todos los campos requeridos |
-| `Readonly<T>` | todos los campos `readonly` |
-| `Pick<T, K>` | solo los campos en `K` |
-| `Omit<T, K>` | todos los campos menos `K` |
-| `Record<K, V>` | objeto con keys `K` y valores `V` |
-| `Exclude<T, U>` | quita `U` de `T` (en uniones) |
-| `Extract<T, U>` | solo `U` de `T` (en uniones) |
-| `ReturnType<F>` | tipo de retorno de la función `F` |
-| `Parameters<F>` | tupla de parámetros de `F` |
-| `Awaited<T>` | desempaca `Promise<T>` |
-| `NonNullable<T>` | quita `null`/`undefined` |
+> IDs, emails, tokens y unidades que TypeScript vería como string plano se marcan con brand (`string & { __brand: "X" }`); el cast al brand ocurre SOLO donde se valida el formato, y de ahí viaja sin re-validación.
 
-- **Obligatorio**: derivar Update/Patch/Partial desde el Create base con utility types.
-- **Obligatorio**: derivar Public/Internal desde el tipo completo con `Omit`/`Pick`.
-- **Prohibido**: copiar manualmente campos en tipos relacionados (un cambio en el base se olvida en las copias).
-- **Aplica a**: ApiInput/ApiOutput, Create/Update/Patch, Public/Internal, FormData/SubmitData.
-
-
-## Branded / nominal types
-
-Para diferenciar strings semánticamente distintos (IDs, emails, phones, hashes, tokens) que TypeScript trataría como `string` plano, usar **branded types** `string & { __brand: "X" }`. **Prohibido** strings desnudos en signatures cuando hay riesgo de mezclar valores semánticamente diferentes.
-
-```ts
-// BIEN — branded types
+```good
 type Brand<T, B extends string> = T & { __brand: B }
+type UserId = Brand<string, "UserId">
+type Email = Brand<string, "Email">
 
-type UserId       = Brand<string, "UserId">
-type WorkspaceId  = Brand<string, "WorkspaceId">
-type Email        = Brand<string, "Email">
-type Phone        = Brand<string, "Phone">
-
-function get_user(id: UserId): User { ... }
-function send_to(email: Email, msg: string) { ... }
-
-const id    = "uuid-123" as UserId
-const email = "a@b.com" as Email
-
-get_user(id)             // OK
-send_to(email, "hello")  // OK
-get_user(email)          // ERROR: Email is not UserId
-send_to(id, "hi")        // ERROR: UserId is not Email
-
-// MAL — strings desnudos
-function get_user(id: string): User { ... }
-function send_to(email: string, msg: string) { ... }
-
-const id    = "uuid-123"
-const email = "a@b.com"
-get_user(email)          // Compila, bug en runtime
-send_to(id, "hi")        // Compila, bug en runtime
+function as_email(s: string): Email | null {
+    return /.+@.+\..+/.test(s) ? (s as Email) : null   // el cast vive SOLO junto a la validación
+}
+function send_to(email: Email, msg: string) {}
 ```
 
-**Convención de uso:**
+```bad
+function get_user(id: string) {}        // string desnudo: get_user(email) compila y explota en runtime
+function send_to(email: string) {}
+send_to("x" as Email, "hola")           // cast sin validación previa: rompe la garantía del brand
+```
 
-- **Constructor del brand**: el cast `as Brand<...>` ocurre **solo en el punto donde se valida el formato** (parser, schema, factory). Después, el branded type viaja por el sistema sin re-validación.
-- **Función validadora**: `function as_email(s: string): Email | null { return is_valid_email(s) ? (s as Email) : null }`.
-- **Helper genérico**: `type Brand<T, B extends string> = T & { __brand: B }`.
+## Ley 26 — Inputs excluyentes con DU; resultados con comportamiento como clases
 
-**Aplica a:**
+> Una operación con N criterios mutuamente excluyentes recibe una discriminated union con tag (`{ by: "email", value }`): el caller elige exactamente un criterio y el switch interno es exhaustive-checkable. Un resultado que lleva MÉTODOS por variante (`is_ok/unwrap/map`) se modela con clases hermanas que encapsulan el comportamiento.
 
-- IDs: `UserId`, `WorkspaceId`, `OrgId`, cualquier UUID/clave foránea.
-- Validated formats: `Email`, `Phone`, `URL`, `Hash`, `Slug`.
-- Tokens: `JwtToken`, `ApiKey`, `RefreshToken`.
-- Unidades: `Usd`, `Eur`, `Meters`, `Feet`.
-
-- **Prohibido**: signature con `string` cuando el dominio distingue entre múltiples tipos de string.
-- **Prohibido**: hacer `as Brand<...>` sin validación previa (el brand garantiza que el formato fue validado).
-- **Cost-benefit alto**: 5 líneas de tipo nominal eliminan toda una clase de bugs por mezclar identificadores.
-
-
-## Search variants — DU con tag, no funciones por sufijo ni filter object
-
-Para una operación que admite N criterios mutuamente excluyentes (`get_user_by_id` / `by_email` / `by_phone`), usar **discriminated union explícita** con campo discriminador (`by`) y valor. **Prohibido** funciones separadas con sufijo y **prohibido** filter object con keys opcionales.
-
-```ts
-// BIEN — DU con tag explícito
+```good
 type UserLookup =
-    | { by: "id";    value: string }
-    | { by: "email"; value: string }
-    | { by: "phone"; value: string }
+    | { by: "id"; value: string }
+    | { by: "email"; value: string }    // el caller DEBE elegir exactamente un criterio: TS no deja mezclar
+function get_user(lookup: UserLookup): User | null {}
 
-function get_user(lookup: UserLookup): User | null { ... }
-
-get_user({ by: "email", value: "a@b.com" })
-get_user({ by: "id",    value: "uuid-123" })
-
-// MAL — funciones separadas con sufijo
-function get_user_by_id(id: string) { ... }
-function get_user_by_email(email: string) { ... }
-function get_user_by_phone(phone: string) { ... }
-
-// MAL — filter object con keys opcionales
-function get_user(filter: { id?: string; email?: string; phone?: string }) {
-    // No fuerza pasar exactamente uno
-    // get_user({}) compila → bug de validación runtime
-    // get_user({ id, email }) compila → ambigüedad
+abstract class Result<T> {
+    abstract is_ok(): boolean
+    abstract unwrap(): T                // el comportamiento vive en la variante: los callers no repiten checks
 }
 ```
 
-**Razones para DU sobre filter object:**
+```bad
+function get_user_by_id(id: string) {}      // proliferación por sufijo: una DU las unifica
+function get_user_by_email(email: string) {}
 
-- Fuerza al caller a especificar **exactamente UN criterio** (TS no permite mezclar variantes).
-- Elimina validación runtime de "se pasó al menos uno y no varios".
-- El switch interno por `lookup.by` es **exhaustive-checkable**: si agregas `phone_e164`, TS marca el switch.
+function find_user(filter: { id?: string; email?: string }) {}   // filter opcional: find_user({}) y find_user({id, email})
+                                                                 // compilan — obliga a validar en runtime lo que el tipo debía impedir
 
-**Razones para DU sobre funciones separadas:**
+type Result<T> = { ok: true; data: T } | { ok: false; error: string }
+if (result.ok) use(result.data)         // cada caller reescribe el mismo check+acceso: eso pedía métodos
+```
 
-- Una sola firma pública, sin proliferación de `get_user_by_*`.
-- Composable: `const lookup: UserLookup = req.query.email ? { by: "email", value: req.query.email } : { by: "id", value: req.params.id }`.
+---
 
-- **Aplica a**: repositorios, query handlers, search APIs, lookup services, cualquier operación con N criterios excluyentes.
-- **Prohibido**: proliferación de funciones `get_X_by_*` cuando una DU las unifica.
-- **Prohibido**: filter object opcional sin validación runtime para "exactamente uno".
+# PARTE VII — Asincronía
+
+## Ley 27 — Pipeline de promesas: un `.then` por paso, `.catch` como fallback
+
+> Las TRANSFORMACIONES de datos async se encadenan como tubería: cada `.then` hace un paso, un `.catch` intermedio devuelve el fallback para continuar degradado, el `.catch` final absorbe lo best-effort, y `.finally` pega el ciclo de vida a la promesa. Los EFECTOS con ramas (reintentos, limpieza, contadores) van imperativos con estado local: la tubería no se fuerza.
+
+```good
+await Mailer.audience()
+    .then((all) => all.filter((contact) => contact.group === group_id))  // un paso: filtrar
+    .catch(() => [] as Contact[])                                        // fallo aquí ⇒ tubería sigue, vacía
+    .then((contacts) => contacts.length > 0 ? Mailer.send(contacts, message) : null)  // un paso: actuar
+    .catch(() => {})                                                     // el envío es best-effort
+
+const res = await fetch(url)
+    .finally(() => clearTimeout(timer))     // el ciclo de vida pegado a la promesa, no en try/finally aparte
+    .catch(() => { throw new Error("No pudimos abrir la URL") })  // el error técnico muere aquí; hacia afuera viaja el mensaje humano
+
+let sent = 0                                // EFECTO con ramas: imperativo honesto,
+for (const chunk of chunks) {               // no se disfraza de tubería pura
+    await Promise.all(chunk.map(async (device) => {
+        const ok = await push(device).catch(() => false)
+        if (ok) sent++
+    }))
+}
+```
+
+```bad
+await Mailer.audience()
+    .then((all) => {                        // un solo .then con TODO adentro: es un bloque, no una tubería
+        const contacts = all.filter((c) => c.group === group_id)
+        if (contacts.length > 0) return Mailer.send(contacts, message)
+        return null
+    })
+    .catch(() => {})
+```
+
+## Ley 28 — `Promise.all` con ramas condicionales `&&`
+
+> Las promesas paralelas condicionales se cortocircuitan con `&&` dentro del array de `Promise.all` (los valores falsy se ignoran): la promesa solo se crea cuando su condición se cumple.
+
+```good
+await Promise.all([
+    instance.email && send_code({ email: instance.email }),   // la promesa solo se CREA si hay email
+    instance.phone && send_code({ phone: instance.phone }),
+])
+```
+
+```bad
+const tasks = []                        // array mutable + if/push por rama: la lista se arma
+if (instance.email) tasks.push(send_code({ email: instance.email }))   // lejos del Promise.all que la consume
+if (instance.phone) tasks.push(send_code({ phone: instance.phone }))
+await Promise.all(tasks)
+```
+
+## Ley 29 — Paralelismo contra APIs externas: chunks por cuota + throttling reactivo
+
+> El paralelismo se dimensiona por la CUOTA REAL del proveedor (chunks con Promise.all) y el throttling se maneja reactivo: un solo reintento ante 429 esperando su Retry-After.
+
+```good
+const batch = 50                                // dimensionado por la cuota real del proveedor
+for (let i = 0; i < devices.length; i += batch) {
+    await Promise.all(devices.slice(i, i + batch).map(async (device) => {
+        let res = await fetch(url).catch(() => null)
+        if (res?.status === 429) {              // throttling REAL: reaccionar, no prevenir a ciegas
+            await new Promise((r) => setTimeout(r, (Number(res.headers.get("retry-after")) || 1) * 1000))
+            res = await fetch(url).catch(() => null)   // UN reintento y se acabó
+        }
+    }))
+}
+```
+
+```bad
+for (const device of devices) {
+    await push(device)                          // serial: N round-trips donde caben 50 en paralelo
+    await new Promise((r) => setTimeout(r, 200))  // sleep fijo: castiga el 99% de envíos que NO throttlean
+}
+```
+
+---
+
+# PARTE VIII — Errores y documentación
+
+## Ley 30 — Errores: código técnico adentro, mensaje humano en el borde
+
+> Dentro del sistema los errores viajan como códigos (`throw new Error("ERR_CODIGO")`, el wrapper http los convierte). En el borde con el usuario final, el mensaje es español natural en primera persona del plural, con el detalle técnico entre paréntesis solo si aporta. Cada I/O traduce su error en el punto de la llamada.
+
+```good
+if (!data.access_token) throw new Error("ERR_FIREBASE_AUTH")   // interno: código rastreable
+
+await fs.writeFile(file, body)
+    .catch(() => { throw new Error("No pudimos guardar la sesión") })  // borde: el técnico muere aquí
+
+throw new Error(`No pudimos abrir la URL (HTTP ${res.status})`)  // detalle técnico solo si aporta
+```
+
+```bad
+throw new Error("ENOENT: no such file or directory, open '/x'")  // error técnico crudo hacia el usuario
+res.error("ERR_NOT_FOUND")              // código pelado como mensaje humano: no comunica nada
+```
+
+## Ley 31 — JSDoc estructural; el cuerpo queda limpio
+
+> El JSDoc describe el CONTRATO: propiedades de clase con una línea; métodos y funciones con @param, @returns y @throws. Bilingüe español/inglés en el mismo bloque. Lo que necesite explicación va al JSDoc o a un mejor nombre — el cuerpo de funciones y métodos queda limpio de comentarios.
+
+```good
+class Foo {
+    /** Nombre del Foo / Foo's name */
+    private name: string
+
+    /**
+     * @param {string} name - Nombre del foo / Foo's name
+     * @returns {string} - Saludo generado / Generated greeting
+     * @throws ERR_EMPTY_NAME si el nombre viene vacío / when the name is empty
+     */
+    bar(name: string) {}
+}
+```
+
+```bad
+/**
+ * Este método recibe el nombre, lo valida, lo normaliza y construye
+ * el saludo final teniendo en cuenta el idioma configurado…
+ */                                     // prosa extendida: el contrato ES la doc, la novela no
+bar(name: string) {}
+
+function checkout() {
+    // ── Validación del payload ────────    ← separador de sección: prohibido
+    // calculamos la diferencia              ← comentario interno: no se lee y no se entiende
+    const diff = total - paid
+}
+```
+
+## Ley 32 — JSDoc de endpoint: método+ruta, ES/EN, @param, @returns, @example
+
+> Todo handler HTTP exportado documenta método y ruta, descripción en español e inglés, cada @param de body/query con "ES / EN", el @returns y un @example request → response. Este es el único JSDoc con descripción, porque la ruta ES el contrato.
+
+```good
+/**
+ * @description
+ * POST /v1/auth/keys - Crea una API Key; la key completa solo se muestra una vez y se persiste su hash SHA-256.
+ * POST /v1/auth/keys - Creates an API Key; the full key is shown only once and its SHA-256 hash is persisted.
+ *
+ * @param {string} body.name - Nombre descriptivo (máx 100 chars) / Descriptive name (100 chars max)
+ * @returns {{ id, name, key, created_at }} - Key creada / Created key
+ *
+ * @example
+ * POST /v1/auth/keys { "name": "Producción" }
+ * → { "data": { "id": "...", "name": "Producción", "key": "sk-abc...", "created_at": "..." } }
+ */
+export const POST = http.auth(async (req, res) => {})
+```
+
+```bad
+// crea una key                         // comentario de línea como doc de endpoint: sin ruta, sin params,
+export const POST = http.auth(async (req, res) => {})   // sin ejemplo — el consumidor no sabe qué mandar
+```
+
+---
+
+# PARTE IX — Arquitectura de archivos
+
+## Ley 33 — Estructura recursiva universal: components/ y lib/ en cualquier tecnología
+
+> Esta estructura es una ideología, no una convención de un framework: aplica a Next, Angular, Flutter, Node o cualquier proyecto. (1) Un módulo SIN dependencias internas es archivo plano; CON ellas, es carpeta con entrypoint. (2) Cada nivel puede tener sus hijos visuales y su lógica local, recursivamente y a cualquier profundidad. (3) Lo que solo usa X vive DENTRO de X; lo que comparten ≥2 módulos sube al ancestro común (el root es el scope global); si dos hermanos comparten lógica, sube a su padre común. (4) Los imports van solo hacia arriba: lo propio con ruta relativa inmediata y todo lo demás — padre, abuelo, root — por su alias (Ley 3).
+
+```good
+// El MISMO patrón en cada dialecto — Next/React: index.tsx + components/ + lib/
+// Angular: index.ts+index.html + components/ + services/ · Flutter: main.dart + widget/ + lib/
+// Node backend/CLI: <modulo>.ts plano, con lib/ anidada cuando crece
+
+src/components/Icon.tsx                 // sin módulos internos → archivo plano
+src/lib/cache.ts                        // wrapper autocontenido → archivo plano
+
+src/components/AnimatedButton/          // tiene hijos propios → carpeta con entrypoint
+├── index.tsx
+├── components/
+│   └── Icon.tsx                        // hijo sin deps propias → archivo plano
+└── lib/
+    ├── use_click.tsx                   // hook sin deps: los hooks son lógica local y viven aquí (use_ + snake_case)
+    └── use_reducer/                    // hook CON deps → carpeta: la recursión es idéntica en cada nivel
+        ├── index.ts
+        └── lib/redis.ts                // solo lo usa use_reducer: ni hermanos ni el abuelo lo tocan
+
+// La MISMA ley en dialecto Angular (modules/client/live/):
+live/
+├── index.ts + index.html               // entrypoint del módulo
+├── services/camera.ts                  // lógica local del módulo (el "lib/" de Angular)
+└── components/chat/
+    ├── index.ts + index.html           // en Angular el componente SIEMPRE es carpeta: ts+html ya son deps internas
+    ├── services/voice.service.ts       // lógica local DEL chat: solo el chat la ve
+    └── components/Message/
+        └── components/MessageCamera/   // recursión nivel 4: el patrón no cambia con la profundidad
+
+import useIconSize from "./lib/use_icon_size"    // propio: relativo inmediato (Ley 3)
+import useButtonState from "@/components/AnimatedButton/lib/use_button_state"   // del padre: por alias (Ley 3)
+import useTheme from "@/lib/use_theme"            // del root: compartido por toda la app
+```
+
+```bad
+src/components/Card/
+└── index.tsx                           // carpeta+index SIN deps internas: era Card.tsx
+src/components/Button/
+├── helpers.ts                          // suelto en el root del componente: lo interno vive bajo lib/
+└── hooks.ts                            // hooks agrupados: cada uno vive con su nombre bajo lib/
+import x from "../ButtonSpinner/lib/x"     // hermano: prohibido — esa lógica sube al padre común
+import y from "@/components/Form/lib/y"    // rama ajena: prohibido — si lo necesitas, va al root
+```
+
+## Ley 34 — Orden de exports en `index.tsx`
+
+> El index de un componente exporta en este orden: enum → type → interface → const → función utilitaria reusada dentro del componente (≥2 usos, Ley 16) → export default del componente al final. Los hooks viven en su lib/ (Ley 33).
+
+```good
+export enum ButtonSize { SM = "sm", MD = "md" }
+export type ButtonVariant = "primary" | "ghost"
+export interface ButtonProps { size?: ButtonSize }
+export const DEFAULT_SIZE = ButtonSize.MD
+
+export default function Button({ size = DEFAULT_SIZE }: ButtonProps) {   // el componente cierra el archivo
+    return <button />
+}
+```
+
+```bad
+export default function Button() {}     // default primero: el lector busca tipos DESPUÉS del componente
+export interface ButtonProps {}         // tipos después del default: orden invertido
+export function useButtonState() {}     // hook en el index: va en lib/use_button_state (Ley 33)
+```
+
+## Ley 35 — Solo archivos solicitados
+
+> Se crean únicamente los archivos que el feature necesita o que fueron pedidos explícitamente; ante la duda de si un archivo corresponde, se pregunta antes de crearlo.
+
+```good
+src/components/Button/
+├── index.tsx
+└── lib/use_click.tsx                   // solo lo que el feature necesita
+```
+
+```bad
+src/components/Button/
+├── index.tsx
+├── Button.css                          // CSS separado: prohibido (estilos = Tailwind/clases nativas)
+├── Button.test.tsx                     // test no pedido: prohibido
+└── README.md                           // doc no pedida: prohibido
+```
+
+---
+
+# PARTE X — Backend
+
+## Ley 36 — Lib = primitivas; el servicio orquesta
+
+> Un lib/ de backend expone SOLO primitivas reutilizables del dominio (send, record, audience, upload, search); la orquestación — buscar destinatarios, decidir el copy, componer el flujo — vive en el endpoint. Dentro del lib rigen las Leyes 16 y 17 (inline lo single-use; privados con ≥2 llamadores o estado compartido como caches).
+
+```good
+// lib/mailer.ts — SOLO primitivas
+export async function audience(): Promise<Contact[]> {}
+export async function send(contacts: Contact[], message: MailPayload) {}
+
+// app/v1/campaigns/[id]/route.ts — el endpoint ORQUESTA con la tubería (Ley 27)
+await Mailer.audience()
+    .then((all) => all.filter((contact) => contact.group === group_id))
+    .catch(() => [] as Contact[])
+    .then((contacts) => contacts.length > 0 ? Mailer.send(contacts, message) : null)
+    .catch(() => {})
+```
+
+```bad
+// lib/mailer.ts
+export async function notify(group_id: string, message: MailPayload) {   // caso de uso disfrazado de primitiva:
+    const contacts = (await audience()).filter((c) => c.group === group_id)  // esta orquestación pertenece al endpoint;
+    return send(contacts, message)                                           // el próximo caso de uso pedirá OTRO wrapper
+}
+```
+
+## Ley 37 — Dos modos de endpoint: proceso inline o CRUD delgado
+
+> Si la lógica se reúsa desde otro endpoint, es una entidad de dominio: vive en la lib y el handler queda delgado (validar mínimo + delegar). Si el endpoint es un proceso único no reutilizable (un checkout, una conciliación), TODA su lógica vive inline en el handler, en el orden real del proceso (validar → cargar → calcular → efectos → responder), con sus helpers como const locales (Ley 15) y el cuerpo limpio de comentarios (Ley 31).
+
+```good
+// CRUD delgado: la entidad se reúsa (otros endpoints también tocan Address)
+export const PUT = http.auth(csrf("PUT"), async (req, res) => {
+    if (req.params.id) {
+        const updated = await Address.update(req.auth!.id, req.params.id, req.body.address)
+        return res.success(updated)     // afirmativo anidado (Ley 5)
+    }
+    throw new Error("ERR_MISSING_ID")
+})
+
+// Proceso único: todo inline, secuencia = el proceso real, validaciones anidadas (Ley 5)
+export const POST = http.auth(csrf("POST"), async (req, res) => {
+    const format_number = (n: number) => new Intl.NumberFormat("es-VE").format(n)   // helper LOCAL del proceso
+    // …validar → cargar carrito → calcular tier → crear orden → limpiar → responder,
+    // redactado de corrido en ese orden, sin fragmentar en funciones de módulo
+})
+```
+
+```bad
+// lib/checkout.ts
+export async function do_checkout(customer: string, body: unknown) {}   // proceso único empujado a la lib:
+export const POST = http.auth(async (req, res) => {                     // nadie más lo llama — es fragmentación
+    res.success(await do_checkout(req.auth!.id, req.body))              // que esconde el proceso a dos archivos de distancia
+})
+```
+
+## Ley 38 — File-based routing con handlers por método
+
+> La carpeta refleja la URL (`[param]` para dinámicos); cada index.ts/route.ts exporta un handler por método HTTP como constante (GET, POST, PUT, DELETE). En Express: `http(path, function GET() {})` con el método inferido del nombre.
+
+```good
+src/auth/keys/[id]/index.ts             // DELETE /v1/auth/keys/{id}: la ruta SE LEE en el árbol
+
+export const GET = http(async (req, res) => res.success(await User.all()))
+export const POST = http(async (req, res) => res.success(await User.create(req.body)))
+```
+
+```bad
+router.get("/auth/keys/:id", handler)   // routing programático: la ruta vive escondida en un registro
+export default async (req, res) => {
+    switch (req.method) {               // switch por método: un archivo-Dios por recurso
+        case "GET": {}
+    }
+}
+```
+
+## Ley 39 — Envelope de respuesta y cliente HTTP único
+
+> Toda API responde `{ success, data }` o `{ success: false, message, cause: { code } }`; las listas paginadas son exactamente `{ rows, count, offset, limit, order }`. Un único cliente HTTP centraliza el token, la extracción de data y el manejo de 401 para todos los consumidores.
+
+```good
+res.success({ rows, count: 100, offset: 0, limit: 20, order: "ASC" })   // shape de paginación EXACTO
+res.error("Usuario no encontrado", 404, { code: "ERR_NOT_FOUND" })      // humano + código (Ley 30)
+
+const user = await api.get<User>("/v1/users/abc")   // el cliente ya extrajo data: el consumidor recibe el payload
+```
+
+```bad
+res.json({ users, total })              // shape ad-hoc: cada endpoint inventa su paginación
+axios.get(url, { headers: { Authorization: token } })   // token a mano + cliente paralelo: se hace UNA vez en el cliente único
+```
+
+## Ley 40 — Proyección explícita en las respuestas
+
+> Toda respuesta proyecta campo por campo lo que expone: la proyección ES el contrato — decide qué sale, protege lo interno y sobrevive a los campos que el modelo agregue mañana.
+
+```good
+res.success(keys.map((k) => ({
+    id: k.id,
+    name: k.name,
+    prefix: k.prefix,                   // el hash NUNCA sale: la proyección es el contrato
+    created_at: k.created_at,
+})))
+```
+
+```bad
+res.success(keys)                       // vuelca el modelo entero: hash, uid interno y lo que se agregue mañana
+```
+
+---
+
+# PARTE XI — Frontend React/Next
+
+## Ley 41 — SSR: acceso al navegador con guard; `mounted` en afirmativo
+
+> Código que corre en SSR protege todo acceso a window/document/localStorage con `typeof window !== "undefined"`; los componentes que dependen del navegador usan el patrón mounted renderizando en afirmativo (Ley 5).
+
+```good
+if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth_token")   // solo el browser tiene localStorage
+    if (token) config.headers.Authorization = `Bearer ${token}`
+}
+
+const [mounted, setMounted] = useState(false)
+useEffect(() => setMounted(true), [])
+if (mounted) return <ThemeAwareUI />    // afirmativo: el caso real primero
+return null                             // rama negativa al final (Ley 5)
+```
+
+```bad
+const token = localStorage.getItem("auth_token")   // ReferenceError en el server
+if (!mounted) return null               // leading-return: prohibido (Ley 5)
+```
+
+## Ley 42 — Dos hooks centrales; el resto es API directa
+
+> El frontend se apoya en dos hooks transversales (`useAuth`, `useWorkSpace`) más los globales inevitables (theme/locale); todo lo demás se obtiene con `api.get` desde el componente que lo necesita.
+
+```good
+function TicketList() {
+    const { workspace, permissions } = useWorkSpace()   // hook central: contexto transversal
+    const [tickets, setTickets] = useState([])
+    useEffect(() => {
+        api.get(`/workspaces/${workspace.id}/tickets`).then(setTickets)   // la entidad se pide directo
+    }, [workspace.id])
+}
+```
+
+```bad
+function useTickets() {}                // hook por entidad: envuelve api.get + useState sin aportar nada
+function useTicketSort() {}             // cadena de hooks especializados: un sort inline lo resolvía
+function useTicketFilters() {}
+```
+
+## Ley 43 — Complejidad proporcional al problema
+
+> La implementación replica la complejidad real del problema: si el caso es fetch+render+acciones, la solución es useState+useEffect+render; cada capa adicional existe solo cuando el problema la exige.
+
+```good
+function TicketList() {
+    const [tickets, setTickets] = useState([])
+    const [loading, setLoading] = useState(true)
+    useEffect(() => {
+        api.get("/tickets").then(setTickets).finally(() => setLoading(false))   // el problema ES así de simple
+    }, [])
+    return <Table loading={loading} data={tickets} />
+}
+```
+
+```bad
+function TicketList() {
+    const { tickets, loading } = useTickets()           // cinco capas para el MISMO problema:
+    const { sorted } = useTicketSort(tickets)           // cada capa existe porque la anterior existe,
+    const { filtered } = useTicketFilters(sorted)       // ninguna porque el problema la pida
+    const { paginated } = useTicketPagination(filtered)
+    return <TicketTable data={paginated} />
+}
+```
+
+## Ley 44 — Componente solo si encapsula comportamiento
+
+> Extraer un componente exige unidad funcional completa: estado propio, ciclo de vida, side effects u orquestación. El micro-componente que solo mapea props a presentación va inline donde se usa (es la Ley 15 aplicada a JSX).
+
+```good
+<WhatsApp phone={phone} on_open={() => {}} />   // encapsula: conexión SSE, registro, PIN, eventos — unidad real
+
+<Chip label={status} color={status === "active" ? "success" : "default"} />   // el mapeo trivial va inline
+```
+
+```bad
+function StatusChip({ status }: { status: string }) {   // 4 líneas sin estado ni lifecycle:
+    const color = status === "active" ? "success" : "default"   // solo re-mapea props a otra forma
+    return <Chip label={status} color={color} />
+}
+```
+
+## Ley 45 — El framework UI se usa directo
+
+> Si el framework de UI ya provee el componente o prop, se usa directo con sus imports tipados; envolver el framework se justifica solo cuando el wrapper agrega comportamiento real (estado, validación, side effects, theming compartido).
+
+```good
+import EditIcon from "@mui/icons-material/Edit"
+<IconButton onClick={on_edit}><EditIcon /></IconButton>   // el framework ya lo resuelve tipado
+```
+
+```bad
+function Icon({ name }) {
+    const icons = { edit: EditIcon, delete: DeleteIcon }   // lookup por string: pierde tipos y tree-shaking
+    const Component = icons[name]
+    return <Component />
+}
+```
+
+## Ley 46 — Convenciones del framework antes que componentes custom
+
+> Cuando el framework tiene convención estructural (parallel routes @drawer/@modal, loading.tsx, error.tsx, not-found.tsx, route groups), se usa la convención. El componente custom solo existe donde el framework no cubre el caso.
+
+```good
+app/(dashboard)/@drawer/default.tsx     // el drawer via parallel route: el framework inyecta el slot
+app/tickets/loading.tsx                 // loading boundary por convención: cero Providers
+```
+
+```bad
+<Layout>
+    <Sidebar items={[...]} activeItem={x} onNavigate={y} />   // reinventa el slot system a mano:
+    <main>{children}</main>                                   // el padre carga con lo que Next ya resolvía
+</Layout>
+```
+
+## Ley 47 — Vistas equivalentes, composición idéntica
+
+> Vistas que resuelven el mismo problema (listas, formularios CRUD, detalles) usan el mismo componente base y el mismo shape de loading/empty/error: abrir una vista hermana es reconocer la misma estructura.
+
+```good
+function TicketList() { return <VirtualList data={tickets} renderItem={(t) => <TicketRow ticket={t} />} /> }
+function ClientList() { return <VirtualList data={clients} renderItem={(c) => <ClientRow client={c} />} /> }
+// mismas piezas, mismo esqueleto: abrir una es saber usar la otra
+```
+
+```bad
+function TicketList() { return <div onScroll={on_scroll}>{tickets.map(render)}</div> }   // scroll infinito aquí…
+function ClientList() { return <Table pagination={{ page, onChange: setPage }} /> }      // …paginación manual allá:
+                                                                                          // mismo problema, dos mundos
+```
+
+## Ley 48 — Dashboard: cada card es autónoma
+
+> En dashboards con métricas de dominios distintos, cada card es autónoma: monta, hace su propio fetch, muestra su skeleton del tamaño exacto final y maneja su error localmente — el dashboard renderiza progresivo, card a card.
+
+```good
+function TicketCountCard() {
+    const [count, setCount] = useState(0)
+    const [loading, setLoading] = useState(true)
+    useEffect(() => {
+        api.get("/metrics/tickets/count").then(setCount).finally(() => setLoading(false))
+    }, [])
+    if (loading) return <Skeleton width={240} height={120} />   // tamaño EXACTO del card final: cero layout shift
+    return <MetricCard title="Tickets" value={count} />
+}
+```
+
+```bad
+useEffect(() => { api.get("/dashboard").then(setData) }, [])   // todo-en-uno: si una métrica tarda 3s,
+if (!data) return <Loading />                                  // TODA la UI espera 3s; si una falla, ninguna se ve
+```
+
+## Ley 49 — Vista cohesiva: un `Promise.all`, un estado
+
+> Cuando la vista es UNA entidad lógica repartida en varios endpoints (un post con comentarios y reacciones), se combinan con Promise.all en un único useState: un loading, un error, un render completo. La prueba: si mostrar una parte sin las otras se ve roto, aplica esta ley; si cada parte es útil por sí sola, aplica la Ley 48.
+
+```good
+useEffect(() => {
+    Promise.all([
+        api.get<Post>(`/posts/${id}`),
+        api.get<Comment[]>(`/posts/${id}/comments`),
+        api.get<Reaction[]>(`/posts/${id}/reactions`),
+    ]).then(([post, comments, reactions]) => setData({ post, comments, reactions }))   // UN estado unificado
+}, [id])
+if (data) return <article>…</article>   // afirmativo (Ley 5): la vista aparece COMPLETA
+return <PostSkeleton />
+```
+
+```bad
+useEffect(() => { api.get(`/posts/${id}`).then(setPost) }, [id])            // tres estados, tres momentos:
+useEffect(() => { api.get(`/posts/${id}/comments`).then(setComments) }, [id])  // el usuario ve la foto sin reacciones,
+useEffect(() => { api.get(`/posts/${id}/reactions`).then(setReactions) }, [id])  // luego reacciones sin comentarios
+```
+
+## Ley 50 — `memo()` solo con props recalculados
+
+> memo() se usa únicamente cuando el padre pasa objetos/arrays/callbacks recreados por render y el re-render es costoso; se envuelve inline sobre la función, manteniendo el export default al final (Ley 34).
+
+```good
+export default memo(function UserCard({ user, on_select }: UserCardProps) {   // on_select se recrea en el padre:
+    return <div onClick={() => on_select(user)}>{user.name}</div>             // memo evita re-render real
+})
+```
+
+```bad
+export default memo(function Title({ text }: { text: string }) {   // prop primitivo estable:
+    return <h1>{text}</h1>                                          // la comparación del memo cuesta más que el render
+})
+```
+
+---
+
+# PARTE XII — Flutter
+
+## Ley 51 — Estilos con FlutterWind
+
+> Todo estilo en Flutter se resuelve con `.className('...')` de FlutterWind (clases Tailwind); las propiedades directas quedan para lo que FlutterWind no cubre (callbacks, controllers, child/children) y para el padding de un Container con decoration, que va nativo (conflicto conocido de FlutterWind).
+
+```good
+Text("Total").className("text-lg font-bold text-neutral-900")
+Container(
+    padding: EdgeInsets.all(12),        // Container CON decoration: padding nativo (conflicto conocido de FlutterWind)
+    decoration: BoxDecoration(borderRadius: BorderRadius.circular(12), color: Colors.white),
+)
+```
+
+```bad
+Text("Total", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold))   // existe .className("text-lg font-bold")
+Container(color: Colors.white)          // existe .className("bg-white")
+```
+
+## Ley 52 — Flutter: dialecto de la Ley 33 + snake_case total
+
+> En Flutter la Ley 33 se habla así: entrypoint main.dart (model.dart auxiliar solo si es necesario), hijos visuales en widget/, lógica local en lib/, vistas en view/ y carpetas en snake_case. El naming es snake_case también en Dart — variables, métodos y campos (silenciar non_constant_identifier_names); camelCase solo en overrides del SDK. Los providers globales son una clase con estado y sub()/notify.
+
+```good
+lib/
+├── main.dart
+├── lib/cart/main.dart                  // provider global: clase + sub()/notify
+├── widget/pressable/main.dart          // widget compartido por ≥2 vistas (Ley 33: sube al scope común)
+└── view/cart/
+    ├── main.dart
+    └── widget/cart_row/main.dart       // carpeta snake_case; exclusivo de la vista: vive con ella
+
+class _CartRowState extends State<CartRow> {
+    bool busy = false                   // snake_case desnudo (Ley 1)
+    void _sync_qty() {}                 // método snake_case; _ de privado
+    @override
+    void initState() { super.initState() }   // camelCase SOLO porque el SDK lo impone
+}
+```
+
+```bad
+lib/view/setting/widget/api-key/main.dart   // kebab-case: es api_key
+lib/utils/helpers.dart                      // carpeta genérica: rompe la jerarquía recursiva (Ley 33)
+mixin PaginatedList {
+    bool loadingMore = false            // camelCase propio: prohibido (es loading_more)
+}
+dependencies:
+    flutter_bloc: ^9.0.0                // state management externo: el provider con sub()/notify ya lo resuelve
+```
+
+---
+
+# PARTE XIII — Runtime y entorno
+
+## Ley 53 — Primitivas del runtime antes que librerías y reimplementaciones
+
+> Si el runtime ya lo provee (crypto.randomUUID, fetch, Intl, structuredClone, EventTarget, AbortController, URLSearchParams, FormData, Headers), se usa la primitiva nativa; la librería externa se justifica únicamente cuando aporta lo que el runtime no cubre.
+
+```good
+const id = crypto.randomUUID()
+const clone = structuredClone(obj)
+class Bus extends EventTarget {         // pub/sub: se EXTIENDE la primitiva, no se reinventa
+    emit<T>(event: string, data: T) { this.dispatchEvent(new CustomEvent(event, { detail: data })) }
+}
+```
+
+```bad
+import { v4 } from "uuid"               // el runtime ya trae crypto.randomUUID()
+import moment from "moment"             // el runtime ya trae Intl.DateTimeFormat
+const listeners = new Set<Listener>()   // pub/sub a mano: EventTarget existe, con once/capture/errores resueltos
+```
+
+## Ley 54 — Simplificar es recortar
+
+> La simplificación real elimina capacidad marginal que nadie usa (features defensivas, soportes hipotéticos, módulos huérfanos). El código muerto que se decide conservar lleva una nota de por qué se conserva y dónde vive.
+
+```good
+const lines = (await fs.readFile(pathname, "utf8")).split("\n")   // leer el archivo y listo:
+                                                                  // el streaming line-by-line era soporte hipotético
+// MCP sin soporte en viber: carga descartada, código conservado en ./mcp
+// import { mcp } from "./mcp"          // muerto CON nota: se sabe por qué sigue existiendo
+```
+
+```bad
+// 170 líneas extra para: notebooks .ipynb, PDF paginado, sonda binaria de 4KB…
+// capacidades que ningún flujo del producto usa: se BORRAN, no se mantienen "por si acaso"
+```
+
+## Ley 55 — Paquetes: yarn local, npm global, npx one-off, tsx para TS
+
+> Lo local del proyecto va con yarn (deps, scripts, build); npm queda para CLIs globales (`npm i -g`) con aprobación previa; npx -y para herramientas de un solo uso; tsx para ejecutar TypeScript en desarrollo. Toda instalación requiere aprobación explícita.
+
+```good
+yarn add axios                          // dependencia local: yarn
+npm i -g eslint                         // CLI global: npm (con aprobación previa)
+npx -y @arcaelas/mcp --stdio            // un solo uso: npx -y, sin instalar
+tsx scripts/migrate.ts                  // TS directo en dev: tsx
+```
+
+```bad
+npm install axios                       // npm en local: prohibido
+yarn global add typescript              // yarn global: prohibido
+npx tsc && node dist/server.js          // compilar para dev: tsx lo ejecuta directo
+```
+
+## Ley 56 — Git: issue → rama → PR; commits en español con prefijo
+
+> Todo cambio nace de un issue; la rama sale de la rama de trabajo con formato `{prefijo}/{issue-id}` (fix/feat/chore/docs); el PR apunta a la rama de origen (dev si existe, si no main) y todo merge llega por PR. Los commits van en español con prefijo `fix:`/`feat:`/`chore:`/`docs:` y a nombre del autor humano.
+
+```good
+git checkout -b feat/54                 // rama con prefijo + id del issue
+git commit -m "feat: agregar filtro de búsqueda por categoría"
+gh pr create --base dev                 // el cambio llega a la rama de trabajo vía PR
+```
+
+```bad
+git checkout -b nueva-feature           // sin issue ni prefijo: no se sabe qué resuelve
+git commit -m "fix login bug"           // inglés: prohibido
+git commit -m "arreglos varios"         // sin prefijo: prohibido
+git push origin main                    // push directo a la rama protegida: prohibido
+```
