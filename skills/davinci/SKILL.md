@@ -10,7 +10,7 @@ description: >
   interface guidelines on top of the user's laws (Tailwind-only, shadcn over native, mobile-first).
   Triggers: "diseño","design","UI","UX","layout","responsive","componente","rediseño","estilos",
   "Tailwind","shadcn","frontend","app","animation","motion","color","theme","landing","dashboard",
-  "page","modal","card". When Da Vinci and the RAG disagree, the RAG wins.
+  "page","modal","card". When Da Vinci and the Obsidian vault disagree, the vault wins.
 ---
 
 # Da Vinci — UI/UX Design & Craft
@@ -19,7 +19,7 @@ Da Vinci owns how a frontend is **planned** and how it **looks and feels**. Two 
 
 The bar is not "a working UI": it is UI that looks **authored**, at the tier of Meta's blue system, Google's Material motion and Linear/Stripe restraint — **never** the AI-generic default (violet-neon gradients, all-glass, inert 3-up cards, static monochrome icons). Rejecting that default and planning **delight** is a first-class goal, not a finishing touch (§18).
 
-**Authority order:** the RAG (live user preferences) > this skill > general defaults. Code-level concerns — file/folder naming, import scope, control flow, helper extraction — belong to `clean-code`; Da Vinci governs *planning, visual and interaction* layers.
+**Authority order:** the Obsidian vault (live user preferences) > this skill > general defaults. Code-level concerns — file/folder naming, import scope, control flow, helper extraction — belong to `clean-code`; Da Vinci governs *planning, visual and interaction* layers.
 
 ---
 
@@ -30,7 +30,7 @@ The bar is not "a working UI": it is UI that looks **authored**, at the tier of 
 For anything data-driven, run **six phases, in order**. Never jump ahead to pixels — each phase feeds the next, and the whole point is to prevent the failure this skill exists to stop: building UI before understanding the resources and the data.
 
 ### 0.1 Resources — know what you have
-Inventory before planning: available **libraries** (local and third-party — including animated component sets like Magic UI / Aceternity beyond the shadcn base, §18), the **REST API**, **documentation**, and the **user's preferences** (the RAG). Reconstruct the API's data contract in particular — entities, fields, relations, endpoints (inputs/outputs), the exact response JSON, and which endpoints combine per view (`Promise.all`). You cannot design a screen whose data you cannot name.
+Inventory before planning: available **libraries** (local and third-party — including animated component sets like Magic UI / Aceternity beyond the shadcn base, §18), the **REST API**, **documentation**, and the **user's preferences** (the Obsidian vault). Reconstruct the API's data contract in particular — entities, fields, relations, endpoints (inputs/outputs), the exact response JSON, and which endpoints combine per view (`Promise.all`). You cannot design a screen whose data you cannot name.
 
 **Clarity gate (hard rule):** if the API is not documented clearly enough to name entities, endpoints, inputs and outputs, do **not** proceed. Ask whether a Markdown doc of the API exists; if not, offer to draft and confirm it *with* the user; if no contract can be established, **pause the task** and say so. Building UI on guessed data is forbidden — a confident UI on an unknown backend is worse than none.
 
@@ -332,4 +332,4 @@ Binary checklist. Most items are auditable by reading the diff — each must be 
 - **Taste:** dials calibrated · hierarchy by weight/color · realistic content · no emoji · no 3-equal-card autopilot · tinted subtle shadows.
 - **Delight (§18):** not the AI-generic look · ≥1 signature interaction per primary flow · action icons animate on state · like/copy/save give rich feedback · empty/loading/success states have personality · dense surfaces earn tooltips/popovers · smooth scroll · animated SVG over static monochrome.
 
-When the RAG holds a preference touching any of the above, it overrides this skill — query it before finalizing a visual decision.
+When the Obsidian vault holds a preference touching any of the above, it overrides this skill — consult it before finalizing a visual decision.

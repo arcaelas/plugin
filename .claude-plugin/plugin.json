@@ -1,7 +1,7 @@
 {
   "name": "arko",
-  "version": "7.2.0",
-  "description": "Productivity plugin for Claude Code: the arko agent, a semantic-memory MCP (RAG via Ollama + Vectra), and skills for coding conventions, UI/UX design, iterative requirements capture, and app publishing.",
+  "version": "8.0.0",
+  "description": "Productivity plugin for Claude Code: the arko agent, Obsidian-vault-driven preferences, and skills for coding conventions, UI/UX design, iterative requirements capture, and app publishing.",
   "author": {
     "name": "Arcaelas",
     "url": "https://github.com/arcaelas"

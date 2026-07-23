@@ -11,7 +11,7 @@ description: >
   (folders born from internal dependencies), backend (lib = primitives, service
   orchestrates), React/Next, Flutter (snake_case too), runtime-first and git flow.
   Load it for any task that writes, refactors, or reviews code. When it conflicts with
-  the RAG, the RAG wins.
+  the Obsidian vault, the vault wins.
 ---
 
 # Clean Code — Ley de construcción de código
@@ -23,8 +23,8 @@ description: >
 - Las leyes están en orden de dependencia: cada ley solo usa conceptos de leyes anteriores. Si una ley menciona `(Ley N)`, esa N ya quedó atrás.
 - Los comentarios `//` DENTRO de los bloques `good`/`bad` explican la ley al lector de ESTE documento. La Ley 31 los excluye del código real: no copiar los comentarios al código producido.
 - `good` = forma exigida. `bad` = forma prohibida; sus comentarios dicen por qué falla.
-- Si el caso no está cubierto por ninguna ley ni por el RAG: proponer y preguntar. Nunca inventar una convención.
-- El RAG (preferencias vivas del usuario) está por encima de esta ley cuando se contradicen.
+- Si el caso no está cubierto por ninguna ley ni por el vault de Obsidian: proponer y preguntar. Nunca inventar una convención.
+- El vault de Obsidian (preferencias vivas del usuario) está por encima de esta ley cuando se contradicen.
 - Al agregar leyes nuevas: la línea de ley instruye lo que SÍ se hace; lo prohibido vive únicamente en el bloque `bad` con su porqué.
 
 ---
@@ -807,10 +807,10 @@ for (const device of devices) {
 > Dentro del sistema los errores viajan como códigos (`throw new Error("ERR_CODIGO")`, el wrapper http los convierte). En el borde con el usuario final, el mensaje es español natural en primera persona del plural, con el detalle técnico entre paréntesis solo si aporta. Cada I/O traduce su error en el punto de la llamada.
 
 ```good
-if (!data.access_token) throw new Error("ERR_FIREBASE_AUTH")   // interno: código rastreable
-
-await fs.writeFile(file, body)
-    .catch(() => { throw new Error("No pudimos guardar la sesión") })  // borde: el técnico muere aquí
+if (data.access_token) {
+    await fs.writeFile(file, body)
+        .catch(() => { throw new Error("No pudimos guardar la sesión") })  // borde: el técnico muere aquí
+} else throw new Error("ERR_FIREBASE_AUTH")     // interno: código rastreable — afirmativo (Ley 5), el error cierra su nivel
 
 throw new Error(`No pudimos abrir la URL (HTTP ${res.status})`)  // detalle técnico solo si aporta
 ```
